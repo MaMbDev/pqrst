@@ -1,3 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">pqrst</string>
+    <string name="app_name">PQRST Learn</string>
+
+    <!-- Auth -->
+    <string name="login_username_hint">Usuario</string>
+    <string name="login_password_hint">Contraseña</string>
+    <string name="login_button">INICIAR SESIÓN</string>
+    <string name="login_forgot_password">¿Olvidaste la contraseña?</string>
+    <string name="login_error_invalid">Usuario o contraseña incorrectos</string>
+    <string name="forgot_password_title">Contraseña olvidada</string>
+    <string name="forgot_password_message">Contacta a tu administrador para restablecer tu contraseña.</string>
+
+    <!-- Common -->
+    <string name="ok">Aceptar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
+    <string name="view">Ver</string>
+    <string name="back">Volver</string>
+    <string name="close">Cerrar</string>
+    <string name="loading">Cargando…</string>
+    <string name="error_generic">Ha ocurrido un error. Inténtalo de nuevo.</string>
+    <string name="error_field_required">Este campo es obligatorio</string>
+    <string name="confirm_delete_title">Confirmar eliminación</string>
+    <string name="confirm_delete_message">¿Estás seguro de que deseas eliminar este elemento? Esta acción no se puede deshacer.</string>
+
+    <!-- Navigation drawer -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_patients">Pacientes</string>
+    <string name="nav_consultations">Consultas</string>
+    <string name="nav_ecg_monitor">Monitor ECG</string>
+    <string name="nav_import_csv">Importar CSV</string>
+    <string name="nav_settings">Configuración</string>
+    <string name="nav_help">Ayuda</string>
+    <string name="nav_logout">Cerrar sesión</string>
+    <string name="nav_role_admin">Admin</string>
+    <string name="nav_role_user">Usuario</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_welcome">¡Bienvenido, %1$s!</string>
+    <string name="dashboard_last_access">Último acceso: %1$s</string>
+    <string name="dashboard_quick_actions">ACCESO RÁPIDO</string>
+    <string name="dashboard_patients">PACIENTES</string>
+    <string name="dashboard_ecg_monitor">MONITOR ECG</string>
+    <string name="dashboard_import_ecg">IMPORTAR ECG</string>
+    <string name="dashboard_admin_label">sólo visible para admin</string>
+    <string name="dashboard_user_management">Gestión Usuarios\nAdministrar accesos</string>
+
+    <!-- Patients -->
+    <string name="patients_title">PACIENTES</string>
+    <string name="patients_search_hint">Buscar Paciente</string>
+    <string name="patients_list_title">LISTADO</string>
+    <string name="patients_new">NUEVO PACIENTE</string>
+    <string name="patients_empty">No hay pacientes registrados</string>
+    <string name="patient_name_label">Nombre</string>
+    <string name="patient_age_label">Edad</string>
+    <string name="patient_sex_label">Sexo</string>
+    <string name="patient_phone_label">Teléfono</string>
+    <string name="patient_email_label">E-mail</string>
+    <string name="patient_address_label">Dirección</string>
+    <string name="patient_history_label">Antecedentes médicos</string>
+    <string name="patient_delete_confirm">¿Eliminar este paciente? Se eliminarán también todas sus consultas y registros ECG.</string>
+
+    <!-- Consultations -->
+    <string name="consultations_empty">Sin consultas registradas</string>
+    <string name="consultations_title">CONSULTAS</string>
+    <string name="consultations_new">NUEVA CONSULTA</string>
+    <string name="consultation_date_label">Fecha</string>
+    <string name="consultation_symptoms_label">Síntomas</string>
+    <string name="consultation_vital_signs_label">Signos vitales</string>
+    <string name="consultation_notes_label">Notas</string>
+    <string name="consultation_delete_confirm">¿Eliminar esta consulta? Se eliminarán también todos sus registros ECG.</string>
+    <string name="consultation_ecg_section">REGISTROS ECG</string>
+
+    <!-- ECG -->
+    <string name="ecg_records_title">Registros ECG</string>
+    <string name="ecg_analyze">Analizar</string>
+    <string name="ecg_import">Importar ECG</string>
+    <string name="ecg_monitor">Monitor ECG</string>
+    <string name="ecg_save">Guardar ECG</string>
+    <string name="ecg_disclaimer">Estos resultados son solo educativos y no constituyen diagnóstico clínico.</string>
+
+    <!-- Report -->
+    <string name="report_generate">Generar informe</string>
+    <string name="report_share">Compartir</string>
+    <string name="report_print">Imprimir</string>
+
+    <!-- Admin / Users -->
+    <string name="users_title">Gestión de Usuarios</string>
+    <string name="users_new">Nuevo usuario</string>
+    <string name="user_username_label">Nombre de usuario</string>
+    <string name="user_email_label">E-mail</string>
+    <string name="user_password_label">Contraseña</string>
+    <string name="user_confirm_password_label">Confirmar contraseña</string>
+    <string name="user_role_label">Rol</string>
+    <string name="user_role_user">Usuario</string>
+    <string name="user_role_admin">Administrador</string>
+    <string name="user_delete_confirm">¿Eliminar este usuario? Esta acción no se puede deshacer.</string>
+    <string name="user_password_edit_hint">Dejar en blanco para mantener la contraseña actual</string>
+
+    <!-- Settings / About -->
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_dark_mode">Modo oscuro</string>
+    <string name="settings_dark_mode_system">Sistema</string>
+    <string name="settings_dark_mode_light">Claro</string>
+    <string name="settings_dark_mode_dark">Oscuro</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_system">Sistema</string>
+    <string name="settings_language_spanish">Español</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_title">Configuración</string>
+    <string name="about_title">Ayuda / Acerca de</string>
+    <string name="about_version">Versión %1$s</string>
+    <string name="about_educational_notice">PQRST Learn es una herramienta educativa. Los resultados de análisis ECG no constituyen diagnóstico clínico.</string>
+    <string name="about_mit_bih_attribution">Patrones de referencia derivados de la base de datos MIT-BIH Arrhythmia.</string>
 </resources>
