@@ -1,213 +1,229 @@
 package dam.pmdm.pqrst.data.db
 
+/**
+ * Bidirectional mapping functions between Room entities and domain models.
+ *
+ * Each entity type has two extension functions:
+ * - `Entity.toDomain()` — converts a Room entity to its domain counterpart for use in the
+ *   domain and presentation layers.
+ * - `DomainModel.toEntity()` — converts a domain model back to a Room entity before persistence.
+ *
+ * [UserEntity] also has `toSession()` which extracts only the fields needed to populate the
+ * active [Session] after a successful login.
+ *
+ * The private helpers [Int.toUserRole] and [UserRole.toInt] translate the INTEGER role flag
+ * stored in the database (1 = ADMIN, 0 = USER) to and from the [UserRole] enum.
+ */
+
+import dam.pmdm.pqrst.data.db.entity.ComparisonEntity
 import dam.pmdm.pqrst.data.db.entity.ConsultationEntity
 import dam.pmdm.pqrst.data.db.entity.EcgAnalysisEntity
+import dam.pmdm.pqrst.data.db.entity.EcgPatternEntity
 import dam.pmdm.pqrst.data.db.entity.EcgRecordEntity
 import dam.pmdm.pqrst.data.db.entity.PatientEntity
-import dam.pmdm.pqrst.data.db.entity.PatientHistoryEntity
+import dam.pmdm.pqrst.data.db.entity.ReportEntity
 import dam.pmdm.pqrst.data.db.entity.UserEntity
 import dam.pmdm.pqrst.domain.model.AppUser
+import dam.pmdm.pqrst.domain.model.Comparison
 import dam.pmdm.pqrst.domain.model.Consultation
 import dam.pmdm.pqrst.domain.model.EcgAnalysis
+import dam.pmdm.pqrst.domain.model.EcgPattern
 import dam.pmdm.pqrst.domain.model.EcgRecord
-import dam.pmdm.pqrst.domain.model.EcgSource
 import dam.pmdm.pqrst.domain.model.Patient
-import dam.pmdm.pqrst.domain.model.PatientHistory
+import dam.pmdm.pqrst.domain.model.Report
 import dam.pmdm.pqrst.domain.model.Session
 import dam.pmdm.pqrst.domain.model.UserRole
 
-// ── User ──────────────────────────────────────────────────────────────
+private fun Int.toUserRole(): UserRole = if (this == 1) UserRole.ADMIN else UserRole.USER
+private fun UserRole.toInt(): Int = if (this == UserRole.ADMIN) 1 else 0
 
-/**
- * Maps this [UserEntity] to the full domain model [AppUser].
- *
- * @return An [AppUser] with all fields copied and [UserRole] parsed from the stored string.
- */
 fun UserEntity.toDomain() = AppUser(
     id = id,
     username = username,
     email = email,
     passwordHash = passwordHash,
-    role = UserRole.valueOf(role),
+    role = role.toUserRole(),
+    isActive = isActive == 1,
     createdAt = createdAt,
+    lastAccess = lastAccess,
+    createdBy = createdBy,
 )
 
-/**
- * Maps this [UserEntity] to a lightweight [Session] used for in-memory auth state.
- *
- * @return A [Session] containing only the fields required for UI and navigation logic.
- */
 fun UserEntity.toSession() = Session(
     userId = id,
     username = username,
     email = email,
-    role = UserRole.valueOf(role),
+    role = role.toUserRole(),
 )
 
-/**
- * Maps this [AppUser] domain model to its Room [UserEntity] counterpart.
- *
- * @return A [UserEntity] ready for insertion or update via the DAO.
- */
 fun AppUser.toEntity() = UserEntity(
     id = id,
     username = username,
     email = email,
     passwordHash = passwordHash,
-    role = role.name,
+    role = role.toInt(),
+    isActive = if (isActive) 1 else 0,
     createdAt = createdAt,
+    lastAccess = lastAccess,
+    createdBy = createdBy,
 )
 
-// ── Patient ───────────────────────────────────────────────────────────
-
-/**
- * Maps this [PatientEntity] to the domain model [Patient].
- *
- * @return A [Patient] with all fields copied from the database row.
- */
 fun PatientEntity.toDomain() = Patient(
     id = id,
     name = name,
     age = age,
     sex = sex,
+    medicalHistory = medicalHistory,
     phone = phone,
     email = email,
-    address = address,
     createdAt = createdAt,
+    isActive = isActive == 1,
+    createdBy = createdBy,
 )
 
-/**
- * Maps this [Patient] domain model to its Room [PatientEntity] counterpart.
- *
- * @return A [PatientEntity] ready for insertion or update via the DAO.
- */
 fun Patient.toEntity() = PatientEntity(
     id = id,
     name = name,
     age = age,
     sex = sex,
+    medicalHistory = medicalHistory,
     phone = phone,
     email = email,
-    address = address,
     createdAt = createdAt,
+    isActive = if (isActive) 1 else 0,
+    createdBy = createdBy,
 )
 
-/**
- * Maps this [PatientHistoryEntity] to the domain model [PatientHistory].
- *
- * @return A [PatientHistory] with all fields copied from the database row.
- */
-fun PatientHistoryEntity.toDomain() = PatientHistory(
-    id = id,
-    patientId = patientId,
-    entry = entry,
-    createdAt = createdAt,
-)
-
-/**
- * Maps this [PatientHistory] domain model to its Room [PatientHistoryEntity] counterpart.
- *
- * @return A [PatientHistoryEntity] ready for insertion via the DAO.
- */
-fun PatientHistory.toEntity() = PatientHistoryEntity(
-    id = id,
-    patientId = patientId,
-    entry = entry,
-    createdAt = createdAt,
-)
-
-// ── Consultation ──────────────────────────────────────────────────────
-
-/**
- * Maps this [ConsultationEntity] to the domain model [Consultation].
- *
- * @return A [Consultation] with all fields copied from the database row.
- */
 fun ConsultationEntity.toDomain() = Consultation(
     id = id,
     patientId = patientId,
-    date = date,
     symptoms = symptoms,
     vitalSigns = vitalSigns,
     notes = notes,
+    createdAt = createdAt,
+    date = date,
+    createdBy = createdBy,
 )
 
-/**
- * Maps this [Consultation] domain model to its Room [ConsultationEntity] counterpart.
- *
- * @return A [ConsultationEntity] ready for insertion or update via the DAO.
- */
 fun Consultation.toEntity() = ConsultationEntity(
     id = id,
     patientId = patientId,
-    date = date,
     symptoms = symptoms,
     vitalSigns = vitalSigns,
     notes = notes,
+    createdAt = createdAt,
+    date = date,
+    createdBy = createdBy,
 )
 
-// ── ECG ───────────────────────────────────────────────────────────────
-
-/**
- * Maps this [EcgRecordEntity] to the domain model [EcgRecord].
- *
- * @return An [EcgRecord] with all fields copied and [EcgSource] parsed from the stored string.
- */
 fun EcgRecordEntity.toDomain() = EcgRecord(
     id = id,
     consultationId = consultationId,
     filePath = filePath,
-    source = EcgSource.valueOf(source),
+    captureDate = captureDate,
     sampleRateHz = sampleRateHz,
-    durationMs = durationMs,
-    createdAt = createdAt,
+    durationSeconds = duration,
+    signalQuality = signalQuality,
+    status = status,
+    createdBy = createdBy,
+    channelCount = channelCount,
 )
 
-/**
- * Maps this [EcgRecord] domain model to its Room [EcgRecordEntity] counterpart.
- *
- * @return An [EcgRecordEntity] ready for insertion via the DAO.
- */
 fun EcgRecord.toEntity() = EcgRecordEntity(
     id = id,
     consultationId = consultationId,
     filePath = filePath,
-    source = source.name,
+    captureDate = captureDate,
     sampleRateHz = sampleRateHz,
-    durationMs = durationMs,
-    createdAt = createdAt,
+    duration = durationSeconds,
+    signalQuality = signalQuality,
+    status = status,
+    createdBy = createdBy,
+    channelCount = channelCount,
 )
 
-/**
- * Maps this [EcgAnalysisEntity] to the domain model [EcgAnalysis].
- *
- * @return An [EcgAnalysis] with all fields copied from the database row.
- */
 fun EcgAnalysisEntity.toDomain() = EcgAnalysis(
     id = id,
     ecgRecordId = ecgRecordId,
     heartRateBpm = heartRateBpm,
     rPeakCount = rPeakCount,
     rrMeanMs = rrMeanMs,
+    rrMinMs = rrMinMs,
+    rrMaxMs = rrMaxMs,
     regularity = regularity,
-    patternMatch = patternMatch,
-    patternSimilarity = patternSimilarity,
     analyzedAt = analyzedAt,
+    algorithmVersion = algorithmVersion,
+    analysisNotes = analysisNotes,
 )
 
-/**
- * Maps this [EcgAnalysis] domain model to its Room [EcgAnalysisEntity] counterpart.
- *
- * @return An [EcgAnalysisEntity] ready for insertion or replacement via the DAO.
- */
 fun EcgAnalysis.toEntity() = EcgAnalysisEntity(
     id = id,
     ecgRecordId = ecgRecordId,
     heartRateBpm = heartRateBpm,
     rPeakCount = rPeakCount,
     rrMeanMs = rrMeanMs,
+    rrMinMs = rrMinMs,
+    rrMaxMs = rrMaxMs,
     regularity = regularity,
-    patternMatch = patternMatch,
-    patternSimilarity = patternSimilarity,
     analyzedAt = analyzedAt,
+    algorithmVersion = algorithmVersion,
+    analysisNotes = analysisNotes,
+)
+
+fun EcgPatternEntity.toDomain() = EcgPattern(
+    id = id,
+    name = name,
+    description = description,
+    filePath = filePath,
+    sampleRateHz = sampleRateHz,
+    arrhythmia = arrhythmia,
+    isVisible = isVisible == 1,
+)
+
+fun EcgPattern.toEntity() = EcgPatternEntity(
+    id = id,
+    name = name,
+    description = description,
+    filePath = filePath,
+    sampleRateHz = sampleRateHz,
+    arrhythmia = arrhythmia,
+    isVisible = if (isVisible) 1 else 0,
+)
+
+fun ComparisonEntity.toDomain() = Comparison(
+    id = id,
+    ecgRecordId = ecgRecordId,
+    patternId = patternId,
+    matchPercentage = matchPercentage,
+    comparedAt = comparedAt,
+    resultText = resultText,
+)
+
+fun Comparison.toEntity() = ComparisonEntity(
+    id = id,
+    ecgRecordId = ecgRecordId,
+    patternId = patternId,
+    matchPercentage = matchPercentage,
+    comparedAt = comparedAt,
+    resultText = resultText,
+)
+
+fun ReportEntity.toDomain() = Report(
+    id = id,
+    consultationId = consultationId,
+    generatedAt = generatedAt,
+    format = format,
+    summary = summary,
+    pdfPath = pdfPath,
+    createdBy = createdBy,
+)
+
+fun Report.toEntity() = ReportEntity(
+    id = id,
+    consultationId = consultationId,
+    generatedAt = generatedAt,
+    format = format,
+    summary = summary,
+    pdfPath = pdfPath,
+    createdBy = createdBy,
 )

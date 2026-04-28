@@ -2,55 +2,63 @@ package dam.pmdm.pqrst.data.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import dam.pmdm.pqrst.data.db.dao.ComparisonDao
 import dam.pmdm.pqrst.data.db.dao.ConsultationDao
 import dam.pmdm.pqrst.data.db.dao.EcgAnalysisDao
+import dam.pmdm.pqrst.data.db.dao.EcgPatternDao
 import dam.pmdm.pqrst.data.db.dao.EcgRecordDao
 import dam.pmdm.pqrst.data.db.dao.PatientDao
-import dam.pmdm.pqrst.data.db.dao.PatientHistoryDao
+import dam.pmdm.pqrst.data.db.dao.ReportDao
 import dam.pmdm.pqrst.data.db.dao.UserDao
+import dam.pmdm.pqrst.data.db.entity.ComparisonEntity
 import dam.pmdm.pqrst.data.db.entity.ConsultationEntity
 import dam.pmdm.pqrst.data.db.entity.EcgAnalysisEntity
+import dam.pmdm.pqrst.data.db.entity.EcgPatternEntity
 import dam.pmdm.pqrst.data.db.entity.EcgRecordEntity
 import dam.pmdm.pqrst.data.db.entity.PatientEntity
-import dam.pmdm.pqrst.data.db.entity.PatientHistoryEntity
+import dam.pmdm.pqrst.data.db.entity.ReportEntity
 import dam.pmdm.pqrst.data.db.entity.UserEntity
 
 /**
  * Room database definition for the PQRST Learn application.
  *
- * All patient, consultation, ECG, and user data is stored on-device; no external network
- * calls are made for health data. Schema export is enabled so that migration scripts can
- * be generated and reviewed when the schema version is incremented.
+ * Contains all 8 entity tables:
+ * - `users` — application user accounts ([UserEntity])
+ * - `patients` — patient records ([PatientEntity])
+ * - `consultations` — clinical consultations ([ConsultationEntity])
+ * - `ecg_records` — ECG recordings ([EcgRecordEntity])
+ * - `ecg_analysis` — automated ECG analysis results ([EcgAnalysisEntity])
+ * - `ecg_patterns` — bundled reference ECG patterns ([EcgPatternEntity])
+ * - `comparisons` — pattern comparison results ([ComparisonEntity])
+ * - `reports` — generated PDF report metadata ([ReportEntity])
+ *
+ * Schema migrations are handled by [fallbackToDestructiveMigration] during development.
+ * Before shipping, replace this with explicit [androidx.room.migration.Migration] objects.
+ * Seed data (admin and default user accounts) is inserted in the Room callback defined in
+ * [dam.pmdm.pqrst.di.DatabaseModule].
  */
 @Database(
     entities = [
         UserEntity::class,
         PatientEntity::class,
-        PatientHistoryEntity::class,
         ConsultationEntity::class,
         EcgRecordEntity::class,
         EcgAnalysisEntity::class,
+        EcgPatternEntity::class,
+        ComparisonEntity::class,
+        ReportEntity::class,
     ],
-    version = 1,
+    version = 3,
     exportSchema = true,
 )
 abstract class PqrstDatabase : RoomDatabase() {
 
-    /** Returns the DAO for [UserEntity] operations. */
     abstract fun userDao(): UserDao
-
-    /** Returns the DAO for [PatientEntity] operations. */
     abstract fun patientDao(): PatientDao
-
-    /** Returns the DAO for [PatientHistoryEntity] operations. */
-    abstract fun patientHistoryDao(): PatientHistoryDao
-
-    /** Returns the DAO for [ConsultationEntity] operations. */
     abstract fun consultationDao(): ConsultationDao
-
-    /** Returns the DAO for [EcgRecordEntity] operations. */
     abstract fun ecgRecordDao(): EcgRecordDao
-
-    /** Returns the DAO for [EcgAnalysisEntity] operations. */
     abstract fun ecgAnalysisDao(): EcgAnalysisDao
+    abstract fun ecgPatternDao(): EcgPatternDao
+    abstract fun comparisonDao(): ComparisonDao
+    abstract fun reportDao(): ReportDao
 }
