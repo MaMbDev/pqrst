@@ -1,30 +1,31 @@
 package dam.pmdm.pqrst.domain.model
 
 /**
- * Acquisition source of an ECG recording.
+ * Domain model representing a stored ECG recording linked to a consultation (RF-03, RF-04).
  *
- * - [BLUETOOTH]: Signal captured in real time from an ESP32 + AD8232 via Bluetooth SPP.
- * - [CSV]: Imported from a CSV file (e.g. MIT-BIH database).
- */
-enum class EcgSource { BLUETOOTH, CSV }
-
-/**
- * Domain model representing a stored ECG recording linked to a consultation.
+ * The raw signal is stored in a CSV file at [filePath]; this model holds only metadata.
+ * Recordings may originate from live Bluetooth capture (ESP32/AD8232) or CSV import (MIT-BIH).
  *
- * @property id Auto-generated primary key; 0 indicates a new, unsaved record.
- * @property consultationId Foreign key referencing the associated [Consultation].
- * @property filePath Absolute path to the CSV file holding the raw ECG samples.
- * @property source How the recording was acquired.
- * @property sampleRateHz Sampling frequency in Hz (target: ≥ 100 Hz for live capture).
- * @property durationMs Total recording duration in milliseconds.
- * @property createdAt Unix timestamp (milliseconds) when the record was saved.
+ * @property id Auto-incremented primary key (0 for unsaved instances).
+ * @property consultationId Foreign key referencing [Consultation.id].
+ * @property filePath Absolute path to the CSV file containing raw ECG samples.
+ * @property captureDate ISO-8601 date-time when the recording was captured or imported.
+ * @property sampleRateHz Sampling frequency in Hz (e.g. 250, 360).
+ * @property durationSeconds Total recording duration in seconds.
+ * @property signalQuality Signal quality classification: "Excelente", "Buena", "Ruido", or "Inutilizable". Optional.
+ * @property status Processing state: "Pendiente", "Analizado", or "Rechazado".
+ * @property createdBy [AppUser.id] of the user who created this record.
+ * @property channelCount Number of recording channels, or null when not specified.
  */
 data class EcgRecord(
     val id: Long = 0,
     val consultationId: Long,
     val filePath: String,
-    val source: EcgSource,
+    val captureDate: String = "",
     val sampleRateHz: Int,
-    val durationMs: Long = 0,
-    val createdAt: Long = System.currentTimeMillis(),
+    val durationSeconds: Double = 0.0,
+    val signalQuality: String? = null,
+    val status: String = "Pendiente",
+    val createdBy: Long = 0,
+    val channelCount: Int? = null,
 )
