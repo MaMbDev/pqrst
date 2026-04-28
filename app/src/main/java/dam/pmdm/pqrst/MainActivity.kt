@@ -1,11 +1,10 @@
 package dam.pmdm.pqrst
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.os.LocaleListCompat
@@ -33,7 +32,7 @@ import javax.inject.Inject
  *    activity recreation so all string resources reload in the chosen language.
  */
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     /** Injected authentication repository used to observe the active session. */
     @Inject lateinit var authRepository: AuthRepository
@@ -57,22 +56,18 @@ class MainActivity : ComponentActivity() {
             val session by authRepository.currentSession.collectAsStateWithLifecycle()
             val isChecking by authRepository.isCheckingSession.collectAsStateWithLifecycle()
 
-            val darkModePref by settingsStore.darkMode.collectAsStateWithLifecycle("system")
-            val language by settingsStore.language.collectAsStateWithLifecycle("system")
+            val darkModePref by settingsStore.darkMode.collectAsStateWithLifecycle("light")
+            // null = DataStore not yet loaded; skip locale call until the real value arrives
+            val language by settingsStore.language.collectAsStateWithLifecycle(initialValue = null)
 
             val darkTheme = when (darkModePref) {
-                "light" -> false
                 "dark" -> true
-                else -> isSystemInDarkTheme()
+                else -> false
             }
 
             LaunchedEffect(language) {
-                val localeList = if (language == "system") {
-                    LocaleListCompat.getEmptyLocaleList()
-                } else {
-                    LocaleListCompat.forLanguageTags(language)
-                }
-                AppCompatDelegate.setApplicationLocales(localeList)
+                val lang = language ?: return@LaunchedEffect
+                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(lang))
             }
 
             PqrstTheme(darkTheme = darkTheme) {

@@ -7,10 +7,12 @@ import dagger.hilt.components.SingletonComponent
 import dam.pmdm.pqrst.data.auth.AuthRepositoryImpl
 import dam.pmdm.pqrst.data.repository.ConsultationRepositoryImpl
 import dam.pmdm.pqrst.data.repository.PatientRepositoryImpl
+import dam.pmdm.pqrst.data.repository.ReportRepositoryImpl
 import dam.pmdm.pqrst.data.repository.UserRepositoryImpl
 import dam.pmdm.pqrst.domain.repository.AuthRepository
 import dam.pmdm.pqrst.domain.repository.ConsultationRepository
 import dam.pmdm.pqrst.domain.repository.PatientRepository
+import dam.pmdm.pqrst.domain.repository.ReportRepository
 import dam.pmdm.pqrst.domain.repository.UserRepository
 import javax.inject.Singleton
 
@@ -61,4 +63,7 @@ abstract class RepositoryModule {
      */
     @Binds @Singleton
     abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
+
+    @Binds @Singleton
+    abstract fun bindReportRepository(impl: ReportRepositoryImpl): ReportRepository
 }
