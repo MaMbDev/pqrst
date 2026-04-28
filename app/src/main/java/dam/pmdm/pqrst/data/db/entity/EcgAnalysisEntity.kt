@@ -9,21 +9,25 @@ import androidx.room.PrimaryKey
 /**
  * Room entity representing a row in the `ecg_analysis` table.
  *
- * One-to-one with [EcgRecordEntity] enforced by a unique index on [ecgRecordId].
  * Cascade-deletes when the parent [EcgRecordEntity] is removed.
+ * All analysis fields are nullable because the pipeline may fail on a noisy signal,
+ * in which case partial results are still persisted alongside an [analysisNotes] warning.
  *
  * @property id Auto-incremented primary key.
  * @property ecgRecordId Foreign key referencing [EcgRecordEntity.id].
- * @property heartRateBpm Estimated heart rate in beats per minute.
- * @property rPeakCount Number of R-peaks detected in the signal.
- * @property rrMeanMs Mean RR-interval in milliseconds.
- * @property regularity Textual regularity classification (e.g. "regular", "irregular").
- * @property patternMatch Closest matched pattern label, or null if not compared.
- * @property patternSimilarity Similarity score [0.0, 1.0], or null if not compared.
- * @property analyzedAt Unix timestamp (milliseconds) of the analysis run.
+ * @property heartRateBpm Estimated heart rate in BPM, or null if undetermined.
+ * @property rPeakCount Number of R-peaks detected in the signal, or null if undetermined.
+ * @property rrMeanMs Mean RR interval in milliseconds, or null if undetermined.
+ * @property rrMinMs Minimum RR interval in milliseconds, or null if undetermined.
+ * @property rrMaxMs Maximum RR interval in milliseconds, or null if undetermined.
+ * @property regularity Rhythm classification: Regular, Irregular, or Undetermined.
+ * @property analyzedAt ISO-8601 date-time when the analysis was run.
+ * @property algorithmVersion Identifier of the algorithm version used (max 20 chars). Optional.
+ * @property analysisNotes Free-text notes or warnings about the analysis result (max 200 chars). Optional.
  */
 @Entity(
     tableName = "ecg_analysis",
+    indices = [Index("ecg_record_id")],
     foreignKeys = [
         ForeignKey(
             entity = EcgRecordEntity::class,
@@ -32,16 +36,18 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["ecg_record_id"], unique = true)],
 )
 data class EcgAnalysisEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
     @ColumnInfo(name = "ecg_record_id") val ecgRecordId: Long,
-    @ColumnInfo(name = "heart_rate_bpm") val heartRateBpm: Float,
-    @ColumnInfo(name = "r_peak_count") val rPeakCount: Int,
-    @ColumnInfo(name = "rr_mean_ms") val rrMeanMs: Float,
-    val regularity: String,
-    @ColumnInfo(name = "pattern_match") val patternMatch: String?,
-    @ColumnInfo(name = "pattern_similarity") val patternSimilarity: Float?,
-    @ColumnInfo(name = "analyzed_at") val analyzedAt: Long,
+    @ColumnInfo(name = "heart_rate_bpm") val heartRateBpm: Int?,
+    @ColumnInfo(name = "r_peak_count") val rPeakCount: Int?,
+    @ColumnInfo(name = "rr_mean_ms") val rrMeanMs: Double?,
+    @ColumnInfo(name = "rr_min_ms") val rrMinMs: Double?,
+    @ColumnInfo(name = "rr_max_ms") val rrMaxMs: Double?,
+    val regularity: String?,
+    @ColumnInfo(name = "analyzed_at") val analyzedAt: String,
+    @ColumnInfo(name = "algorithm_version") val algorithmVersion: String?,
+    @ColumnInfo(name = "analysis_notes") val analysisNotes: String?,
 )
