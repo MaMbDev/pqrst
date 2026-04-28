@@ -9,50 +9,32 @@ import dam.pmdm.pqrst.data.db.entity.ConsultationEntity
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Room data access object for the `consultations` table.
+ * DAO for the `consultations` table.
+ *
+ * Provides CRUD operations for consultation management (RF-02).
+ * Consultations are always scoped to a single patient and ordered by consultation date descending.
+ * Hard-delete via [deleteById] cascade-removes linked ECG records and reports.
  */
 @Dao
 interface ConsultationDao {
 
-    /**
-     * Returns a live stream of consultations for a patient, sorted by date descending.
-     *
-     * @param patientId The ID of the patient whose consultations to observe.
-     */
+    /** Emits the consultation list for [patientId], newest first, whenever any row changes. */
     @Query("SELECT * FROM consultations WHERE patient_id = :patientId ORDER BY date DESC")
     fun observeByPatient(patientId: Long): Flow<List<ConsultationEntity>>
 
-    /**
-     * Retrieves a single consultation by primary key.
-     *
-     * @param id The consultation ID to look up.
-     * @return The matching [ConsultationEntity], or null if not found.
-     */
+    /** Returns the consultation with [id], or null if not found. */
     @Query("SELECT * FROM consultations WHERE id = :id")
     suspend fun getById(id: Long): ConsultationEntity?
 
-    /**
-     * Inserts a new consultation, replacing any conflicting row.
-     *
-     * @param consultation The entity to insert.
-     * @return The row ID of the inserted record.
-     */
+    /** Inserts or replaces a consultation row and returns its generated id. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(consultation: ConsultationEntity): Long
 
-    /**
-     * Updates all columns of an existing consultation row.
-     *
-     * @param consultation The entity containing updated values. Matched by primary key.
-     */
+    /** Updates an existing consultation row. */
     @Update
     suspend fun update(consultation: ConsultationEntity)
 
-    /**
-     * Deletes a consultation by primary key, cascade-deleting linked ECG records and analyses.
-     *
-     * @param id The ID of the consultation to delete.
-     */
+    /** Permanently deletes the consultation with [id] and cascade-removes child rows. */
     @Query("DELETE FROM consultations WHERE id = :id")
     suspend fun deleteById(id: Long)
 }
