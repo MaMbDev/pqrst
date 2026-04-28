@@ -55,20 +55,30 @@ object DatabaseModule {
 }
 
 private class SeedCallback : RoomDatabase.Callback() {
-    override fun onCreate(db: SupportSQLiteDatabase) {
-        super.onCreate(db)
+    // onOpen fires after Room has fully created / migrated all tables.
+    // onCreate and onDestructiveMigration fire before tables are guaranteed to exist in all
+    // build-cache states, so we use onOpen + a row-count guard instead.
+    override fun onOpen(db: SupportSQLiteDatabase) {
+        super.onOpen(db)
+        val userCount = db.query("SELECT COUNT(*) FROM users").use { cursor ->
+            if (cursor.moveToFirst()) cursor.getInt(0) else 0
+        }
+        if (userCount == 0) seed(db)
+    }
+
+    private fun seed(db: SupportSQLiteDatabase) {
         val now = "2024-01-01T00:00:00"
         val adminHash = BCrypt.withDefaults().hashToString(12, "admin123".toCharArray())
         val userHash = BCrypt.withDefaults().hashToString(12, "user123".toCharArray())
-        // Room enables FK in onConfigure() before onCreate(), so we must disable it temporarily.
-        // Admin's created_by=1 is a self-reference that cannot be validated before the row exists.
+        // Disable FK checks: admin's created_by = 1 is a self-reference that can't be
+        // validated before the row itself exists.
         db.execSQL("PRAGMA foreign_keys = OFF")
         db.execSQL(
-            "INSERT INTO users (username, email, password_hash, role, is_active, created_at, last_access, created_by) " +
+            "INSERT OR IGNORE INTO users (username, email, password_hash, role, is_active, created_at, last_access, created_by) " +
                 "VALUES ('admin', 'admin@pqrst.local', '$adminHash', 1, 1, '$now', NULL, 1)",
         )
         db.execSQL(
-            "INSERT INTO users (username, email, password_hash, role, is_active, created_at, last_access, created_by) " +
+            "INSERT OR IGNORE INTO users (username, email, password_hash, role, is_active, created_at, last_access, created_by) " +
                 "VALUES ('user', 'user@pqrst.local', '$userHash', 0, 1, '$now', NULL, 1)",
         )
         db.execSQL("PRAGMA foreign_keys = ON")

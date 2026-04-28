@@ -27,9 +27,8 @@ import dam.pmdm.pqrst.presentation.component.LabeledTextField
 import dam.pmdm.pqrst.presentation.component.PrimaryButton
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Screen for creating a new consultation or editing an existing one under a given patient.
@@ -94,7 +93,7 @@ private fun ConsultationFormContent(
     viewModel: ConsultationFormViewModel,
     modifier: Modifier = Modifier,
 ) {
-    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+    val displayFormatter = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm") }
 
     Column(
         modifier = modifier
@@ -104,7 +103,8 @@ private fun ConsultationFormContent(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         OutlinedTextField(
-            value = dateFormat.format(Date(viewModel.date)),
+            value = runCatching { LocalDateTime.parse(viewModel.date).format(displayFormatter) }
+                .getOrElse { viewModel.date },
             onValueChange = {},
             label = { Text(stringResource(R.string.consultation_date_label)) },
             readOnly = true,

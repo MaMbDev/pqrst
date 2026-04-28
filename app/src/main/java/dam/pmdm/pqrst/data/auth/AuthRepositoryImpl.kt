@@ -39,6 +39,9 @@ class AuthRepositoryImpl @Inject constructor(
                 if (userId != null) {
                     _currentSession.value = userDao.getById(userId)?.toSession()
                 }
+            } catch (_: Exception) {
+                // DB may not be ready yet or migration failed; treat as logged out.
+                _currentSession.value = null
             } finally {
                 _isCheckingSession.value = false
             }
@@ -47,15 +50,17 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun login(username: String, password: String): Result<Session> =
         withContext(ioDispatcher) {
-            val entity = userDao.getByUsername(username)
-                ?: return@withContext Result.failure(Exception("Invalid username or password"))
-            if (!hasher.verify(password, entity.passwordHash)) {
-                return@withContext Result.failure(Exception("Invalid username or password"))
+            runCatching {
+                val entity = userDao.getByUsername(username)
+                    ?: throw Exception("Invalid username or password")
+                if (!hasher.verify(password, entity.passwordHash)) {
+                    throw Exception("Invalid username or password")
+                }
+                val session = entity.toSession()
+                sessionStore.saveUserId(entity.id)
+                _currentSession.value = session
+                session
             }
-            val session = entity.toSession()
-            sessionStore.saveUserId(entity.id)
-            _currentSession.value = session
-            Result.success(session)
         }
 
     override suspend fun logout() {

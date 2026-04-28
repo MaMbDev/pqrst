@@ -32,8 +32,8 @@ import dam.pmdm.pqrst.data.db.entity.UserEntity
  * - `comparisons` — pattern comparison results ([ComparisonEntity])
  * - `reports` — generated PDF report metadata ([ReportEntity])
  *
- * Schema migrations are handled by [fallbackToDestructiveMigration] during development.
- * Before shipping, replace this with explicit [androidx.room.migration.Migration] objects.
+ * Schema migrations during development use [fallbackToDestructiveMigration]; bump [version]
+ * whenever the schema changes. Before shipping, replace with explicit [androidx.room.migration.Migration] objects.
  * Seed data (admin and default user accounts) is inserted in the Room callback defined in
  * [dam.pmdm.pqrst.di.DatabaseModule].
  */
@@ -48,7 +48,7 @@ import dam.pmdm.pqrst.data.db.entity.UserEntity
         ComparisonEntity::class,
         ReportEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class PqrstDatabase : RoomDatabase() {
