@@ -1,4 +1,4 @@
-package dam.pmdm.pqrst.presentation.ecg.monitor
+tpackage dam.pmdm.pqrst.presentation.ecg.monitor
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
@@ -13,8 +13,6 @@ import android.os.Build
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dam.pmdm.pqrst.R
@@ -69,8 +67,6 @@ class EcgMonitorViewModel @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
-    val modelProducer = CartesianChartModelProducer()
-
     private val _uiState = MutableStateFlow<EcgMonitorUiState>(EcgMonitorUiState.Idle)
     val uiState: StateFlow<EcgMonitorUiState> = _uiState.asStateFlow()
 
@@ -98,14 +94,6 @@ class EcgMonitorViewModel @Inject constructor(
     private var btSocket: BluetoothSocket? = null
     private var discoveryReceiver: BroadcastReceiver? = null
 
-    init {
-        viewModelScope.launch {
-            modelProducer.runTransaction {
-                lineSeries { series(y = List(WINDOW_SIZE) { 0f }) }
-            }
-        }
-    }
-
     // ── Demo mode ──────────────────────────────────────────────────────────────
 
     fun startDemo(pattern: DemoPattern) {
@@ -132,10 +120,6 @@ class EcgMonitorViewModel @Inject constructor(
                     _peaks.value = detectedPeaks
                     _signalBuffer.value = data
 
-                    modelProducer.runTransaction {
-                        lineSeries { series(y = data) }
-                    }
-
                     val current = _uiState.value
                     if (current is EcgMonitorUiState.DemoRunning) {
                         _uiState.value = current.copy(
@@ -155,8 +139,8 @@ class EcgMonitorViewModel @Inject constructor(
         demoJob = null
         _uiState.value = EcgMonitorUiState.Idle
         _peaks.value = emptyList()
+        _signalBuffer.value = List(WINDOW_SIZE) { 0f }
         buffer.clear()
-        resetChartToFlatline()
     }
 
     // ── Bluetooth ──────────────────────────────────────────────────────────────
@@ -269,18 +253,10 @@ class EcgMonitorViewModel @Inject constructor(
         btSocket?.close()
         btSocket = null
         _uiState.value = EcgMonitorUiState.Idle
-        resetChartToFlatline()
+        _signalBuffer.value = List(WINDOW_SIZE) { 0f }
     }
 
     // ── Private helpers ────────────────────────────────────────────────────────
-
-    private fun resetChartToFlatline() {
-        viewModelScope.launch {
-            modelProducer.runTransaction {
-                lineSeries { series(y = List(WINDOW_SIZE) { 0f }) }
-            }
-        }
-    }
 
     private fun resetGenerator(pattern: DemoPattern) {
         genSampleIndex = 0L
@@ -316,24 +292,28 @@ class EcgMonitorViewModel @Inject constructor(
         }
     }
 
-    // Standard PQRST wave using sum of Gaussians (phases as fractions of RR interval)
+    // Standard PQRST wave using sum of Gaussians.
+    // Sigma values are expressed in absolute samples (not phase fractions) so wave
+    // widths stay physiologically correct at all heart rates.
     private fun sinusSample(phase: Float, noiseAmp: Float): Float {
-        val p = 0.12f * gauss(phase, 0.20f, 0.025f)
-        val q = -0.06f * gauss(phase, 0.44f, 0.010f)
-        val r = 1.00f * gauss(phase, 0.47f, 0.013f)
-        val s = -0.18f * gauss(phase, 0.51f, 0.010f)
-        val t = 0.30f * gauss(phase, 0.68f, 0.055f)
+        val rr = genCurrentRrSamples.coerceAtLeast(20f)
+        val p =  0.12f * gauss(phase, 0.20f,  8f / rr)   // P  ~80 ms
+        val q = -0.08f * gauss(phase, 0.44f,  2f / rr)   // Q  ~20 ms
+        val r =  1.00f * gauss(phase, 0.47f,  4f / rr)   // R  ~40 ms
+        val s = -0.20f * gauss(phase, 0.51f,  2f / rr)   // S  ~20 ms
+        val t =  0.32f * gauss(phase, 0.70f, 11f / rr)   // T ~110 ms
         return p + q + r + s + t + noise(noiseAmp)
     }
 
     // AFib: no P wave, fibrillatory baseline, irregular QRS amplitude
     private fun afibSample(phase: Float): Float {
-        val fibrillation = 0.04f * sin(2f * PI.toFloat() * 4f * phase)
-        val q = -0.05f * gauss(phase, 0.44f, 0.010f)
-        val r = (0.65f + Random.nextFloat() * 0.35f) * gauss(phase, 0.47f, 0.016f)
-        val s = -0.15f * gauss(phase, 0.51f, 0.010f)
-        val t = 0.22f * gauss(phase, 0.68f, 0.055f)
-        return fibrillation + q + r + s + t + noise(0.030f)
+        val rr = genCurrentRrSamples.coerceAtLeast(20f)
+        val fibrillation = 0.05f * sin(2f * PI.toFloat() * 6f * phase)
+        val q = -0.05f * gauss(phase, 0.44f,  2f / rr)
+        val r = (0.60f + Random.nextFloat() * 0.40f) * gauss(phase, 0.47f, 4f / rr)
+        val s = -0.15f * gauss(phase, 0.51f,  2f / rr)
+        val t =  0.22f * gauss(phase, 0.70f, 11f / rr)
+        return fibrillation + q + r + s + t + noise(0.035f)
     }
 
     // VFib: chaotic multi-frequency oscillation, no identifiable PQRST

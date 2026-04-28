@@ -68,15 +68,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineSpec
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
-import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
-import com.patrykandpatrick.vico.compose.common.shader.color
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.common.shader.DynamicShader
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import dam.pmdm.pqrst.R
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstBurgundy
@@ -157,28 +151,19 @@ fun EcgMonitorScreen(
 
             // ── ECG chart area ─────────────────────────────────────────────────
             Surface(
-                tonalElevation = 2.dp,
+                color = Color(0xFFFFF3F3),
                 shape = MaterialTheme.shapes.large,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    EcgChartWithPeaks(
-                        modelProducer = viewModel.modelProducer,
-                        signalColor = signalColorFor(uiState),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                    )
-                    // R-peak tick strip
-                    RPeakStrip(
-                        peaks = peaks,
-                        windowSize = EcgMonitorViewModel.WINDOW_SIZE,
-                        peakColor = peakColorFor(uiState),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(18.dp),
-                    )
-                }
+                EcgChartWithPeaks(
+                    signalBuffer = signalBuffer,
+                    peaks = peaks,
+                    signalColor = signalColorFor(uiState),
+                    peakColor = peakColorFor(uiState),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                )
             }
 
             // ── Color legend ───────────────────────────────────────────────────
@@ -254,48 +239,88 @@ fun EcgMonitorScreen(
 
 @Composable
 private fun EcgChartWithPeaks(
-    modelProducer: CartesianChartModelProducer,
-    signalColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    CartesianChartHost(
-        chart = rememberCartesianChart(
-            rememberLineCartesianLayer(
-                lines = listOf(
-                    rememberLineSpec(
-                        shader = remember(signalColor) { DynamicShader.color(signalColor) },
-                        thickness = 2.dp,
-                    ),
-                ),
-            ),
-        ),
-        modelProducer = modelProducer,
-        scrollState = rememberVicoScrollState(scrollEnabled = false),
-        zoomState = rememberVicoZoomState(zoomEnabled = false),
-        modifier = modifier,
-    )
-}
-
-// ── R-peak tick strip ─────────────────────────────────────────────────────────
-
-@Composable
-private fun RPeakStrip(
+    signalBuffer: List<Float>,
     peaks: List<Int>,
-    windowSize: Int,
+    signalColor: Color,
     peakColor: Color,
     modifier: Modifier = Modifier,
 ) {
+    Box(modifier = modifier) {
+        EcgPaperGrid(modifier = Modifier.fillMaxSize())
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            if (signalBuffer.size < 2) return@Canvas
+            val minY = -0.5f
+            val maxY = 1.5f
+            val yRange = maxY - minY
+            val xStep = size.width / (signalBuffer.size - 1).toFloat()
+
+            fun toOffset(i: Int, v: Float) = Offset(
+                x = i * xStep,
+                y = (size.height * (1f - (v - minY) / yRange)).coerceIn(0f, size.height),
+            )
+
+            // Signal line
+            val path = Path()
+            signalBuffer.forEachIndexed { i, v ->
+                val pt = toOffset(i, v)
+                if (i == 0) path.moveTo(pt.x, pt.y) else path.lineTo(pt.x, pt.y)
+            }
+            drawPath(
+                path = path,
+                color = signalColor,
+                style = Stroke(
+                    width = 2.dp.toPx(),
+                    cap = StrokeCap.Round,
+                    join = StrokeJoin.Round,
+                ),
+            )
+
+            // R-peak markers
+            peaks.forEach { idx ->
+                if (idx in signalBuffer.indices) {
+                    drawCircle(
+                        color = peakColor,
+                        radius = 4.dp.toPx(),
+                        center = toOffset(idx, signalBuffer[idx]),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EcgPaperGrid(modifier: Modifier = Modifier) {
+    val minorColor = Color(0xFFFFCDD2)
+    val majorColor = Color(0xFFEF9A9A)
     Canvas(modifier = modifier) {
-        val tickWidth = 2.dp.toPx()
-        peaks.forEach { idx ->
-            val x = if (windowSize > 1) idx.toFloat() / (windowSize - 1) * size.width else 0f
+        val minorStep = 20.dp.toPx()
+        val majorEvery = 5
+        var col = 0
+        var x = 0f
+        while (x <= size.width + 1f) {
+            val isMajor = col % majorEvery == 0
             drawLine(
-                color = peakColor,
+                color = if (isMajor) majorColor else minorColor,
                 start = Offset(x, 0f),
                 end = Offset(x, size.height),
-                strokeWidth = tickWidth,
-                cap = StrokeCap.Round,
+                strokeWidth = if (isMajor) 1.dp.toPx() else 0.5.dp.toPx(),
             )
+            x += minorStep
+            col++
+        }
+        var row = 0
+        var y = 0f
+        while (y <= size.height + 1f) {
+            val isMajor = row % majorEvery == 0
+            drawLine(
+                color = if (isMajor) majorColor else minorColor,
+                start = Offset(0f, y),
+                end = Offset(size.width, y),
+                strokeWidth = if (isMajor) 1.dp.toPx() else 0.5.dp.toPx(),
+            )
+            y += minorStep
+            row++
         }
     }
 }
@@ -684,8 +709,8 @@ private fun DeviceSection(
 @Composable
 private fun signalColorFor(uiState: EcgMonitorUiState): Color = when (uiState) {
     is EcgMonitorUiState.DemoRunning -> uiState.pattern.lineColor
-    is EcgMonitorUiState.BtConnected -> Color(0xFF00BCD4)
-    else -> MaterialTheme.colorScheme.outlineVariant
+    is EcgMonitorUiState.BtConnected -> Color(0xFF0097A7)
+    else -> Color(0xFF9E9E9E)
 }
 
 @Composable
