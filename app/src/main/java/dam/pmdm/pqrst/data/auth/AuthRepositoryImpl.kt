@@ -17,18 +17,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Singleton implementation of [AuthRepository] backed by Room and Jetpack DataStore.
- *
- * On creation it restores any previously persisted session from [SessionStore] so the user
- * does not have to re-authenticate after the process is killed.
- *
- * @param userDao DAO for querying user records.
- * @param sessionStore DataStore wrapper used to persist the logged-in user ID.
- * @param hasher Bcrypt utility for password verification.
- * @param ioDispatcher Dispatcher for all database and I/O operations.
- * @param appScope Application-lifetime scope used for the session-restore coroutine.
- */
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
@@ -39,13 +27,9 @@ class AuthRepositoryImpl @Inject constructor(
 ) : AuthRepository {
 
     private val _currentSession = MutableStateFlow<Session?>(null)
-
-    /** The active [Session], or null when no user is authenticated. */
     override val currentSession: StateFlow<Session?> = _currentSession.asStateFlow()
 
     private val _isCheckingSession = MutableStateFlow(true)
-
-    /** Emits true while the initial DataStore session-restore check is in progress. */
     override val isCheckingSession: StateFlow<Boolean> = _isCheckingSession.asStateFlow()
 
     init {
@@ -61,23 +45,12 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    /**
-     * Validates the credentials against the locally stored password hash.
-     *
-     * Username and password failures return the same generic message to avoid
-     * leaking which field is incorrect.
-     *
-     * @param username The account's login name.
-     * @param password The plain-text password to verify.
-     * @return [Result.success] with the new [Session] on success,
-     *         or [Result.failure] with a generic error message on invalid credentials.
-     */
     override suspend fun login(username: String, password: String): Result<Session> =
         withContext(ioDispatcher) {
             val entity = userDao.getByUsername(username)
-                ?: return@withContext Result.failure(Exception("Usuario o contraseña incorrectos"))
+                ?: return@withContext Result.failure(Exception("Invalid username or password"))
             if (!hasher.verify(password, entity.passwordHash)) {
-                return@withContext Result.failure(Exception("Usuario o contraseña incorrectos"))
+                return@withContext Result.failure(Exception("Invalid username or password"))
             }
             val session = entity.toSession()
             sessionStore.saveUserId(entity.id)
@@ -85,10 +58,6 @@ class AuthRepositoryImpl @Inject constructor(
             Result.success(session)
         }
 
-    /**
-     * Clears the DataStore session and nullifies the in-memory session state,
-     * triggering navigation to the login screen.
-     */
     override suspend fun logout() {
         sessionStore.clear()
         _currentSession.value = null
