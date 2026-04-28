@@ -6,7 +6,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Set of Material typography styles to start with
+/**
+ * Material 3 typography scale for the PQRST Learn application.
+ *
+ * Only [Typography.bodyLarge] is overridden from the Material defaults;
+ * all other text styles inherit the standard Material 3 values.
+ * Additional overrides (e.g. [Typography.titleLarge], [Typography.labelSmall])
+ * can be added here as the design system evolves.
+ */
 val Typography = Typography(
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
