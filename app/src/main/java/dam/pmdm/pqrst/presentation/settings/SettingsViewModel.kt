@@ -29,14 +29,14 @@ class SettingsViewModel @Inject constructor(
      * Defaults to `"system"` while the DataStore value is loading.
      */
     val darkMode: StateFlow<String> = settingsStore.darkMode
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "system")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "light")
 
     /**
-     * Current language preference: `"system"`, `"es"`, or `"en"`.
-     * Defaults to `"system"` while the DataStore value is loading.
+     * Current language preference: `"es"` or `"en"`.
+     * Defaults to `"es"` while the DataStore value is loading.
      */
     val language: StateFlow<String> = settingsStore.language
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "system")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "es")
 
     /**
      * Persists a new dark-mode preference.

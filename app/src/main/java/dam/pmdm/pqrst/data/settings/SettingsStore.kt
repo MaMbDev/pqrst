@@ -37,7 +37,7 @@ class SettingsStore @Inject constructor(
      * - `"dark"` — always use the dark colour scheme
      */
     val darkMode: Flow<String> = dataStore.data.map { prefs ->
-        prefs[keyDarkMode] ?: "system"
+        prefs[keyDarkMode] ?: "light"
     }
 
     /**
@@ -49,7 +49,7 @@ class SettingsStore @Inject constructor(
      * - `"en"` — force English
      */
     val language: Flow<String> = dataStore.data.map { prefs ->
-        prefs[keyLanguage] ?: "system"
+        prefs[keyLanguage] ?: "es"
     }
 
     /**
