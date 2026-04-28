@@ -76,8 +76,12 @@
     <string name="ecg_save">Save ECG</string>
     <string name="ecg_disclaimer">These results are for educational purposes only and do not constitute a clinical diagnosis.</string>
 
+    <string name="report_title">Report</string>
     <string name="report_generate">Generate report</string>
-    <string name="report_share">Share</string>
+    <string name="report_generating">Generating report…</string>
+    <string name="report_ready">Report ready</string>
+    <string name="report_retry">Retry</string>
+    <string name="report_share">Save / Share</string>
     <string name="report_print">Print</string>
 
     <string name="users_title">User Management</string>

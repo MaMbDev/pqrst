@@ -81,10 +81,35 @@
     <string name="ecg_monitor">Monitor ECG</string>
     <string name="ecg_save">Guardar ECG</string>
     <string name="ecg_disclaimer">Estos resultados son solo educativos y no constituyen diagnóstico clínico.</string>
+    <string name="ecg_monitor_title">Monitor ECG</string>
+    <string name="ecg_connect_esp32">Conectar ESP32</string>
+    <string name="ecg_demo_mode">Señal de prueba</string>
+    <string name="ecg_demo_description">ECG sinusal normal simulado — 72 lpm</string>
+    <string name="ecg_esp32_description">Conectar dispositivo ESP32 + AD8232 vía Bluetooth</string>
+    <string name="ecg_paired_devices">Vinculados</string>
+    <string name="ecg_nearby_devices">Cercanos</string>
+    <string name="ecg_scan">Buscar</string>
+    <string name="ecg_scanning">Buscando…</string>
+    <string name="ecg_no_devices">No se encontraron dispositivos</string>
+    <string name="ecg_connecting">Conectando con %1$s…</string>
+    <string name="ecg_source_demo">DEMO</string>
+    <string name="ecg_source_bt">Bluetooth</string>
+    <string name="ecg_samples">%1$d muestras</string>
+    <string name="ecg_bpm">FC estimada: %1$d lpm</string>
+    <string name="ecg_stop_save">Detener y guardar</string>
+    <string name="ecg_cancel_capture">Cancelar captura</string>
+    <string name="ecg_saving">Guardando registro…</string>
+    <string name="ecg_saved">Registro guardado correctamente</string>
+    <string name="ecg_permission_rationale">Se necesitan permisos de Bluetooth para conectar con el ESP32</string>
+    <string name="ecg_bt_unavailable">Bluetooth no disponible en este dispositivo</string>
 
     <!-- Report -->
+    <string name="report_title">Informe</string>
     <string name="report_generate">Generar informe</string>
-    <string name="report_share">Compartir</string>
+    <string name="report_generating">Generando informe…</string>
+    <string name="report_ready">Informe generado</string>
+    <string name="report_retry">Reintentar</string>
+    <string name="report_share">Guardar / Compartir</string>
     <string name="report_print">Imprimir</string>
 
     <!-- Admin / Users -->
