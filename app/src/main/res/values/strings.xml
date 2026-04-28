@@ -102,6 +102,26 @@
     <string name="ecg_saved">Registro guardado correctamente</string>
     <string name="ecg_permission_rationale">Se necesitan permisos de Bluetooth para conectar con el ESP32</string>
     <string name="ecg_bt_unavailable">Bluetooth no disponible en este dispositivo</string>
+    <string name="ecg_bt_connection_failed">No se pudo conectar con el dispositivo</string>
+    <string name="ecg_bt_waiting_signal">Conectado. En espera de señal ECG del ESP32…</string>
+    <string name="ecg_disconnect">Desconectar</string>
+    <string name="ecg_connect_action">Conectar</string>
+    <string name="ecg_stop_demo">Detener demo</string>
+    <string name="ecg_no_signal">Sin señal</string>
+    <string name="ecg_legend_signal">Señal</string>
+    <string name="ecg_legend_peak">Pico R</string>
+
+    <!-- ECG demo patterns -->
+    <string name="ecg_pattern_normal">ECG Normal</string>
+    <string name="ecg_pattern_normal_desc">Ritmo sinusal normal · 72 lpm</string>
+    <string name="ecg_pattern_tachy">Taquicardia sinusal</string>
+    <string name="ecg_pattern_tachy_desc">Frecuencia cardíaca elevada · 150 lpm</string>
+    <string name="ecg_pattern_brady">Bradicardia sinusal</string>
+    <string name="ecg_pattern_brady_desc">Frecuencia cardíaca reducida · 42 lpm</string>
+    <string name="ecg_pattern_afib">Fibrilación auricular</string>
+    <string name="ecg_pattern_afib_desc">Ritmo irregular, sin onda P · ~88 lpm</string>
+    <string name="ecg_pattern_vfib">Fibrilación ventricular</string>
+    <string name="ecg_pattern_vfib_desc">Caótico, sin PQRST identificable</string>
 
     <!-- Report -->
     <string name="report_title">Informe</string>

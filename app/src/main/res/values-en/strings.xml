@@ -110,4 +110,25 @@
     <string name="about_version">Version %1$s</string>
     <string name="about_educational_notice">PQRST Learn is an educational tool. ECG analysis results do not constitute a clinical diagnosis.</string>
     <string name="about_mit_bih_attribution">Reference patterns derived from the MIT-BIH Arrhythmia database.</string>
+
+    <string name="ecg_bt_connection_failed">Could not connect to device</string>
+    <string name="ecg_bt_waiting_signal">Connected. Waiting for ECG signal from ESP32…</string>
+    <string name="ecg_disconnect">Disconnect</string>
+    <string name="ecg_connect_action">Connect</string>
+    <string name="ecg_stop_demo">Stop demo</string>
+    <string name="ecg_no_signal">No signal</string>
+    <string name="ecg_legend_signal">Signal</string>
+    <string name="ecg_legend_peak">R-peak</string>
+
+    <!-- ECG demo patterns -->
+    <string name="ecg_pattern_normal">Normal ECG</string>
+    <string name="ecg_pattern_normal_desc">Normal sinus rhythm · 72 bpm</string>
+    <string name="ecg_pattern_tachy">Sinus tachycardia</string>
+    <string name="ecg_pattern_tachy_desc">Elevated heart rate · 150 bpm</string>
+    <string name="ecg_pattern_brady">Sinus bradycardia</string>
+    <string name="ecg_pattern_brady_desc">Reduced heart rate · 42 bpm</string>
+    <string name="ecg_pattern_afib">Atrial fibrillation</string>
+    <string name="ecg_pattern_afib_desc">Irregular rhythm, absent P waves · ~88 bpm</string>
+    <string name="ecg_pattern_vfib">Ventricular fibrillation</string>
+    <string name="ecg_pattern_vfib_desc">Chaotic, no identifiable PQRST</string>
 </resources>
