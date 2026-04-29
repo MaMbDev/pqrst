@@ -45,6 +45,7 @@ sealed class EcgMonitorUiState {
         val pattern: DemoPattern,
         val sampleCount: Int,
         val bpm: Int?,
+        val isPaused: Boolean = false,
     ) : EcgMonitorUiState()
     data class BtDeviceList(
         val paired: List<BtDeviceInfo>,
@@ -90,6 +91,7 @@ class EcgMonitorViewModel @Inject constructor(
     private var genNextBeatSample = 0L
     private val buffer = ArrayDeque<Float>(WINDOW_SIZE + 1)
 
+    @Volatile private var isGeneratorPaused = false
     private var demoJob: Job? = null
     private var btSocket: BluetoothSocket? = null
     private var discoveryReceiver: BroadcastReceiver? = null
@@ -100,6 +102,7 @@ class EcgMonitorViewModel @Inject constructor(
         demoJob?.cancel()
         buffer.clear()
         resetGenerator(pattern)
+        isGeneratorPaused = false
 
         _uiState.value = EcgMonitorUiState.DemoRunning(pattern, 0, null)
         _peaks.value = emptyList()
@@ -107,6 +110,11 @@ class EcgMonitorViewModel @Inject constructor(
         demoJob = viewModelScope.launch(ioDispatcher) {
             var chartUpdateCounter = 0
             while (isActive) {
+                if (isGeneratorPaused) {
+                    delay(50L)
+                    continue
+                }
+
                 val sample = nextSample(pattern)
                 buffer.addLast(sample)
                 if (buffer.size > WINDOW_SIZE) buffer.removeFirst()
@@ -134,9 +142,26 @@ class EcgMonitorViewModel @Inject constructor(
         }
     }
 
+    fun pauseDemo() {
+        isGeneratorPaused = true
+        val current = _uiState.value
+        if (current is EcgMonitorUiState.DemoRunning) {
+            _uiState.value = current.copy(isPaused = true)
+        }
+    }
+
+    fun resumeDemo() {
+        isGeneratorPaused = false
+        val current = _uiState.value
+        if (current is EcgMonitorUiState.DemoRunning) {
+            _uiState.value = current.copy(isPaused = false)
+        }
+    }
+
     fun stopDemo() {
         demoJob?.cancel()
         demoJob = null
+        isGeneratorPaused = false
         _uiState.value = EcgMonitorUiState.Idle
         _peaks.value = emptyList()
         _signalBuffer.value = List(WINDOW_SIZE) { 0f }

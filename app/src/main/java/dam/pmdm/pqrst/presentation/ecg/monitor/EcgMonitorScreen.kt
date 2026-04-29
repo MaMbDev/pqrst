@@ -7,7 +7,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,17 +21,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.BluetoothSearching
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothConnected
 import androidx.compose.material.icons.filled.MonitorHeart
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -136,6 +143,7 @@ fun EcgMonitorScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -177,11 +185,17 @@ fun EcgMonitorScreen(
                     viewModel.startDemo(pattern)
                 },
                 onDemoMenuDismiss = { showDemoMenu = false },
+                onPauseDemo = { viewModel.pauseDemo() },
+                onResumeDemo = { viewModel.resumeDemo() },
                 onStopDemo = { viewModel.stopDemo() },
                 onDisconnectBt = { viewModel.disconnectBt() },
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            // ── Pattern description ────────────────────────────────────────────
+            val demoState = uiState as? EcgMonitorUiState.DemoRunning
+            if (demoState != null) {
+                PatternDescriptionCard(pattern = demoState.pattern)
+            }
 
             // ── Educational disclaimer ─────────────────────────────────────────
             Row(
@@ -202,6 +216,8 @@ fun EcgMonitorScreen(
                     textAlign = TextAlign.Start,
                 )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 
@@ -244,9 +260,10 @@ private fun StatusRow(uiState: EcgMonitorUiState) {
             is EcgMonitorUiState.DemoRunning -> {
                 StatusChip(
                     label = "DEMO · ${stringResource(uiState.pattern.labelRes)}",
-                    containerColor = uiState.pattern.lineColor.copy(alpha = 0.18f),
+                    containerColor = Color(0xFFFFF3F3),
                     contentColor = uiState.pattern.lineColor,
                     icon = { Icon(Icons.Default.MonitorHeart, null, modifier = Modifier.size(14.dp)) },
+                    border = BorderStroke(1.5.dp, uiState.pattern.lineColor.copy(alpha = 0.60f)),
                 )
             }
             is EcgMonitorUiState.BtConnected -> {
@@ -275,14 +292,14 @@ private fun StatusRow(uiState: EcgMonitorUiState) {
             }
         }
 
-        // BPM display
-        val bpm = when (uiState) {
-            is EcgMonitorUiState.DemoRunning -> uiState.bpm
-            else -> null
-        }
-        AnimatedVisibility(visible = bpm != null, enter = fadeIn(), exit = fadeOut()) {
+        // BPM display — always visible while a demo is running
+        val demoRunning = uiState as? EcgMonitorUiState.DemoRunning
+        AnimatedVisibility(visible = demoRunning != null, enter = fadeIn(), exit = fadeOut()) {
+            val bpmText = demoRunning?.bpm
+                ?.let { stringResource(R.string.ecg_bpm, it) }
+                ?: stringResource(R.string.ecg_bpm_unknown)
             Text(
-                text = stringResource(R.string.ecg_bpm, bpm ?: 0),
+                text = bpmText,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -296,10 +313,15 @@ private fun StatusChip(
     containerColor: Color,
     contentColor: Color,
     icon: @Composable () -> Unit,
+    border: BorderStroke? = null,
 ) {
     Surface(
         shape = MaterialTheme.shapes.small,
         color = containerColor,
+        modifier = if (border != null)
+            Modifier.border(border, MaterialTheme.shapes.small)
+        else
+            Modifier,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -369,6 +391,8 @@ private fun ActionButtons(
     showDemoMenu: Boolean,
     onDemoPatternSelected: (DemoPattern) -> Unit,
     onDemoMenuDismiss: () -> Unit,
+    onPauseDemo: () -> Unit,
+    onResumeDemo: () -> Unit,
     onStopDemo: () -> Unit,
     onDisconnectBt: () -> Unit,
 ) {
@@ -405,14 +429,39 @@ private fun ActionButtons(
             }
         }
         is EcgMonitorUiState.DemoRunning -> {
-            Button(
-                onClick = onStopDemo,
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB71C1C)),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Icon(Icons.Default.Stop, null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(stringResource(R.string.ecg_stop_demo))
+                if (uiState.isPaused) {
+                    Button(
+                        onClick = onResumeDemo,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = uiState.pattern.lineColor),
+                    ) {
+                        Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.ecg_resume_demo))
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = onPauseDemo,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(Icons.Default.Pause, null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(stringResource(R.string.ecg_pause_demo))
+                    }
+                }
+                Button(
+                    onClick = onStopDemo,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB71C1C)),
+                ) {
+                    Icon(Icons.Default.Stop, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(stringResource(R.string.ecg_stop_demo))
+                }
             }
         }
         is EcgMonitorUiState.BtConnecting -> {
@@ -606,6 +655,56 @@ private fun DeviceSection(
                 }
             },
         )
+    }
+}
+
+// ── Pattern description card ──────────────────────────────────────────────────
+
+@Composable
+private fun PatternDescriptionCard(pattern: DemoPattern) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFFF3F3),
+        ),
+        border = BorderStroke(
+            width = 1.5.dp,
+            color = pattern.lineColor.copy(alpha = 0.60f),
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(10.dp)
+                        .background(pattern.lineColor, CircleShape),
+                )
+                Text(
+                    text = stringResource(pattern.labelRes),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = pattern.lineColor,
+                )
+            }
+            Text(
+                text = stringResource(R.string.ecg_pattern_features),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            HorizontalDivider(color = pattern.lineColor.copy(alpha = 0.20f))
+            Text(
+                text = stringResource(pattern.detailRes),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.4f,
+            )
+        }
     }
 }
 

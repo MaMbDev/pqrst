@@ -2,9 +2,6 @@ package dam.pmdm.pqrst.presentation.ecg.importcsv
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -161,16 +158,17 @@ fun EcgImportScreen(
                         durationSec = durationSec,
                     )
 
-                    // BPM badge
-                    AnimatedVisibility(visible = bpm != null, enter = fadeIn(), exit = fadeOut()) {
-                        Text(
-                            text = stringResource(R.string.ecg_bpm, bpm ?: 0),
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.End,
-                        )
-                    }
+                    // BPM badge — always visible once a file is loaded
+                    val bpmText = bpm
+                        ?.let { stringResource(R.string.ecg_bpm, it) }
+                        ?: stringResource(R.string.ecg_bpm_unknown)
+                    Text(
+                        text = bpmText,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                    )
 
                     // Chart
                     Surface(

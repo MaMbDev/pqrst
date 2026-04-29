@@ -96,6 +96,7 @@
     <string name="ecg_source_bt">Bluetooth</string>
     <string name="ecg_samples">%1$d muestras</string>
     <string name="ecg_bpm">FC estimada: %1$d lpm</string>
+    <string name="ecg_bpm_unknown">FC: --</string>
     <string name="ecg_stop_save">Detener y guardar</string>
     <string name="ecg_cancel_capture">Cancelar captura</string>
     <string name="ecg_saving">Guardando registro…</string>
@@ -107,21 +108,29 @@
     <string name="ecg_disconnect">Desconectar</string>
     <string name="ecg_connect_action">Conectar</string>
     <string name="ecg_stop_demo">Detener demo</string>
+    <string name="ecg_pause_demo">Pausar</string>
+    <string name="ecg_resume_demo">Reanudar</string>
     <string name="ecg_no_signal">Sin señal</string>
     <string name="ecg_legend_signal">Señal</string>
     <string name="ecg_legend_peak">Pico R</string>
+    <string name="ecg_pattern_features">Características del patrón</string>
 
     <!-- ECG demo patterns -->
     <string name="ecg_pattern_normal">ECG Normal</string>
     <string name="ecg_pattern_normal_desc">Ritmo sinusal normal · 72 lpm</string>
+    <string name="ecg_pattern_normal_detail">• FC: 60–100 lpm\n• Ritmo regular, origen sinoauricular\n• Eje cardíaco: −30° a +90°\n• Ondas P presentes, cada P seguida de un QRS\n• Intervalo PR: 120–200 ms (3–5 cuadros pequeños)\n• QRS: &lt;0,12 s, morfología y progresión normales\n• Segmento ST isoeléctrico\n• Ondas T positivas; inversión en V1 e inversión en III son variantes normales</string>
     <string name="ecg_pattern_tachy">Taquicardia sinusal</string>
     <string name="ecg_pattern_tachy_desc">Frecuencia cardíaca elevada · 150 lpm</string>
+    <string name="ecg_pattern_tachy_detail">• FC: &gt;100 lpm (típicamente 100–180 lpm)\n• Ritmo regular, origen sinoauricular\n• Ondas P visibles antes de cada QRS (pueden solapar con onda T previa a FC elevadas)\n• Intervalo PR normal o ligeramente acortado\n• QRS: morfología normal (&lt;0,12 s)\n• Causas frecuentes: ejercicio, fiebre, ansiedad, hipovolemia, hipertiroidismo</string>
     <string name="ecg_pattern_brady">Bradicardia sinusal</string>
     <string name="ecg_pattern_brady_desc">Frecuencia cardíaca reducida · 42 lpm</string>
+    <string name="ecg_pattern_brady_detail">• FC: &lt;60 lpm\n• Ritmo regular, origen sinoauricular\n• Ondas P presentes, cada P seguida de un QRS\n• Todos los intervalos dentro de límites normales\n• Habitualmente fisiológica (atletas entrenados, sueño, tono vagal elevado)\n• Tratar si sintomática: síncope, hipotensión o intolerancia al esfuerzo</string>
     <string name="ecg_pattern_afib">Fibrilación auricular</string>
     <string name="ecg_pattern_afib_desc">Ritmo irregular, sin onda P · ~88 lpm</string>
+    <string name="ecg_pattern_afib_detail">• FC: variable, 60–180 lpm (sin control)\n• Ritmo irregularmente irregular\n• Sin ondas P identificables; línea de base fibrilatoria (ondas f, mejor visible en V1)\n• Intervalos RR variables\n• QRS habitualmente estrecho (&lt;0,12 s)\n• Arritmia sostenida más frecuente; conlleva riesgo tromboembólico importante</string>
     <string name="ecg_pattern_vfib">Fibrilación ventricular</string>
     <string name="ecg_pattern_vfib_desc">Caótico, sin PQRST identificable</string>
+    <string name="ecg_pattern_vfib_detail">• Sin complejos PQRST reconocibles\n• Oscilaciones caóticas de alta frecuencia y amplitud variable\n• Emergencia vital: el gasto cardíaco cesa de inmediato\n• No genera pulso efectivo\n• Tratamiento inmediato: desfibrilación eléctrica + RCP\n• Precipitada por infarto agudo de miocardio, hipoxia o trastornos electrolíticos graves</string>
 
     <!-- Report -->
     <string name="report_title">Informe</string>

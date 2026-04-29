@@ -116,21 +116,30 @@
     <string name="ecg_disconnect">Disconnect</string>
     <string name="ecg_connect_action">Connect</string>
     <string name="ecg_stop_demo">Stop demo</string>
+    <string name="ecg_pause_demo">Pause</string>
+    <string name="ecg_resume_demo">Resume</string>
     <string name="ecg_no_signal">No signal</string>
+    <string name="ecg_bpm_unknown">HR: --</string>
     <string name="ecg_legend_signal">Signal</string>
     <string name="ecg_legend_peak">R-peak</string>
+    <string name="ecg_pattern_features">Pattern features</string>
 
     <!-- ECG demo patterns -->
     <string name="ecg_pattern_normal">Normal ECG</string>
     <string name="ecg_pattern_normal_desc">Normal sinus rhythm · 72 bpm</string>
+    <string name="ecg_pattern_normal_detail">• Heart rate: 60–100 bpm\n• Rhythm: regular, sinoatrial origin (sinus rhythm)\n• Cardiac axis: −30° to +90°\n• P waves present; each P wave followed by a QRS complex\n• PR interval: 120–200 ms (3–5 small squares)\n• QRS: &lt;0.12 s, normal morphology and chest-lead progression\n• ST segment flat/isoelectric\n• T waves usually upright; inversion in V1 and in III is a normal variant</string>
     <string name="ecg_pattern_tachy">Sinus tachycardia</string>
     <string name="ecg_pattern_tachy_desc">Elevated heart rate · 150 bpm</string>
+    <string name="ecg_pattern_tachy_detail">• Heart rate: &gt;100 bpm (typically 100–180 bpm)\n• Rhythm: regular, sinoatrial origin\n• P waves visible before each QRS (may overlap preceding T wave at high rates)\n• PR interval normal or mildly shortened\n• QRS: normal morphology (&lt;0.12 s)\n• Common causes: exercise, fever, anxiety, hypovolaemia, hyperthyroidism</string>
     <string name="ecg_pattern_brady">Sinus bradycardia</string>
     <string name="ecg_pattern_brady_desc">Reduced heart rate · 42 bpm</string>
+    <string name="ecg_pattern_brady_detail">• Heart rate: &lt;60 bpm\n• Rhythm: regular, sinoatrial origin\n• P waves present; each P wave followed by a QRS complex\n• All intervals within normal limits\n• Often physiological (trained athletes, sleep, high vagal tone)\n• Treat if symptomatic: syncope, hypotension, or effort intolerance</string>
     <string name="ecg_pattern_afib">Atrial fibrillation</string>
     <string name="ecg_pattern_afib_desc">Irregular rhythm, absent P waves · ~88 bpm</string>
+    <string name="ecg_pattern_afib_detail">• Heart rate: variable, 60–180 bpm (untreated)\n• Rhythm: irregularly irregular\n• No identifiable P waves; fibrillatory baseline (f waves, best seen in V1)\n• Variable RR intervals\n• QRS usually narrow (&lt;0.12 s)\n• Most common sustained arrhythmia; significant thromboembolic risk</string>
     <string name="ecg_pattern_vfib">Ventricular fibrillation</string>
     <string name="ecg_pattern_vfib_desc">Chaotic, no identifiable PQRST</string>
+    <string name="ecg_pattern_vfib_detail">• No recognisable PQRST complexes\n• Chaotic high-frequency oscillations with variable amplitude\n• Life-threatening emergency — cardiac output ceases immediately\n• No effective pulse is generated\n• Immediate treatment: electrical defibrillation + CPR\n• Precipitated by acute MI, hypoxia, or severe electrolyte disturbances</string>
 
     <!-- ECG CSV Import -->
     <string name="ecg_import_title">Import ECG from CSV</string>
