@@ -665,46 +665,62 @@ private fun PatternDescriptionCard(pattern: DemoPattern) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFFF3F3),
+            containerColor = pattern.lineColor.copy(alpha = 0.22f),
         ),
         border = BorderStroke(
             width = 1.5.dp,
             color = pattern.lineColor.copy(alpha = 0.60f),
         ),
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        // ── Demo banner ──
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(pattern.lineColor.copy(alpha = 0.22f))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(pattern.lineColor, CircleShape),
+                Icon(
+                    imageVector = Icons.Default.MonitorHeart,
+                    contentDescription = null,
+                    tint = pattern.lineColor,
+                    modifier = Modifier.size(16.dp),
                 )
                 Text(
-                    text = stringResource(pattern.labelRes),
-                    style = MaterialTheme.typography.titleSmall,
+                    text = "DEMO · ${stringResource(pattern.labelRes).uppercase()}",
+                    style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = pattern.lineColor,
                 )
             }
+        }
+
+        // ── Pattern features header ──
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(pattern.lineColor.copy(alpha = 0.22f))
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        ) {
             Text(
-                text = stringResource(R.string.ecg_pattern_features),
+                text = stringResource(R.string.ecg_pattern_features).uppercase(),
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            HorizontalDivider(color = pattern.lineColor.copy(alpha = 0.20f))
-            Text(
-                text = stringResource(pattern.detailRes),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.4f,
+                fontWeight = FontWeight.Bold,
+                color = pattern.lineColor,
             )
         }
+
+        // ── Pattern detail ──
+        Text(
+            text = stringResource(pattern.detailRes),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.4f,
+            modifier = Modifier.padding(16.dp),
+        )
     }
 }
 
