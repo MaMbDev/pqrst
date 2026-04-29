@@ -1,4 +1,4 @@
-tpackage dam.pmdm.pqrst.presentation.ecg.monitor
+package dam.pmdm.pqrst.presentation.ecg.monitor
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
