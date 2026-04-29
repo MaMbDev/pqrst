@@ -7,7 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,9 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -68,10 +65,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import dam.pmdm.pqrst.R
+import dam.pmdm.pqrst.presentation.component.EcgChartWithPeaks
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstBurgundy
 
@@ -231,96 +226,6 @@ fun EcgMonitorScreen(
                     showBtSheet = false
                 },
             )
-        }
-    }
-}
-
-// ── Chart composable ──────────────────────────────────────────────────────────
-
-@Composable
-private fun EcgChartWithPeaks(
-    signalBuffer: List<Float>,
-    peaks: List<Int>,
-    signalColor: Color,
-    peakColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    Box(modifier = modifier) {
-        EcgPaperGrid(modifier = Modifier.fillMaxSize())
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            if (signalBuffer.size < 2) return@Canvas
-            val minY = -0.5f
-            val maxY = 1.5f
-            val yRange = maxY - minY
-            val xStep = size.width / (signalBuffer.size - 1).toFloat()
-
-            fun toOffset(i: Int, v: Float) = Offset(
-                x = i * xStep,
-                y = (size.height * (1f - (v - minY) / yRange)).coerceIn(0f, size.height),
-            )
-
-            // Signal line
-            val path = Path()
-            signalBuffer.forEachIndexed { i, v ->
-                val pt = toOffset(i, v)
-                if (i == 0) path.moveTo(pt.x, pt.y) else path.lineTo(pt.x, pt.y)
-            }
-            drawPath(
-                path = path,
-                color = signalColor,
-                style = Stroke(
-                    width = 2.dp.toPx(),
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round,
-                ),
-            )
-
-            // R-peak markers
-            peaks.forEach { idx ->
-                if (idx in signalBuffer.indices) {
-                    drawCircle(
-                        color = peakColor,
-                        radius = 4.dp.toPx(),
-                        center = toOffset(idx, signalBuffer[idx]),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun EcgPaperGrid(modifier: Modifier = Modifier) {
-    val minorColor = Color(0xFFFFCDD2)
-    val majorColor = Color(0xFFEF9A9A)
-    Canvas(modifier = modifier) {
-        val minorStep = 20.dp.toPx()
-        val majorEvery = 5
-        var col = 0
-        var x = 0f
-        while (x <= size.width + 1f) {
-            val isMajor = col % majorEvery == 0
-            drawLine(
-                color = if (isMajor) majorColor else minorColor,
-                start = Offset(x, 0f),
-                end = Offset(x, size.height),
-                strokeWidth = if (isMajor) 1.dp.toPx() else 0.5.dp.toPx(),
-            )
-            x += minorStep
-            col++
-        }
-        var row = 0
-        var y = 0f
-        while (y <= size.height + 1f) {
-            val isMajor = row % majorEvery == 0
-            drawLine(
-                color = if (isMajor) majorColor else minorColor,
-                start = Offset(0f, y),
-                end = Offset(size.width, y),
-                strokeWidth = if (isMajor) 1.dp.toPx() else 0.5.dp.toPx(),
-            )
-            y += minorStep
-            row++
         }
     }
 }

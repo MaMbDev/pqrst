@@ -131,4 +131,17 @@
     <string name="ecg_pattern_afib_desc">Irregular rhythm, absent P waves · ~88 bpm</string>
     <string name="ecg_pattern_vfib">Ventricular fibrillation</string>
     <string name="ecg_pattern_vfib_desc">Chaotic, no identifiable PQRST</string>
+
+    <!-- ECG CSV Import -->
+    <string name="ecg_import_title">Import ECG from CSV</string>
+    <string name="ecg_import_pick_file">Select CSV file</string>
+    <string name="ecg_import_pick_hint">Supports MIT-BIH and single-column CSV formats</string>
+    <string name="ecg_import_parsing">Reading file…</string>
+    <string name="ecg_import_error">Error: %1$s</string>
+    <string name="ecg_import_retry">Try a different file</string>
+    <string name="ecg_import_play">Play</string>
+    <string name="ecg_import_pause">Pause</string>
+    <string name="ecg_import_stop">Restart</string>
+    <string name="ecg_import_save">Save to consultation</string>
+    <string name="ecg_import_no_consultation">Open this screen from a consultation to save the record</string>
 </resources>

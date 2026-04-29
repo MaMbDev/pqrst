@@ -160,4 +160,17 @@
     <string name="about_version">Versión %1$s</string>
     <string name="about_educational_notice">PQRST Learn es una herramienta educativa. Los resultados de análisis ECG no constituyen diagnóstico clínico.</string>
     <string name="about_mit_bih_attribution">Patrones de referencia derivados de la base de datos MIT-BIH Arrhythmia.</string>
+
+    <!-- ECG CSV Import -->
+    <string name="ecg_import_title">Importar ECG desde CSV</string>
+    <string name="ecg_import_pick_file">Seleccionar archivo CSV</string>
+    <string name="ecg_import_pick_hint">Compatible con MIT-BIH y CSV de columna única</string>
+    <string name="ecg_import_parsing">Analizando archivo…</string>
+    <string name="ecg_import_error">Error: %1$s</string>
+    <string name="ecg_import_retry">Intentar con otro archivo</string>
+    <string name="ecg_import_play">Reproducir</string>
+    <string name="ecg_import_pause">Pausar</string>
+    <string name="ecg_import_stop">Reiniciar</string>
+    <string name="ecg_import_save">Guardar en consulta</string>
+    <string name="ecg_import_no_consultation">Abre este ECG desde una consulta para poder guardarlo</string>
 </resources>

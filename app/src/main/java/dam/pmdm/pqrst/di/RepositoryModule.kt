@@ -6,11 +6,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dam.pmdm.pqrst.data.auth.AuthRepositoryImpl
 import dam.pmdm.pqrst.data.repository.ConsultationRepositoryImpl
+import dam.pmdm.pqrst.data.repository.EcgRepositoryImpl
 import dam.pmdm.pqrst.data.repository.PatientRepositoryImpl
 import dam.pmdm.pqrst.data.repository.ReportRepositoryImpl
 import dam.pmdm.pqrst.data.repository.UserRepositoryImpl
 import dam.pmdm.pqrst.domain.repository.AuthRepository
 import dam.pmdm.pqrst.domain.repository.ConsultationRepository
+import dam.pmdm.pqrst.domain.repository.EcgRepository
 import dam.pmdm.pqrst.domain.repository.PatientRepository
 import dam.pmdm.pqrst.domain.repository.ReportRepository
 import dam.pmdm.pqrst.domain.repository.UserRepository
@@ -66,4 +68,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindReportRepository(impl: ReportRepositoryImpl): ReportRepository
+
+    @Binds @Singleton
+    abstract fun bindEcgRepository(impl: EcgRepositoryImpl): EcgRepository
 }
