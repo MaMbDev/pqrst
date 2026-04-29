@@ -12,6 +12,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,12 +71,9 @@ fun SettingsScreen(
 
             SettingsSectionHeader(text = stringResource(R.string.settings_language))
 
-            SettingsSwitchRow(
-                title = stringResource(R.string.settings_language),
-                subtitle = if (language == "en") stringResource(R.string.settings_language_english)
-                           else stringResource(R.string.settings_language_spanish),
-                checked = language == "en",
-                onCheckedChange = { viewModel.setLanguage(if (it) "en" else "es") },
+            LanguageSelector(
+                selectedLanguage = language,
+                onLanguageSelected = { viewModel.setLanguage(it) },
             )
         }
     }
@@ -118,6 +118,31 @@ private fun SettingsSwitchRow(
     }
 }
 
+@Composable
+private fun LanguageSelector(
+    selectedLanguage: String,
+    onLanguageSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val options = listOf("en" to stringResource(R.string.settings_language_english),
+                         "es" to stringResource(R.string.settings_language_spanish))
+    SingleChoiceSegmentedButtonRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        options.forEachIndexed { index, (code, label) ->
+            SegmentedButton(
+                selected = selectedLanguage == code,
+                onClick = { onLanguageSelected(code) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+            ) {
+                Text(label)
+            }
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun SettingsPreview() {
@@ -149,11 +174,9 @@ private fun SettingsPreview() {
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 Spacer(Modifier.height(8.dp))
                 SettingsSectionHeader(text = "Idioma")
-                SettingsSwitchRow(
-                    title = "Idioma",
-                    subtitle = "Español",
-                    checked = false,
-                    onCheckedChange = {},
+                LanguageSelector(
+                    selectedLanguage = "es",
+                    onLanguageSelected = {},
                 )
             }
         }
