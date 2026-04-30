@@ -31,11 +31,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dam.pmdm.pqrst.R
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
+import dam.pmdm.pqrst.ui.theme.PqrstTheme
 import java.io.FileOutputStream
 import java.io.IOException
 
@@ -138,6 +140,80 @@ fun ReportPreviewScreen(
                     ) {
                         Text(stringResource(R.string.report_share))
                     }
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ReportLoadingPreview() {
+    PqrstTheme {
+        Scaffold(
+            topBar = {
+                PqrstTopBar(
+                    title = stringResource(R.string.report_title),
+                    role = null,
+                    onMenuClick = {},
+                    onBackClick = {},
+                )
+            },
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = stringResource(R.string.report_generating),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ReportReadyPreview() {
+    PqrstTheme {
+        Scaffold(
+            topBar = {
+                PqrstTopBar(
+                    title = stringResource(R.string.report_title),
+                    role = null,
+                    onMenuClick = {},
+                    onBackClick = {},
+                )
+            },
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.report_ready),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(Modifier.height(4.dp))
+                Button(onClick = {}, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.report_print))
+                }
+                OutlinedButton(onClick = {}, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.report_share))
                 }
             }
         }

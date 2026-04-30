@@ -766,3 +766,58 @@ private fun DemoPatternDropdownPreview() {
         }
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+private fun EcgMonitorScreenPreview() {
+    MaterialTheme {
+        Scaffold(
+            topBar = {
+                PqrstTopBar(
+                    title = stringResource(R.string.ecg_monitor_title),
+                    role = null,
+                    onMenuClick = {},
+                    onBackClick = {},
+                )
+            },
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                StatusRow(uiState = EcgMonitorUiState.Idle)
+                Surface(
+                    color = Color(0xFFFFF3F3),
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    EcgChartWithPeaks(
+                        signalBuffer = emptyList(),
+                        peaks = emptyList(),
+                        signalColor = Color(0xFF9E9E9E),
+                        peakColor = Color(0xFFFF1744),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp),
+                    )
+                }
+                ColorLegend(uiState = EcgMonitorUiState.Idle)
+                ActionButtons(
+                    uiState = EcgMonitorUiState.Idle,
+                    onConnectEsp32 = {},
+                    onDemoClick = {},
+                    showDemoMenu = false,
+                    onDemoPatternSelected = {},
+                    onDemoMenuDismiss = {},
+                    onPauseDemo = {},
+                    onResumeDemo = {},
+                    onStopDemo = {},
+                    onDisconnectBt = {},
+                )
+            }
+        }
+    }
+}

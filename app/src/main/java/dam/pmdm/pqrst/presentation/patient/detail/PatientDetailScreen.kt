@@ -266,3 +266,65 @@ private fun ConsultationRowPreview() {
         )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientDetailScreenPreview() {
+    PqrstTheme {
+        val patient = Patient(
+            id = 1L,
+            name = "María García",
+            age = 45,
+            sex = "F",
+            phone = "612 345 678",
+            medicalHistory = "Hipertensión arterial, diabetes tipo 2",
+        )
+        val consultations = listOf(
+            Consultation(1L, 1L, "2024-01-15T10:30:00", "Dolor en el pecho"),
+            Consultation(2L, 1L, "2024-03-22T09:00:00", "Control rutinario"),
+        )
+        Scaffold(
+            topBar = {
+                PqrstTopBar(
+                    title = patient.name,
+                    role = null,
+                    onMenuClick = {},
+                    onBackClick = {},
+                    actions = {
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                        }
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Default.Delete, contentDescription = null)
+                        }
+                    },
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = {}) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                }
+            },
+        ) { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item { PatientInfoCard(patient = patient) }
+                item {
+                    Text(
+                        text = stringResource(R.string.consultations_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+                items(consultations, key = { it.id }) { consultation ->
+                    ConsultationRow(consultation = consultation, onClick = {})
+                }
+            }
+        }
+    }
+}

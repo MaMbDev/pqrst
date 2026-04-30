@@ -271,3 +271,53 @@ private fun ConsultationInfoCardPreview() {
         )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+private fun ConsultationDetailScreenPreview() {
+    PqrstTheme {
+        val consultation = Consultation(
+            id = 1L,
+            patientId = 1L,
+            date = "2024-01-15T10:30:00",
+            symptoms = "Dolor en el pecho, disnea en reposo",
+            vitalSigns = "TA: 130/85 mmHg, FC: 92 bpm, SatO2: 97%",
+            notes = "Paciente refiere episodio de 2 horas de evolución.",
+        )
+        Scaffold(
+            topBar = {
+                PqrstTopBar(
+                    title = "Consulta",
+                    role = null,
+                    onMenuClick = {},
+                    onBackClick = {},
+                    actions = {
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                        }
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Default.Delete, contentDescription = null)
+                        }
+                    },
+                )
+            },
+        ) { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item { ConsultationInfoCard(consultation = consultation) }
+                item {
+                    EcgActionsCard(
+                        onEcgMonitor = {},
+                        onEcgImport = {},
+                        onReport = {},
+                    )
+                }
+            }
+        }
+    }
+}

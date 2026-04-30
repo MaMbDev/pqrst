@@ -200,3 +200,49 @@ private fun UserRowPreview() {
         )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+private fun UserListScreenPreview() {
+    PqrstTheme {
+        val users = listOf(
+            AppUser(1L, "admin", "admin@example.com", "hash", UserRole.ADMIN),
+            AppUser(2L, "doctor1", "doctor@example.com", "hash", UserRole.USER),
+            AppUser(3L, "enfermero", "enfermero@example.com", "hash", UserRole.USER),
+        )
+        Scaffold(
+            topBar = {
+                PqrstTopBar(
+                    title = stringResource(R.string.users_title),
+                    role = null,
+                    onMenuClick = {},
+                    onBackClick = {},
+                )
+            },
+            bottomBar = {
+                PrimaryButton(
+                    text = stringResource(R.string.users_new),
+                    onClick = {},
+                    modifier = Modifier.padding(16.dp),
+                )
+            },
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            ) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(users, key = { it.id }) { user ->
+                        UserRow(
+                            user = user,
+                            onEdit = {},
+                            onDelete = {},
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

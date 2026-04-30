@@ -245,3 +245,64 @@ private fun PatientRowPreview() {
         )
     }
 }
+
+@Preview(showBackground = true)
+@Composable
+private fun PatientListScreenPreview() {
+    PqrstTheme {
+        val patients = listOf(
+            Patient(id = 1L, name = "María García", age = 45, sex = "F"),
+            Patient(id = 2L, name = "Carlos López", age = 62, sex = "M"),
+            Patient(id = 3L, name = "Ana Martínez", age = 38, sex = "F"),
+        )
+        Scaffold(
+            topBar = {
+                PqrstTopBar(
+                    title = stringResource(R.string.patients_title),
+                    role = UserRole.USER,
+                    onMenuClick = {},
+                )
+            },
+            bottomBar = {
+                PrimaryButton(
+                    text = stringResource(R.string.patients_new),
+                    onClick = {},
+                    modifier = Modifier.padding(16.dp),
+                )
+            },
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(innerPadding)
+                    .padding(16.dp),
+            ) {
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    label = { Text(stringResource(R.string.patients_search_hint)) },
+                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = stringResource(R.string.patients_list_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+                LazyColumn {
+                    items(patients, key = { it.id }) { patient ->
+                        PatientRow(
+                            patient = patient,
+                            onView = {},
+                            onEdit = {},
+                            onDelete = {},
+                        )
+                        HorizontalDivider()
+                    }
+                }
+            }
+        }
+    }
+}

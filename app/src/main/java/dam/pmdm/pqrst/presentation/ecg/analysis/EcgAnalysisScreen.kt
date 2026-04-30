@@ -8,7 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
+import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
 /**
  * Screen that displays the automated analysis results for a stored ECG record.
@@ -40,5 +42,13 @@ fun EcgAnalysisScreen(
         ) {
             Text("Análisis ECG — Próximamente")
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EcgAnalysisScreenPreview() {
+    PqrstTheme {
+        EcgAnalysisScreen(ecgRecordId = 1L, onBack = {})
     }
 }

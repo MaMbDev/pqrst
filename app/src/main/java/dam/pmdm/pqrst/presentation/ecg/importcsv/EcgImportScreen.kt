@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +55,7 @@ import dam.pmdm.pqrst.R
 import dam.pmdm.pqrst.presentation.component.EcgChartWithPeaks
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstBurgundy
+import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
 @Composable
 fun EcgImportScreen(
@@ -406,6 +408,65 @@ private fun FileInfoCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+    }
+}
+
+// ── Previews ──────────────────────────────────────────────────────────────────
+
+@Preview(showBackground = true)
+@Composable
+private fun EcgImportIdlePreview() {
+    PqrstTheme {
+        Scaffold(
+            topBar = {
+                PqrstTopBar(
+                    title = stringResource(R.string.ecg_import_title),
+                    role = null,
+                    onMenuClick = {},
+                    onBackClick = {},
+                )
+            },
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                IdleContent(onPickFile = {})
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EcgImportErrorPreview() {
+    PqrstTheme {
+        Scaffold(
+            topBar = {
+                PqrstTopBar(
+                    title = stringResource(R.string.ecg_import_title),
+                    role = null,
+                    onMenuClick = {},
+                    onBackClick = {},
+                )
+            },
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ErrorContent(
+                    message = "Formato CSV no reconocido",
+                    onRetry = {},
+                )
+            }
         }
     }
 }
