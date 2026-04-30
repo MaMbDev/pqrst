@@ -1,9 +1,11 @@
 package dam.pmdm.pqrst.data.repository
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import android.text.Layout
@@ -52,7 +54,10 @@ class ReportRepositoryImpl @Inject constructor(
                     ?: error("Consulta no encontrada")
                 val patient = patientDao.getById(consultation.patientId)
                     ?: error("Paciente no encontrado")
-                val ecgRecord = recordId?.let { ecgRecordDao.getById(it) }
+                val ecgRecord = when {
+                    recordId != null -> ecgRecordDao.getById(recordId)
+                    else -> ecgRecordDao.getLatestByConsultation(consultationId)
+                }
                 val ecgAnalysis = ecgRecord?.let { ecgAnalysisDao.getByRecordId(it.id) }
 
                 val pdf = buildPdf(patient, consultation, ecgRecord, ecgAnalysis)
@@ -128,7 +133,14 @@ class ReportRepositoryImpl @Inject constructor(
         }
 
         b.drawSubSection("Gráfico ECG")
-        b.drawEcgPlaceholder()
+        val snapshotBitmap = ecgRecord?.snapshotPath
+            ?.let { runCatching { BitmapFactory.decodeFile(it) }.getOrNull() }
+        if (snapshotBitmap != null) {
+            b.drawEcgImage(snapshotBitmap)
+            snapshotBitmap.recycle()
+        } else {
+            b.drawEcgPlaceholder()
+        }
         b.drawDivider()
 
         b.drawDisclaimer()
@@ -267,6 +279,15 @@ private class PdfCanvas {
         ensureSpace(16f)
         canvas.drawLine(margin, y + 6f, pageWidth - margin, y + 6f, dividerPaint)
         y += 16f
+    }
+
+    fun drawEcgImage(bitmap: android.graphics.Bitmap) {
+        val aspectRatio = bitmap.width.toFloat() / bitmap.height
+        val imgHeight = (contentWidth / aspectRatio).coerceAtMost(200f)
+        ensureSpace(imgHeight + 10f)
+        val dst = RectF(margin, y, margin + contentWidth, y + imgHeight)
+        canvas.drawBitmap(bitmap, null, dst, null)
+        y += imgHeight + 8f
     }
 
     // A reserved box for the ECG chart — filled in when the monitor is implemented.

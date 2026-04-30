@@ -29,6 +29,10 @@ interface EcgRecordDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(record: EcgRecordEntity): Long
 
+    /** Returns the most recent ECG record for [consultationId], or null if none exists. */
+    @Query("SELECT * FROM ecg_records WHERE consultation_id = :consultationId ORDER BY capture_date DESC LIMIT 1")
+    suspend fun getLatestByConsultation(consultationId: Long): EcgRecordEntity?
+
     /** Permanently deletes the ECG record with [id] and cascade-removes child rows. */
     @Query("DELETE FROM ecg_records WHERE id = :id")
     suspend fun deleteById(id: Long)

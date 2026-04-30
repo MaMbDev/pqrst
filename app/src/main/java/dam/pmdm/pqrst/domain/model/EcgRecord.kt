@@ -16,6 +16,7 @@ package dam.pmdm.pqrst.domain.model
  * @property status Processing state: "Pendiente", "Analizado", or "Rechazado".
  * @property createdBy [AppUser.id] of the user who created this record.
  * @property channelCount Number of recording channels, or null when not specified.
+ * @property snapshotPath Absolute path to the PNG chart snapshot saved at import time, or null if not captured.
  */
 data class EcgRecord(
     val id: Long = 0,
@@ -28,4 +29,5 @@ data class EcgRecord(
     val status: String = "Pendiente",
     val createdBy: Long = 0,
     val channelCount: Int? = null,
+    val snapshotPath: String? = null,
 )

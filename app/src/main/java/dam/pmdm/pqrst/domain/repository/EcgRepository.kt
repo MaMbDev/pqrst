@@ -30,11 +30,21 @@ interface EcgRepository {
     /**
      * Parses and imports an ECG recording from a CSV file (e.g. MIT-BIH format).
      *
+     * If [snapshotBuffer] is non-empty the repository renders it (together with [snapshotPeaks])
+     * to a PNG file and stores the path in [EcgRecord.snapshotPath] for use in PDF reports.
+     *
      * @param uri Content URI pointing to the CSV file on device storage.
      * @param consultationId The ID of the consultation to link the record to.
+     * @param snapshotBuffer The signal window visible on screen at save time (empty = no snapshot).
+     * @param snapshotPeaks R-peak indices within [snapshotBuffer] (empty = no markers).
      * @return [Result.success] containing the persisted [EcgRecord], or [Result.failure] on parse or I/O error.
      */
-    suspend fun importFromCsv(uri: Uri, consultationId: Long): Result<EcgRecord>
+    suspend fun importFromCsv(
+        uri: Uri,
+        consultationId: Long,
+        snapshotBuffer: List<Float> = emptyList(),
+        snapshotPeaks: List<Int> = emptyList(),
+    ): Result<EcgRecord>
 
     /**
      * Opens a Bluetooth SPP connection to the given device and emits ECG samples in real time.

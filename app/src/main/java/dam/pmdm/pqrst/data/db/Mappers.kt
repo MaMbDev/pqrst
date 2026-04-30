@@ -127,6 +127,7 @@ fun EcgRecordEntity.toDomain() = EcgRecord(
     status = status,
     createdBy = createdBy,
     channelCount = channelCount,
+    snapshotPath = snapshotPath,
 )
 
 fun EcgRecord.toEntity() = EcgRecordEntity(
@@ -140,6 +141,7 @@ fun EcgRecord.toEntity() = EcgRecordEntity(
     status = status,
     createdBy = createdBy,
     channelCount = channelCount,
+    snapshotPath = snapshotPath,
 )
 
 fun EcgAnalysisEntity.toDomain() = EcgAnalysis(

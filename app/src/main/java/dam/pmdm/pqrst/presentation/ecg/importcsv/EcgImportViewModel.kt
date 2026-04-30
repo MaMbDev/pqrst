@@ -80,6 +80,7 @@ class EcgImportViewModel @Inject constructor(
     private var playbackIndex = 0
     private var currentUri: Uri? = null
     private var playbackJob: Job? = null
+    private var hasPlayedBack = false
 
     fun loadCsv(uri: Uri) {
         currentUri = uri
@@ -95,6 +96,7 @@ class EcgImportViewModel @Inject constructor(
                 onSuccess = { parsed ->
                     allSamples = parsed.samples
                     playbackIndex = 0
+                    hasPlayedBack = false
                     _signalBuffer.value = List(WINDOW_SIZE) { 0f }
                     _peaks.value = emptyList()
                     _bpm.value = null
@@ -125,6 +127,7 @@ class EcgImportViewModel @Inject constructor(
         }
 
         if (current is EcgImportUiState.Ready) playbackIndex = 0
+        hasPlayedBack = true
 
         _uiState.value = EcgImportUiState.Playing(name, rate, dur)
 
@@ -195,10 +198,15 @@ class EcgImportViewModel @Inject constructor(
         if (consultationId == 0L) return
         playbackJob?.cancel()
         playbackJob = null
+
+        // Only capture snapshot if playback has actually run (buffer contains real ECG data)
+        val snapshotBuffer = if (hasPlayedBack) _signalBuffer.value else emptyList()
+        val snapshotPeaks = if (hasPlayedBack) _peaks.value else emptyList()
+
         _uiState.value = EcgImportUiState.Saving
 
         viewModelScope.launch(ioDispatcher) {
-            ecgRepository.importFromCsv(uri, consultationId).fold(
+            ecgRepository.importFromCsv(uri, consultationId, snapshotBuffer, snapshotPeaks).fold(
                 onSuccess = {
                     _uiState.value = EcgImportUiState.Saved
                     _events.trySend(EcgImportEvent.ImportedSuccessfully)

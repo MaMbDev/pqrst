@@ -22,6 +22,7 @@ import androidx.room.PrimaryKey
  * @property status Processing state: Pending, Analyzed, or Rejected.
  * @property createdBy Foreign key referencing [UserEntity.id] of the recording user.
  * @property channelCount Number of recording channels, or null when not specified.
+ * @property snapshotPath Absolute path to the PNG snapshot of the chart at save time, or null if none was captured.
  */
 @Entity(
     tableName = "ecg_records",
@@ -56,4 +57,5 @@ data class EcgRecordEntity(
     val status: String,
     @ColumnInfo(name = "created_by") val createdBy: Long,
     @ColumnInfo(name = "channel_count") val channelCount: Int?,
+    @ColumnInfo(name = "snapshot_path") val snapshotPath: String? = null,
 )
