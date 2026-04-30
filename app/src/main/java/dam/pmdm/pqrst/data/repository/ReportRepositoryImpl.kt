@@ -94,39 +94,40 @@ class ReportRepositoryImpl @Inject constructor(
         b.drawHeader()
 
         b.drawSection("DATOS DEL PACIENTE")
-        b.drawField("Nombre", patient.name)
-        b.drawField("Edad", "${patient.age} años")
-        b.drawField("Sexo", patient.sex)
-        patient.medicalHistory?.takeIf { it.isNotBlank() }
-            ?.let { b.drawField("Antecedentes médicos", it) }
-        patient.phone?.takeIf { it.isNotBlank() }?.let { b.drawField("Teléfono", it) }
-        patient.email?.takeIf { it.isNotBlank() }?.let { b.drawField("E-mail", it) }
+        b.drawFieldRow("Nombre", patient.name, "Edad", "${patient.age} años · ${patient.sex}")
+        patient.medicalHistory?.takeIf { it.isNotBlank() }?.let { b.drawField("Antecedentes", it) }
+        val hasPhone = patient.phone?.isNotBlank() == true
+        val hasEmail = patient.email?.isNotBlank() == true
+        when {
+            hasPhone && hasEmail -> b.drawFieldRow("Teléfono", patient.phone!!, "E-mail", patient.email!!)
+            hasPhone -> b.drawField("Teléfono", patient.phone!!)
+            hasEmail -> b.drawField("E-mail", patient.email!!)
+        }
         b.drawDivider()
 
         b.drawSection("DATOS DE LA CONSULTA")
         b.drawField("Fecha", formatDate(consultation.date))
         consultation.symptoms?.takeIf { it.isNotBlank() }?.let { b.drawField("Síntomas", it) }
-        consultation.vitalSigns?.takeIf { it.isNotBlank() }
-            ?.let { b.drawField("Signos vitales", it) }
+        consultation.vitalSigns?.takeIf { it.isNotBlank() }?.let { b.drawField("Signos vitales", it) }
         consultation.notes?.takeIf { it.isNotBlank() }?.let { b.drawField("Notas", it) }
         b.drawDivider()
 
         b.drawSection("REGISTRO ECG")
         if (ecgRecord != null) {
-            b.drawField("Fecha de captura", formatDate(ecgRecord.captureDate))
-            b.drawField("Frecuencia de muestreo", "${ecgRecord.sampleRateHz} Hz")
-            if (ecgRecord.duration > 0) b.drawField("Duración", "%.1f s".format(ecgRecord.duration))
+            b.drawFieldRow(
+                "Frec. muestreo", "${ecgRecord.sampleRateHz} Hz",
+                "Duración", if (ecgRecord.duration > 0) "%.1f s".format(ecgRecord.duration) else "—",
+            )
             ecgRecord.signalQuality?.let { b.drawField("Calidad de señal", it) }
-            ecgRecord.channelCount?.let { b.drawField("Canales", it.toString()) }
-
             if (ecgAnalysis != null) {
-                b.drawSubSection("Resultados del análisis")
-                ecgAnalysis.heartRateBpm?.let { b.drawField("Frecuencia cardíaca", "$it bpm") }
-                ecgAnalysis.rPeakCount?.let { b.drawField("Picos R detectados", it.toString()) }
-                ecgAnalysis.rrMeanMs?.let { b.drawField("Intervalo RR medio", "%.1f ms".format(it)) }
+                b.drawFieldRow(
+                    "Frec. cardíaca", ecgAnalysis.heartRateBpm?.let { "$it bpm" } ?: "—",
+                    "Picos R", ecgAnalysis.rPeakCount?.toString() ?: "—",
+                )
+                ecgAnalysis.rrMeanMs?.let { b.drawField("Intervalo RR", "%.1f ms".format(it)) }
                 ecgAnalysis.regularity?.let { b.drawField("Ritmo", it) }
                 ecgAnalysis.analysisNotes?.takeIf { it.isNotBlank() }
-                    ?.let { b.drawField("Notas", it) }
+                    ?.let { b.drawField("Notas análisis", it) }
             }
         } else {
             b.drawNote("Sin registro ECG asociado a esta consulta.")
@@ -141,7 +142,6 @@ class ReportRepositoryImpl @Inject constructor(
         } else {
             b.drawEcgPlaceholder()
         }
-        b.drawDivider()
 
         b.drawDisclaimer()
 
@@ -157,8 +157,10 @@ private class PdfCanvas {
 
     private val pageWidth = 595
     private val pageHeight = 842
-    private val margin = 40f
+    private val margin = 36f
     private val contentWidth = (pageWidth - 2 * margin).toInt()
+    private val colGap = 10f
+    private val colWidth = (contentWidth - colGap) / 2f
 
     private val doc = PdfDocument()
     private var pageNum = 0
@@ -169,43 +171,34 @@ private class PdfCanvas {
     // ── Paints ───────────────────────────────────────────────────────────────
 
     private val titlePaint = TextPaint().apply {
-        color = Color.rgb(30, 66, 140); textSize = 18f; isFakeBoldText = true
-    }
-    private val subtitlePaint = TextPaint().apply {
-        color = Color.rgb(30, 66, 140); textSize = 11f; isFakeBoldText = true
+        color = Color.rgb(30, 66, 140); textSize = 13f; isFakeBoldText = true
     }
     private val metaPaint = TextPaint().apply {
-        color = Color.rgb(120, 120, 120); textSize = 9f
+        color = Color.rgb(120, 120, 120); textSize = 8f
     }
     private val sectionPaint = TextPaint().apply {
-        color = Color.rgb(30, 66, 140); textSize = 11f; isFakeBoldText = true
-    }
-    private val subSectionPaint = TextPaint().apply {
-        color = Color.rgb(60, 60, 60); textSize = 10f; isFakeBoldText = true
-    }
-    private val labelPaint = TextPaint().apply {
-        color = Color.rgb(100, 100, 100); textSize = 8f; isFakeBoldText = true
+        color = Color.rgb(30, 66, 140); textSize = 9f; isFakeBoldText = true
     }
     private val bodyPaint = TextPaint().apply {
-        color = Color.rgb(30, 30, 30); textSize = 10f
+        color = Color.rgb(30, 30, 30); textSize = 9f
     }
     private val notePaint = TextPaint().apply {
-        color = Color.rgb(130, 130, 130); textSize = 9f
+        color = Color.rgb(130, 130, 130); textSize = 8.5f
     }
     private val disclaimerPaint = TextPaint().apply {
-        color = Color.rgb(130, 130, 130); textSize = 8f
+        color = Color.rgb(150, 150, 150); textSize = 7.5f
     }
     private val dividerPaint = Paint().apply {
-        color = Color.rgb(210, 210, 210); strokeWidth = 0.5f
+        color = Color.rgb(200, 200, 200); strokeWidth = 0.5f
     }
     private val boxFillPaint = Paint().apply {
-        color = Color.rgb(245, 245, 245); style = Paint.Style.FILL
+        color = Color.rgb(248, 248, 248); style = Paint.Style.FILL
     }
     private val boxStrokePaint = Paint().apply {
         color = Color.rgb(190, 190, 190); style = Paint.Style.STROKE; strokeWidth = 0.8f
     }
     private val placeholderTextPaint = TextPaint().apply {
-        color = Color.rgb(160, 160, 160); textSize = 9f
+        color = Color.rgb(160, 160, 160); textSize = 8f
     }
 
     init { newPage() }
@@ -225,13 +218,25 @@ private class PdfCanvas {
         if (y + needed > pageHeight - margin) newPage()
     }
 
-    private fun layout(text: String, paint: TextPaint): StaticLayout =
-        StaticLayout.Builder.obtain(text, 0, text.length, paint, contentWidth)
+    private fun lineH(paint: Paint) = -paint.ascent() + paint.descent()
+
+    private fun layout(text: String, paint: TextPaint, width: Int = contentWidth): StaticLayout =
+        StaticLayout.Builder.obtain(text, 0, text.length, paint, width)
             .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-            .setLineSpacing(0f, 1.15f)
+            .setLineSpacing(0f, 1.1f)
             .build()
 
-    private fun drawLayout(sl: StaticLayout) {
+    // Draws a single line of text and advances y by lineHeight + gap.
+    private fun singleLine(text: String, paint: TextPaint, x: Float = margin, gap: Float = 3f) {
+        val h = lineH(paint)
+        ensureSpace(h + gap)
+        canvas.drawText(text, x, y - paint.ascent(), paint)
+        y += h + gap
+    }
+
+    // Draws wrapping text via StaticLayout and advances y.
+    private fun multiLine(text: String, paint: TextPaint) {
+        val sl = layout(text, paint)
         ensureSpace(sl.height.toFloat() + 3f)
         canvas.save()
         canvas.translate(margin, y)
@@ -243,77 +248,91 @@ private class PdfCanvas {
     // ── Public drawing API ────────────────────────────────────────────────────
 
     fun drawHeader() {
-        drawLayout(layout("PQRST Learn", titlePaint))
-        drawLayout(layout("Informe de Consulta Médica", subtitlePaint))
-        val now = LocalDateTime.now()
-            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-        drawLayout(layout("Generado: $now", metaPaint))
+        singleLine("PQRST Learn — Informe de Consulta", titlePaint, gap = 2f)
+        val now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+        singleLine("Generado: $now", metaPaint, gap = 5f)
+        canvas.drawLine(margin, y, pageWidth - margin, y, dividerPaint)
         y += 6f
-        drawDivider()
     }
 
     fun drawSection(title: String) {
-        y += 6f
-        drawLayout(layout(title, sectionPaint))
-        y += 2f
+        y += 5f
+        singleLine(title, sectionPaint, gap = 2f)
     }
 
     fun drawSubSection(title: String) {
-        y += 4f
-        drawLayout(layout(title, subSectionPaint))
-        y += 1f
+        y += 3f
+        singleLine(title, sectionPaint, gap = 2f)
     }
 
+    // Single-line "LABEL: value" — wraps with StaticLayout when the text is too wide.
     fun drawField(label: String, value: String) {
-        drawLayout(layout(label.uppercase(), labelPaint))
-        y -= 1f
-        drawLayout(layout(value, bodyPaint))
-        y += 2f
+        val text = "${label.uppercase()}: $value"
+        if (bodyPaint.measureText(text) <= contentWidth) {
+            singleLine(text, bodyPaint)
+        } else {
+            multiLine(text, bodyPaint)
+        }
+    }
+
+    // Two fields on the same line, each in its own half-width column.
+    fun drawFieldRow(label1: String, val1: String, label2: String? = null, val2: String? = null) {
+        val h = lineH(bodyPaint)
+        ensureSpace(h + 3f)
+        val baseline = y - bodyPaint.ascent()
+        canvas.drawText("${label1.uppercase()}: $val1", margin, baseline, bodyPaint)
+        if (label2 != null && val2 != null) {
+            canvas.drawText(
+                "${label2.uppercase()}: $val2",
+                margin + colWidth + colGap,
+                baseline,
+                bodyPaint,
+            )
+        }
+        y += h + 3f
     }
 
     fun drawNote(text: String) {
-        drawLayout(layout(text, notePaint))
+        singleLine(text, notePaint)
     }
 
     fun drawDivider() {
-        ensureSpace(16f)
-        canvas.drawLine(margin, y + 6f, pageWidth - margin, y + 6f, dividerPaint)
-        y += 16f
+        y += 4f
+        ensureSpace(6f)
+        canvas.drawLine(margin, y, pageWidth - margin, y, dividerPaint)
+        y += 6f
     }
 
     fun drawEcgImage(bitmap: android.graphics.Bitmap) {
         val aspectRatio = bitmap.width.toFloat() / bitmap.height
-        val imgHeight = (contentWidth / aspectRatio).coerceAtMost(200f)
-        ensureSpace(imgHeight + 10f)
+        val imgHeight = (contentWidth / aspectRatio).coerceAtMost(260f)
+        ensureSpace(imgHeight + 6f)
         val dst = RectF(margin, y, margin + contentWidth, y + imgHeight)
         canvas.drawBitmap(bitmap, null, dst, null)
-        y += imgHeight + 8f
+        y += imgHeight + 6f
     }
 
-    // A reserved box for the ECG chart — filled in when the monitor is implemented.
     fun drawEcgPlaceholder() {
-        val boxHeight = 90f
-        ensureSpace(boxHeight + 10f)
+        val boxHeight = 80f
+        ensureSpace(boxHeight + 6f)
         canvas.drawRect(margin, y, pageWidth - margin, y + boxHeight, boxFillPaint)
         canvas.drawRect(margin, y, pageWidth - margin, y + boxHeight, boxStrokePaint)
-        val text = "Gráfico ECG — pendiente de implementar"
-        val textWidth = placeholderTextPaint.measureText(text)
+        val text = "Sin datos ECG para mostrar"
+        val tw = placeholderTextPaint.measureText(text)
         canvas.drawText(
             text,
-            margin + (contentWidth - textWidth) / 2f,
-            y + boxHeight / 2f + placeholderTextPaint.textSize / 2f,
+            margin + (contentWidth - tw) / 2f,
+            y + boxHeight / 2f - placeholderTextPaint.ascent() / 2f,
             placeholderTextPaint,
         )
-        y += boxHeight + 8f
+        y += boxHeight + 6f
     }
 
     fun drawDisclaimer() {
         y += 4f
-        drawLayout(
-            layout(
-                "AVISO EDUCATIVO: Este informe es exclusivamente para uso educativo. Los resultados del análisis ECG y las comparaciones de patrones no constituyen diagnóstico clínico ni sustituyen la valoración de un profesional médico cualificado.",
-                disclaimerPaint,
-            )
+        multiLine(
+            "AVISO EDUCATIVO: Este informe es exclusivamente para uso educativo. Los resultados no constituyen diagnóstico clínico ni sustituyen la valoración de un profesional médico cualificado.",
+            disclaimerPaint,
         )
     }
 
