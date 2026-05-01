@@ -2,12 +2,14 @@ package dam.pmdm.pqrst.presentation.consultation.form
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -94,6 +96,7 @@ private fun ConsultationFormContent(
     modifier: Modifier = Modifier,
 ) {
     val displayFormatter = remember { DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm") }
+    val normalVitals = stringResource(R.string.consultation_normal_vitals_value)
 
     Column(
         modifier = modifier
@@ -123,6 +126,18 @@ private fun ConsultationFormContent(
             label = stringResource(R.string.consultation_symptoms_label),
             singleLine = false,
         )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            OutlinedButton(onClick = { viewModel.vitalSigns = normalVitals }) {
+                Text(
+                    text = stringResource(R.string.consultation_fill_normal_vitals),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            }
+        }
 
         LabeledTextField(
             value = viewModel.vitalSigns,

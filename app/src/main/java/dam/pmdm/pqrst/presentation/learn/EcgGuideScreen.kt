@@ -201,17 +201,18 @@ private fun PqrstWaveformDiagram(modifier: Modifier = Modifier) {
             }
             drawLine(colorBaseline, Offset(0f, base), Offset(w, base), swThin)
 
-            // ── Interval indicator bars ───────────────────────────────────────
-            val barH = 6.dp.toPx()
-            // PR interval — top, brown (P-wave start → QRS start)
+            // ── Gap strips (20 % height top + bottom, connecting the band islands) ──
+            val stripH = h * 0.20f
+            // Gap 1 — PR segment (0.312–0.413): brown top, green bottom
             drawRect(ColorIntPR.copy(alpha = 0.82f),
-                topLeft = Offset(fx(0.141f), 0f), size = Size(fx(0.272f), barH))
-            // QT interval — top, olive (QRS start → T-wave end)
-            drawRect(ColorIntQT.copy(alpha = 0.82f),
-                topLeft = Offset(fx(0.413f), 0f), size = Size(fx(0.443f), barH))
-            // ST segment — bottom, green (QRS end → T-wave start)
+                topLeft = Offset(fx(0.312f), 0f),        size = Size(fx(0.101f), stripH))
             drawRect(ColorBandST.copy(alpha = 0.82f),
-                topLeft = Offset(fx(0.548f), h - barH), size = Size(fx(0.136f), barH))
+                topLeft = Offset(fx(0.312f), h - stripH), size = Size(fx(0.101f), stripH))
+            // Gap 2 — ST segment (0.548–0.684): green top, olive bottom
+            drawRect(ColorBandST.copy(alpha = 0.82f),
+                topLeft = Offset(fx(0.548f), 0f),        size = Size(fx(0.136f), stripH))
+            drawRect(ColorIntQT.copy(alpha = 0.82f),
+                topLeft = Offset(fx(0.548f), h - stripH), size = Size(fx(0.136f), stripH))
 
             val stroke = Stroke(sw, cap = StrokeCap.Round, join = StrokeJoin.Round)
 

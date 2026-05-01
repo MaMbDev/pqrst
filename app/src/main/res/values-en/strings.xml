@@ -65,6 +65,8 @@
     <string name="consultation_date_label">Date</string>
     <string name="consultation_symptoms_label">Symptoms</string>
     <string name="consultation_vital_signs_label">Vital signs</string>
+    <string name="consultation_fill_normal_vitals">Normal values</string>
+    <string name="consultation_normal_vitals_value">HR: 60-100 bpm\nRR: 12-20 rpm\nBP: &lt; 120/80 mmHg\nTemp: 36.5–37.3 °C</string>
     <string name="consultation_notes_label">Notes</string>
     <string name="consultation_delete_confirm">Delete this consultation? All associated ECG records will also be deleted.</string>
     <string name="consultation_ecg_section">ECG RECORDS</string>

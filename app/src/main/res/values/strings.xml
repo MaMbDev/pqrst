@@ -70,6 +70,8 @@
     <string name="consultation_date_label">Fecha</string>
     <string name="consultation_symptoms_label">Síntomas</string>
     <string name="consultation_vital_signs_label">Signos vitales</string>
+    <string name="consultation_fill_normal_vitals">Valores normales</string>
+    <string name="consultation_normal_vitals_value">FC: 60-100 lpm\nFR: 12-20 rpm\nTA: &lt; 120/80 mmHg\nT°: 36,5–37,3 °C</string>
     <string name="consultation_notes_label">Notas</string>
     <string name="consultation_delete_confirm">¿Eliminar esta consulta? Se eliminarán también todos sus registros ECG.</string>
     <string name="consultation_ecg_section">REGISTROS ECG</string>
