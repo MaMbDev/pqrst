@@ -17,6 +17,7 @@ package dam.pmdm.pqrst.data.db
 
 import dam.pmdm.pqrst.data.db.entity.ComparisonEntity
 import dam.pmdm.pqrst.data.db.entity.ConsultationEntity
+import dam.pmdm.pqrst.data.db.entity.ConsultationWithPatientEntity
 import dam.pmdm.pqrst.data.db.entity.EcgAnalysisEntity
 import dam.pmdm.pqrst.data.db.entity.EcgPatternEntity
 import dam.pmdm.pqrst.data.db.entity.EcgRecordEntity
@@ -26,6 +27,7 @@ import dam.pmdm.pqrst.data.db.entity.UserEntity
 import dam.pmdm.pqrst.domain.model.AppUser
 import dam.pmdm.pqrst.domain.model.Comparison
 import dam.pmdm.pqrst.domain.model.Consultation
+import dam.pmdm.pqrst.domain.model.ConsultationWithPatient
 import dam.pmdm.pqrst.domain.model.EcgAnalysis
 import dam.pmdm.pqrst.domain.model.EcgPattern
 import dam.pmdm.pqrst.domain.model.EcgRecord
@@ -103,6 +105,20 @@ fun ConsultationEntity.toDomain() = Consultation(
     createdAt = createdAt,
     date = date,
     createdBy = createdBy,
+)
+
+fun ConsultationWithPatientEntity.toDomain() = ConsultationWithPatient(
+    consultation = Consultation(
+        id = id,
+        patientId = patientId,
+        symptoms = symptoms,
+        vitalSigns = vitalSigns,
+        notes = notes,
+        createdAt = createdAt,
+        date = date,
+        createdBy = createdBy,
+    ),
+    patientName = patientName,
 )
 
 fun Consultation.toEntity() = ConsultationEntity(

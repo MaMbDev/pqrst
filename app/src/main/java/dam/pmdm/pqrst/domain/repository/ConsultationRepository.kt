@@ -1,6 +1,7 @@
 package dam.pmdm.pqrst.domain.repository
 
 import dam.pmdm.pqrst.domain.model.Consultation
+import dam.pmdm.pqrst.domain.model.ConsultationWithPatient
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -14,6 +15,14 @@ interface ConsultationRepository {
      * @param patientId The ID of the patient whose consultations to observe.
      */
     fun observeConsultations(patientId: Long): Flow<List<Consultation>>
+
+    /**
+     * Returns a live stream of all consultations across all patients, joined with the patient's name.
+     * Optionally filtered by patient name.
+     *
+     * @param patientNameQuery Optional name filter; null returns all records.
+     */
+    fun observeAll(patientNameQuery: String? = null): Flow<List<ConsultationWithPatient>>
 
     /**
      * Retrieves a single consultation by its primary key.

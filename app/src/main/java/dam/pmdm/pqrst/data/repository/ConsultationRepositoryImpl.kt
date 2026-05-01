@@ -5,6 +5,7 @@ import dam.pmdm.pqrst.data.db.toDomain
 import dam.pmdm.pqrst.data.db.toEntity
 import dam.pmdm.pqrst.di.IoDispatcher
 import dam.pmdm.pqrst.domain.model.Consultation
+import dam.pmdm.pqrst.domain.model.ConsultationWithPatient
 import dam.pmdm.pqrst.domain.repository.ConsultationRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -27,13 +28,11 @@ class ConsultationRepositoryImpl @Inject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ConsultationRepository {
 
-    /**
-     * Returns a live stream of consultations for the given patient, sorted by date descending.
-     *
-     * @param patientId The ID of the patient whose consultations to observe.
-     */
     override fun observeConsultations(patientId: Long): Flow<List<Consultation>> =
         dao.observeByPatient(patientId).map { list -> list.map { it.toDomain() } }
+
+    override fun observeAll(patientNameQuery: String?): Flow<List<ConsultationWithPatient>> =
+        dao.observeAll(patientNameQuery).map { list -> list.map { it.toDomain() } }
 
     /**
      * Retrieves a single consultation by primary key.

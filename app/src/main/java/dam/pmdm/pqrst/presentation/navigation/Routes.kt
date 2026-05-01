@@ -11,6 +11,9 @@ import kotlinx.serialization.Serializable
 /** Navigation route for the patient list screen. */
 @Serializable object PatientList
 
+/** Navigation route for the global consultation list screen. */
+@Serializable object ConsultationList
+
 /**
  * Navigation route for the patient detail screen.
  *

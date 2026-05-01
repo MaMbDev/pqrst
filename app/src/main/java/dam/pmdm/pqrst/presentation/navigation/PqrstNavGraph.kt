@@ -13,6 +13,7 @@ import dam.pmdm.pqrst.presentation.admin.users.list.UserListScreen
 import dam.pmdm.pqrst.presentation.auth.login.LoginScreen
 import dam.pmdm.pqrst.presentation.consultation.detail.ConsultationDetailScreen
 import dam.pmdm.pqrst.presentation.consultation.form.ConsultationFormScreen
+import dam.pmdm.pqrst.presentation.consultation.list.ConsultationListScreen
 import dam.pmdm.pqrst.presentation.dashboard.DashboardScreen
 import dam.pmdm.pqrst.presentation.ecg.analysis.EcgAnalysisScreen
 import dam.pmdm.pqrst.presentation.ecg.importcsv.EcgImportScreen
@@ -74,6 +75,7 @@ fun PqrstNavGraph(
                 onNavigate = { route ->
                     when (route) {
                         "patients" -> navController.navigate(PatientList)
+                        "consultations" -> navController.navigate(ConsultationList)
                         "ecg_monitor" -> navController.navigate(EcgMonitor(0L))
                         "ecg_import" -> navController.navigate(EcgImport(0L))
                         "users" -> navController.navigate(UserList)
@@ -98,6 +100,30 @@ fun PqrstNavGraph(
                         "dashboard" -> navController.navigate(Dashboard) {
                             popUpTo(PatientList) { inclusive = true }
                         }
+                        "consultations" -> navController.navigate(ConsultationList)
+                        "users" -> navController.navigate(UserList)
+                        "settings" -> navController.navigate(Settings)
+                        "about" -> navController.navigate(About)
+                        "ecg_monitor" -> navController.navigate(EcgMonitor(0L))
+                        "ecg_import" -> navController.navigate(EcgImport(0L))
+                        else -> Unit
+                    }
+                },
+            )
+        }
+
+        composable<ConsultationList> {
+            ConsultationListScreen(
+                session = session,
+                onLogout = onLogout,
+                onNavigateToDetail = { navController.navigate(ConsultationDetail(it)) },
+                onNewConsultation = { patientId -> navController.navigate(ConsultationForm(patientId)) },
+                onDrawerNavigate = { route ->
+                    when (route) {
+                        "dashboard" -> navController.navigate(Dashboard) {
+                            popUpTo(ConsultationList) { inclusive = true }
+                        }
+                        "patients" -> navController.navigate(PatientList)
                         "users" -> navController.navigate(UserList)
                         "settings" -> navController.navigate(Settings)
                         "about" -> navController.navigate(About)
