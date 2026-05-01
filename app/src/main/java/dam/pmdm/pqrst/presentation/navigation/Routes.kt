@@ -84,3 +84,9 @@ import kotlinx.serialization.Serializable
 
 /** Navigation route for the about/help screen. */
 @Serializable object About
+
+/** Navigation route for the PQRST waveform educational guide. */
+@Serializable object EcgGuide
+
+/** Navigation route for the heart anatomy and excitoconducton system educational screen. */
+@Serializable object HeartAnatomy

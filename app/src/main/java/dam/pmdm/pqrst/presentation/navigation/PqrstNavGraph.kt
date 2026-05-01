@@ -21,6 +21,8 @@ import dam.pmdm.pqrst.presentation.patient.detail.PatientDetailScreen
 import dam.pmdm.pqrst.presentation.patient.form.PatientFormScreen
 import dam.pmdm.pqrst.presentation.patient.list.PatientListScreen
 import dam.pmdm.pqrst.presentation.report.ReportPreviewScreen
+import dam.pmdm.pqrst.presentation.learn.EcgGuideScreen
+import dam.pmdm.pqrst.presentation.learn.HeartAnatomyScreen
 import dam.pmdm.pqrst.presentation.settings.AboutScreen
 import dam.pmdm.pqrst.presentation.settings.SettingsScreen
 
@@ -77,6 +79,8 @@ fun PqrstNavGraph(
                         "users" -> navController.navigate(UserList)
                         "settings" -> navController.navigate(Settings)
                         "about" -> navController.navigate(About)
+                        "ecg_guide" -> navController.navigate(EcgGuide)
+                        "heart_anatomy" -> navController.navigate(HeartAnatomy)
                         else -> Unit
                     }
                 },
@@ -206,6 +210,14 @@ fun PqrstNavGraph(
 
         composable<About> {
             AboutScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable<EcgGuide> {
+            EcgGuideScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable<HeartAnatomy> {
+            HeartAnatomyScreen(onBack = { navController.popBackStack() })
         }
     }
 }

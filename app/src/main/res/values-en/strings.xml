@@ -141,6 +141,57 @@
     <string name="ecg_pattern_vfib_desc">Chaotic, no identifiable PQRST</string>
     <string name="ecg_pattern_vfib_detail">• No recognisable PQRST complexes\n• Chaotic high-frequency oscillations with variable amplitude\n• Life-threatening emergency — cardiac output ceases immediately\n• No effective pulse is generated\n• Immediate treatment: electrical defibrillation + CPR\n• Precipitated by acute MI, hypoxia, or severe electrolyte disturbances</string>
 
+    <!-- Dashboard — learn section -->
+    <string name="dashboard_learn_section">LEARN</string>
+    <string name="dashboard_ecg_guide">Learn ECG</string>
+    <string name="dashboard_heart_anatomy">Learn Heart</string>
+
+    <!-- ECG Guide screen -->
+    <string name="ecg_guide_title">PQRST Waveform Guide</string>
+    <string name="ecg_guide_intro">The electrocardiogram (ECG) records the heart\'s electrical activity. Each cardiac cycle produces a characteristic pattern of five waves: P, Q, R, S, and T. Tap each section to learn more.</string>
+    <string name="ecg_guide_p_wave_label">P WAVE</string>
+    <string name="ecg_guide_p_wave_title">Atrial depolarisation</string>
+    <string name="ecg_guide_p_wave_desc">The P wave represents electrical activation of the atria, initiated by the sinoatrial (SA) node and spreading through both atria to trigger their contraction.\n\n• Normal duration: 80–120 ms\n• Amplitude: &lt; 2.5 mm\n• Positive in leads I, II, and aVF\n• Inversion in aVR is normal</string>
+    <string name="ecg_guide_qrs_label">QRS COMPLEX</string>
+    <string name="ecg_guide_qrs_title">Ventricular depolarisation</string>
+    <string name="ecg_guide_qrs_desc">The QRS complex represents ventricular depolarisation via the His-Purkinje system and ventricular myocardium.\n\n• Q wave: septal depolarisation (small, negative)\n• R wave: free ventricular wall (large, positive)\n• S wave: basal regions (negative)\n• Normal duration: &lt; 120 ms\n• QRS ≥ 120 ms suggests bundle branch block</string>
+    <string name="ecg_guide_t_wave_label">T WAVE</string>
+    <string name="ecg_guide_t_wave_title">Ventricular repolarisation</string>
+    <string name="ecg_guide_t_wave_desc">The T wave represents electrical recovery (repolarisation) of the ventricles.\n\n• Asymmetric shape: slow rise, rapid descent\n• Polarity concordant with QRS\n• Inversion in V1 and lead III may be normal\n• Inversion in V2–V6 suggests ischaemia or hypertrophy</string>
+    <string name="ecg_guide_pr_label">PR INTERVAL</string>
+    <string name="ecg_guide_pr_title">Atrioventricular conduction time</string>
+    <string name="ecg_guide_pr_desc">Time from onset of atrial depolarisation to onset of ventricular depolarisation. Reflects the physiological delay in the AV node.\n\n• Normal: 120–200 ms\n• Short PR: pre-excitation (WPW) or junctional rhythm\n• Long PR (&gt; 200 ms): first-degree AV block\n• Variable PR: second or third-degree AV block</string>
+    <string name="ecg_guide_st_label">ST SEGMENT</string>
+    <string name="ecg_guide_st_title">Ventricular isoelectric period</string>
+    <string name="ecg_guide_st_desc">From the end of the QRS (J-point) to the start of the T wave. Normally isoelectric (flat at baseline).\n\n• ST elevation (&gt; 1 mm): acute MI, pericarditis\n• ST depression (&gt; 0.5 mm): subendocardial ischaemia, digoxin effect\n\n⚠ Educational only — does not replace clinical diagnosis</string>
+    <string name="ecg_guide_qt_label">QT INTERVAL</string>
+    <string name="ecg_guide_qt_title">Ventricular electrical systole</string>
+    <string name="ecg_guide_qt_desc">Total duration of ventricular depolarisation and repolarisation. Rate-dependent — corrected with Bazett\'s formula.\n\n• QTc = QT / √RR\n• Normal QTc: &lt; 440 ms (♂) / &lt; 460 ms (♀)\n• QTc &gt; 500 ms: increased risk of torsade de pointes\n• Causes: drugs, hypokalaemia, hypocalcaemia</string>
+
+    <!-- Heart Anatomy screen -->
+    <string name="heart_anatomy_title">Heart Anatomy &amp; Conduction</string>
+    <string name="heart_anatomy_intro">The heart has four chambers and a specialised electrical system that coordinates its contraction. Understanding this system helps interpret the ECG.</string>
+    <string name="heart_anatomy_ra">RA</string>
+    <string name="heart_anatomy_la">LA</string>
+    <string name="heart_anatomy_rv">RV</string>
+    <string name="heart_anatomy_lv">LV</string>
+    <string name="heart_anatomy_disclaimer">RA: Right Atrium · LA: Left Atrium · RV: Right Ventricle · LV: Left Ventricle</string>
+    <string name="heart_anatomy_sa_label">1 — Sinoatrial Node (SA)</string>
+    <string name="heart_anatomy_sa_title">The natural pacemaker of the heart</string>
+    <string name="heart_anatomy_sa_desc">Located in the upper wall of the right atrium (RA), the SA node generates spontaneous electrical impulses that initiate each heartbeat.\n\n• Intrinsic rate: 60–100 bpm at rest\n• Regulated by the autonomic nervous system\n• Produces the P wave on the ECG\n• Dysfunction: sick sinus syndrome (sinus bradycardia, sinus arrest)</string>
+    <string name="heart_anatomy_av_label">2 — Atrioventricular Node (AV)</string>
+    <string name="heart_anatomy_av_title">Gatekeeper and conduction delay</string>
+    <string name="heart_anatomy_av_desc">Located in the interatrial septum, the AV node is the only normal electrical bridge between the atria and ventricles. It introduces a 120–200 ms delay.\n\n• Escape rate: 40–60 bpm\n• The delay allows the atria to empty before ventricular systole\n• Reflects the PR interval on the ECG\n• AV block: 1st degree (long PR), 2nd degree (dropped beats), 3rd degree (AV dissociation)</string>
+    <string name="heart_anatomy_his_label">3 — Bundle of His &amp; Branches</string>
+    <string name="heart_anatomy_his_title">Ventricular activation highway</string>
+    <string name="heart_anatomy_his_desc">The bundle of His descends through the interventricular septum and splits into a right bundle branch (to RV) and left bundle branch (to LV, with anterior and posterior fascicles).\n\n• Escape rate: 20–40 bpm\n• Conduction velocity: ~2 m/s\n• RBBB: QRS ≥ 120 ms, rSR\' in V1\n• LBBB: QRS ≥ 120 ms, characteristic morphology in V5–V6</string>
+    <string name="heart_anatomy_purkinje_label">4 — Purkinje Fibres</string>
+    <string name="heart_anatomy_purkinje_title">Subendocardial distribution network</string>
+    <string name="heart_anatomy_purkinje_desc">A dense network of highly specialised fibres that distribute the impulse almost simultaneously across the ventricular subendocardium, ensuring efficient contraction.\n\n• Fastest conduction in the heart: ~4 m/s\n• Synchronised activation of ventricular myocardium\n• Escape rate: 20–40 bpm\n• Produces the QRS complex on the ECG</string>
+    <string name="heart_anatomy_conduction_label">5 — Internodal Pathways</string>
+    <string name="heart_anatomy_conduction_title">Atrial impulse propagation</string>
+    <string name="heart_anatomy_conduction_desc">The impulse from the SA node spreads through the atria via preferential pathways (Bachmann\'s bundle, anterior, middle, and posterior tracts) to the AV node.\n\n• Velocity: ~1 m/s in atrial myocardium\n• Bachmann\'s bundle conducts the impulse to the left atrium\n• Atrial propagation generates the P wave\n• Normal duration: 80–120 ms</string>
+
     <!-- ECG CSV Import -->
     <string name="ecg_import_title">Import ECG from CSV</string>
     <string name="ecg_import_pick_file">Select CSV file</string>

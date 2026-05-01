@@ -170,6 +170,57 @@
     <string name="about_educational_notice">PQRST Learn es una herramienta educativa. Los resultados de análisis ECG no constituyen diagnóstico clínico.</string>
     <string name="about_mit_bih_attribution">Patrones de referencia derivados de la base de datos MIT-BIH Arrhythmia.</string>
 
+    <!-- Dashboard — learn section -->
+    <string name="dashboard_learn_section">APRENDE</string>
+    <string name="dashboard_ecg_guide">Aprende ECG</string>
+    <string name="dashboard_heart_anatomy">Aprende Corazón</string>
+
+    <!-- ECG Guide screen -->
+    <string name="ecg_guide_title">Guía de Ondas PQRST</string>
+    <string name="ecg_guide_intro">El electrocardiograma (ECG) registra la actividad eléctrica del corazón. Cada ciclo cardíaco produce un patrón con cinco ondas principales: P, Q, R, S y T. Toca cada sección para conocer su significado.</string>
+    <string name="ecg_guide_p_wave_label">ONDA P</string>
+    <string name="ecg_guide_p_wave_title">Despolarización auricular</string>
+    <string name="ecg_guide_p_wave_desc">La onda P representa la activación eléctrica de las aurículas, iniciada en el nodo sinoauricular (SA) y propagada por ambas aurículas produciendo su contracción.\n\n• Duración normal: 80–120 ms\n• Amplitud: &lt; 2,5 mm\n• Positiva en DI, DII y aVF\n• Inversión en aVR es normal</string>
+    <string name="ecg_guide_qrs_label">COMPLEJO QRS</string>
+    <string name="ecg_guide_qrs_title">Despolarización ventricular</string>
+    <string name="ecg_guide_qrs_desc">El QRS representa la despolarización de los ventrículos a través del sistema His-Purkinje y el miocardio ventricular.\n\n• Onda Q: despolarización septal (negativa, pequeña)\n• Onda R: pared libre ventricular (positiva, grande)\n• Onda S: regiones basales (negativa)\n• Duración normal: &lt; 120 ms\n• QRS ≥ 120 ms sugiere bloqueo de rama</string>
+    <string name="ecg_guide_t_wave_label">ONDA T</string>
+    <string name="ecg_guide_t_wave_title">Repolarización ventricular</string>
+    <string name="ecg_guide_t_wave_desc">La onda T representa la recuperación eléctrica (repolarización) de los ventrículos.\n\n• Morfología asimétrica: ascenso lento, descenso rápido\n• Polaridad concordante con el QRS\n• Inversión en V1 y en III puede ser variante normal\n• Inversión en V2-V6 sugiere isquemia o hipertrofia</string>
+    <string name="ecg_guide_pr_label">INTERVALO PR</string>
+    <string name="ecg_guide_pr_title">Conducción auriculoventricular</string>
+    <string name="ecg_guide_pr_desc">Tiempo desde el inicio de la despolarización auricular hasta el inicio del QRS. Refleja el retardo fisiológico en el nodo AV.\n\n• Normal: 120–200 ms\n• PR corto: preexcitación (WPW) o ritmo de la unión\n• PR largo (&gt; 200 ms): bloqueo AV de primer grado\n• PR variable: bloqueo de segundo o tercer grado</string>
+    <string name="ecg_guide_st_label">SEGMENTO ST</string>
+    <string name="ecg_guide_st_title">Período isoeléctrico ventricular</string>
+    <string name="ecg_guide_st_desc">Desde el punto J hasta el inicio de la onda T. Normalmente isoeléctrico (plano en la línea de base).\n\n• Elevación ST (&gt; 1 mm): infarto agudo de miocardio, pericarditis\n• Depresión ST (&gt; 0,5 mm): isquemia subendocárdica, digitálicos\n\n⚠ Solo educativo — no sustituye al diagnóstico clínico</string>
+    <string name="ecg_guide_qt_label">INTERVALO QT</string>
+    <string name="ecg_guide_qt_title">Sístole eléctrica ventricular</string>
+    <string name="ecg_guide_qt_desc">Duración total de despolarización y repolarización ventricular. Varía con la frecuencia cardíaca; se corrige con la fórmula de Bazett.\n\n• QTc = QT / √RR\n• QTc normal: &lt; 440 ms (♂) / &lt; 460 ms (♀)\n• QTc &gt; 500 ms: mayor riesgo de torsade de pointes\n• Causas: fármacos, hipopotasemia, hipocalcemia</string>
+
+    <!-- Heart Anatomy screen -->
+    <string name="heart_anatomy_title">Anatomía y Conducción Cardíaca</string>
+    <string name="heart_anatomy_intro">El corazón tiene cuatro cámaras y un sistema eléctrico especializado que coordina su contracción. Comprende este sistema para interpretar mejor el ECG.</string>
+    <string name="heart_anatomy_ra">AD</string>
+    <string name="heart_anatomy_la">AI</string>
+    <string name="heart_anatomy_rv">VD</string>
+    <string name="heart_anatomy_lv">VI</string>
+    <string name="heart_anatomy_disclaimer">AD: Aurícula Derecha · AI: Aurícula Izquierda · VD: Ventrículo Derecho · VI: Ventrículo Izquierdo</string>
+    <string name="heart_anatomy_sa_label">1 — Nodo Sinoauricular (SA)</string>
+    <string name="heart_anatomy_sa_title">El marcapasos natural del corazón</string>
+    <string name="heart_anatomy_sa_desc">Localizado en la pared superior de la aurícula derecha (AD), el nodo SA genera impulsos eléctricos espontáneos que inician cada latido.\n\n• Frecuencia intrínseca: 60–100 lpm en reposo\n• Regulado por el sistema nervioso autónomo\n• Su activación produce la onda P en el ECG\n• Disfunción: enfermedad del nodo sinusal (bradicardia sinusal, paro sinusal)</string>
+    <string name="heart_anatomy_av_label">2 — Nodo Auriculoventricular (AV)</string>
+    <string name="heart_anatomy_av_title">Filtro y retardador de la conducción</string>
+    <string name="heart_anatomy_av_desc">Situado en el tabique interauricular, es la única conexión eléctrica normal entre aurículas y ventrículos. Introduce un retardo de 120–200 ms.\n\n• Frecuencia de escape: 40–60 lpm\n• El retardo permite que las aurículas se vacíen antes de la sístole ventricular\n• Refleja el intervalo PR en el ECG\n• Bloqueo AV: 1.º grado (PR largo), 2.º (latidos bloqueados), 3.º (disociación AV)</string>
+    <string name="heart_anatomy_his_label">3 — Haz de His y ramas</string>
+    <string name="heart_anatomy_his_title">Autopista de activación ventricular</string>
+    <string name="heart_anatomy_his_desc">El haz de His desciende por el tabique interventricular y se divide en rama derecha (hacia el VD) e izquierda (hacia el VI, con fascículos anterior y posterior).\n\n• Frecuencia de escape: 20–40 lpm\n• Velocidad de conducción: ~2 m/s\n• BRD: QRS ≥ 120 ms, rSR\' en V1\n• BRI: QRS ≥ 120 ms, patrón característico en V5-V6</string>
+    <string name="heart_anatomy_purkinje_label">4 — Fibras de Purkinje</string>
+    <string name="heart_anatomy_purkinje_title">Red de distribución subendocárdica</string>
+    <string name="heart_anatomy_purkinje_desc">Red de fibras altamente especializadas que distribuyen el impulso por el subendocardio ventricular de forma casi simultánea, garantizando una contracción eficiente.\n\n• Velocidad más alta del corazón: ~4 m/s\n• Activación sincronizada del miocardio ventricular\n• Frecuencia de escape: 20–40 lpm\n• Su activación produce el complejo QRS en el ECG</string>
+    <string name="heart_anatomy_conduction_label">5 — Vías internodales</string>
+    <string name="heart_anatomy_conduction_title">Propagación auricular del impulso</string>
+    <string name="heart_anatomy_conduction_desc">El impulso desde el nodo SA se propaga por las aurículas a través de vías preferenciales (haz de Bachmann, tractos anterior, medio y posterior) hasta el nodo AV.\n\n• Velocidad: ~1 m/s en el miocardio auricular\n• El haz de Bachmann conduce el impulso a la aurícula izquierda\n• La propagación auricular genera la onda P\n• Duración normal: 80–120 ms</string>
+
     <!-- ECG CSV Import -->
     <string name="ecg_import_title">Importar ECG desde CSV</string>
     <string name="ecg_import_pick_file">Seleccionar archivo CSV</string>

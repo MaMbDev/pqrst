@@ -3,6 +3,7 @@ package dam.pmdm.pqrst.presentation.dashboard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,10 +13,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -123,7 +128,14 @@ private fun DashboardContent(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Card(modifier = Modifier.fillMaxWidth()) {
+        val welcomeColor = if (session?.role == UserRole.ADMIN) Color(0xFFE6E2CC) else Color(0xFFB7D2E5)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = welcomeColor,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+        ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -164,18 +176,33 @@ private fun DashboardContent(
             onClick = { onNavigate("ecg_import") },
         )
 
-        if (session?.role == UserRole.ADMIN) {
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.dashboard_admin_label),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onBackground,
+        Spacer(Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            QuickActionCard(
+                label = stringResource(R.string.dashboard_ecg_guide),
+                icon = Icons.Default.Timeline,
+                onClick = { onNavigate("ecg_guide") },
+                modifier = Modifier.weight(1f),
             )
+            QuickActionCard(
+                label = stringResource(R.string.dashboard_heart_anatomy),
+                icon = Icons.Default.Favorite,
+                onClick = { onNavigate("heart_anatomy") },
+                modifier = Modifier.weight(1f),
+            )
+        }
+
+        if (session?.role == UserRole.ADMIN) {
             Spacer(Modifier.height(8.dp))
             QuickActionCard(
                 label = stringResource(R.string.dashboard_user_management),
                 icon = Icons.Default.AccountCircle,
                 onClick = { onNavigate("users") },
+                containerColor = Color(0xFFE6E2CC),
             )
         }
     }
@@ -197,10 +224,17 @@ private fun QuickActionCard(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    containerColor: Color = Color.Unspecified,
 ) {
+    val colors = if (containerColor == Color.Unspecified) CardDefaults.cardColors()
+                 else CardDefaults.cardColors(
+                     containerColor = containerColor,
+                     contentColor = MaterialTheme.colorScheme.onSurface,
+                 )
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
+        colors = colors,
     ) {
         Column(
             modifier = Modifier
