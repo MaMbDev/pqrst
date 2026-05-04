@@ -3,8 +3,10 @@ package dam.pmdm.pqrst.presentation.dashboard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -179,20 +181,22 @@ private fun DashboardContent(
         Spacer(Modifier.height(8.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             QuickActionCard(
-                label = stringResource(R.string.dashboard_ecg_guide),
+                label = stringResource(R.string.dashboard_learn),
+                subtitle = stringResource(R.string.dashboard_ecg_guide),
                 icon = Icons.Default.Timeline,
                 onClick = { onNavigate("ecg_guide") },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
             QuickActionCard(
-                label = stringResource(R.string.dashboard_heart_anatomy),
+                label = stringResource(R.string.dashboard_learn),
+                subtitle = stringResource(R.string.dashboard_heart_anatomy),
                 icon = Icons.Default.Favorite,
                 onClick = { onNavigate("heart_anatomy") },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).fillMaxHeight(),
             )
         }
 
@@ -224,6 +228,7 @@ private fun QuickActionCard(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     containerColor: Color = Color.Unspecified,
 ) {
     val colors = if (containerColor == Color.Unspecified) CardDefaults.cardColors()
@@ -249,6 +254,14 @@ private fun QuickActionCard(
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+            }
             Spacer(Modifier.height(8.dp))
             Icon(imageVector = icon, contentDescription = null)
         }

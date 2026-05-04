@@ -177,8 +177,9 @@
 
     <!-- Dashboard — learn section -->
     <string name="dashboard_learn_section">APRENDE</string>
-    <string name="dashboard_ecg_guide">Aprende ECG</string>
-    <string name="dashboard_heart_anatomy">Aprende Corazón</string>
+    <string name="dashboard_learn">Aprende</string>
+    <string name="dashboard_ecg_guide">ECG</string>
+    <string name="dashboard_heart_anatomy">Corazón</string>
 
     <!-- ECG Guide screen -->
     <string name="ecg_guide_title">Guía de Ondas PQRST</string>
