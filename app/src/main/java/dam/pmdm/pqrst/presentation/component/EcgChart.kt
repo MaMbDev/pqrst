@@ -1,17 +1,39 @@
 package dam.pmdm.pqrst.presentation.component
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import dam.pmdm.pqrst.R
+import kotlin.math.roundToInt
+
+private const val ZOOM_MIN = 1f
+private const val ZOOM_MAX = 10f
 
 @Composable
 fun EcgChartWithPeaks(
@@ -20,15 +42,62 @@ fun EcgChartWithPeaks(
     signalColor: Color,
     peakColor: Color,
     modifier: Modifier = Modifier,
+    isPaused: Boolean = false,
 ) {
-    Box(modifier = modifier) {
-        EcgPaperGrid(modifier = Modifier.fillMaxSize())
+    var zoomLevel by remember { mutableFloatStateOf(1f) }
+    var panSamples by remember { mutableFloatStateOf(0f) }
+
+    // Reset pan position when live signal resumes
+    LaunchedEffect(isPaused) {
+        if (!isPaused) panSamples = 0f
+    }
+
+    val totalSamples = signalBuffer.size
+    val visibleCount = (totalSamples / zoomLevel).coerceAtLeast(2f).roundToInt()
+    val maxPan = (totalSamples - visibleCount).toFloat().coerceAtLeast(0f)
+
+    // panSamples=0 → show newest samples; panSamples=maxPan → show oldest
+    val startIdx = (totalSamples - visibleCount - panSamples.roundToInt())
+        .coerceIn(0, (totalSamples - visibleCount).coerceAtLeast(0))
+    val endIdx = (startIdx + visibleCount).coerceAtMost(totalSamples)
+    val visibleBuffer = if (totalSamples >= 2) signalBuffer.subList(startIdx, endIdx) else signalBuffer
+    val visiblePeaks = peaks.filter { it in startIdx until endIdx }.map { it - startIdx }
+
+    Box(
+        modifier = modifier
+            .pointerInput(isPaused) {
+                detectTransformGestures { _, pan, zoom, _ ->
+                    val newZoom = (zoomLevel * zoom).coerceIn(ZOOM_MIN, ZOOM_MAX)
+                    zoomLevel = newZoom
+                    if (isPaused && totalSamples > 1 && size.width > 0) {
+                        val currentVisible = (totalSamples / newZoom).coerceAtLeast(2f).roundToInt()
+                        val samplesPerPx = currentVisible.toFloat() / size.width.toFloat()
+                        val newMaxPan = (totalSamples - currentVisible).toFloat().coerceAtLeast(0f)
+                        // Drag right → show older samples (positive pan.x increases panSamples)
+                        panSamples = (panSamples + pan.x * samplesPerPx).coerceIn(0f, newMaxPan)
+                    } else if (!isPaused) {
+                        panSamples = 0f
+                    }
+                }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(onDoubleTap = {
+                    zoomLevel = 1f
+                    panSamples = 0f
+                })
+            },
+    ) {
+        EcgPaperGrid(modifier = Modifier.fillMaxSize(), zoomLevel = zoomLevel)
+
         Canvas(modifier = Modifier.fillMaxSize()) {
-            if (signalBuffer.size < 2) return@Canvas
-            val minY = -0.5f
-            val maxY = 1.5f
+            if (visibleBuffer.size < 2) return@Canvas
+
+            // Vertical zoom: shrink the visible amplitude range around the signal centre
+            val halfRange = 1.0f / zoomLevel   // zoom=1 → ±1.0 (range -0.5..1.5); zoom=2 → ±0.5 (0.0..1.0)
+            val minY = 0.5f - halfRange
+            val maxY = 0.5f + halfRange
             val yRange = maxY - minY
-            val xStep = size.width / (signalBuffer.size - 1).toFloat()
+            val xStep = size.width / (visibleBuffer.size - 1).toFloat()
 
             fun toOffset(i: Int, v: Float) = Offset(
                 x = i * xStep,
@@ -36,7 +105,7 @@ fun EcgChartWithPeaks(
             )
 
             val path = Path()
-            signalBuffer.forEachIndexed { i, v ->
+            visibleBuffer.forEachIndexed { i, v ->
                 val pt = toOffset(i, v)
                 if (i == 0) path.moveTo(pt.x, pt.y) else path.lineTo(pt.x, pt.y)
             }
@@ -50,25 +119,79 @@ fun EcgChartWithPeaks(
                 ),
             )
 
-            peaks.forEach { idx ->
-                if (idx in signalBuffer.indices) {
+            visiblePeaks.forEach { localIdx ->
+                if (localIdx in visibleBuffer.indices) {
                     drawCircle(
                         color = peakColor,
                         radius = 4.dp.toPx(),
-                        center = toOffset(idx, signalBuffer[idx]),
+                        center = toOffset(localIdx, visibleBuffer[localIdx]),
                     )
                 }
             }
+
+            // Scrubber bar — visible only when paused and zoomed in
+            if (isPaused && zoomLevel > 1.01f && totalSamples > 1) {
+                val barH = 3.dp.toPx()
+                val barY = size.height - barH - 4.dp.toPx()
+                drawRoundRect(
+                    color = Color(0x33000000),
+                    topLeft = Offset(0f, barY),
+                    size = Size(size.width, barH),
+                    cornerRadius = CornerRadius(barH / 2),
+                )
+                val thumbW = (size.width * visibleCount / totalSamples.toFloat())
+                    .coerceAtLeast(20.dp.toPx())
+                // thumbX: right = newest, left = oldest
+                val thumbX = if (maxPan > 0f) {
+                    (1f - panSamples / maxPan) * (size.width - thumbW)
+                } else {
+                    size.width - thumbW
+                }
+                drawRoundRect(
+                    color = signalColor.copy(alpha = 0.75f),
+                    topLeft = Offset(thumbX, barY),
+                    size = Size(thumbW, barH),
+                    cornerRadius = CornerRadius(barH / 2),
+                )
+            }
+        }
+
+        // Zoom level badge
+        if (zoomLevel > 1.01f) {
+            Text(
+                text = "×${"%.1f".format(zoomLevel)}",
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp)
+                    .background(Color(0x99000000), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
+                color = Color.White,
+                fontSize = 11.sp,
+            )
+        }
+
+        // Pinch hint — only visible when paused and not yet zoomed
+        if (isPaused && zoomLevel <= 1.01f) {
+            Text(
+                text = stringResource(R.string.ecg_zoom_hint),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 6.dp)
+                    .background(Color(0x88000000), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 8.dp, vertical = 3.dp),
+                color = Color.White,
+                fontSize = 10.sp,
+            )
         }
     }
 }
 
 @Composable
-fun EcgPaperGrid(modifier: Modifier = Modifier) {
+fun EcgPaperGrid(modifier: Modifier = Modifier, zoomLevel: Float = 1f) {
     val minorColor = Color(0xFFFFCDD2)
     val majorColor = Color(0xFFEF9A9A)
     Canvas(modifier = modifier) {
-        val minorStep = 20.dp.toPx()
+        val minorStep = (20.dp.toPx() * zoomLevel).coerceAtLeast(2f)
         val majorEvery = 5
         var col = 0
         var x = 0f

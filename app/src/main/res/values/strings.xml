@@ -114,6 +114,7 @@
     <string name="ecg_stop_demo">Detener demo</string>
     <string name="ecg_pause_demo">Pausar</string>
     <string name="ecg_resume_demo">Reanudar</string>
+    <string name="ecg_zoom_hint">Pellizca para ampliar · doble toque para restablecer</string>
     <string name="ecg_no_signal">Sin señal</string>
     <string name="ecg_legend_signal">Señal</string>
     <string name="ecg_legend_peak">Pico R</string>

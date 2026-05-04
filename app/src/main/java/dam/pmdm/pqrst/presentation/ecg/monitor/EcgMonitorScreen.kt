@@ -163,6 +163,7 @@ fun EcgMonitorScreen(
                     peaks = peaks,
                     signalColor = signalColorFor(uiState),
                     peakColor = peakColorFor(uiState),
+                    isPaused = (uiState as? EcgMonitorUiState.DemoRunning)?.isPaused == true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(220.dp),
