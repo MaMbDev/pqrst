@@ -179,8 +179,8 @@ private fun HeartCrossSectionDiagram(
     val textMeasurer = rememberTextMeasurer()
     val colorRight   = Color(0xFF0FFFF8).copy(alpha = 0.28f)  // color1 tint — right (RA/RV)
     val colorLeft    = Color(0xFFFF8376).copy(alpha = 0.38f)  // color5 tint — left (LA/LV)
-    val colorOnRight = Color(0xFF91074A)                       // color3 — label text
-    val colorOnLeft  = Color(0xFF91074A)                       // color3 — label text
+    val colorOnRight = MaterialTheme.colorScheme.onSurface
+    val colorOnLeft  = MaterialTheme.colorScheme.onSurface
 
     Card(modifier = modifier) {
         Canvas(

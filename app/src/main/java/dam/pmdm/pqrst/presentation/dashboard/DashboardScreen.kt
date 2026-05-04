@@ -135,7 +135,7 @@ private fun DashboardContent(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
                 containerColor = welcomeColor,
-                contentColor = MaterialTheme.colorScheme.onSurface,
+                contentColor = Color(0xFF1C1B1F),
             ),
         ) {
             Column(
@@ -207,6 +207,7 @@ private fun DashboardContent(
                 icon = Icons.Default.AccountCircle,
                 onClick = { onNavigate("users") },
                 containerColor = Color(0xFFE6E2CC),
+                contentColor = Color(0xFF1C1B1F),
             )
         }
     }
@@ -230,11 +231,13 @@ private fun QuickActionCard(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     containerColor: Color = Color.Unspecified,
+    contentColor: Color = Color.Unspecified,
 ) {
     val colors = if (containerColor == Color.Unspecified) CardDefaults.cardColors()
                  else CardDefaults.cardColors(
                      containerColor = containerColor,
-                     contentColor = MaterialTheme.colorScheme.onSurface,
+                     contentColor = if (contentColor != Color.Unspecified) contentColor
+                                    else MaterialTheme.colorScheme.onSurface,
                  )
     Card(
         onClick = onClick,

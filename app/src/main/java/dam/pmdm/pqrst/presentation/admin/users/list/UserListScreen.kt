@@ -153,7 +153,7 @@ private fun UserRow(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = cardColor,
-            contentColor = MaterialTheme.colorScheme.onSurface,
+            contentColor = Color(0xFF1C1B1F),
         ),
     ) {
         Row(
