@@ -145,8 +145,9 @@
 
     <!-- Dashboard — learn section -->
     <string name="dashboard_learn_section">LEARN</string>
-    <string name="dashboard_ecg_guide">Learn ECG</string>
-    <string name="dashboard_heart_anatomy">Learn Heart</string>
+    <string name="dashboard_learn">Learn</string>
+    <string name="dashboard_ecg_guide">ECG</string>
+    <string name="dashboard_heart_anatomy">Heart</string>
 
     <!-- ECG Guide screen -->
     <string name="ecg_guide_title">PQRST Waveform Guide</string>
