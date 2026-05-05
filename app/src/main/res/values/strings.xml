@@ -69,6 +69,7 @@
     <string name="consultations_new">NUEVA CONSULTA</string>
     <string name="consultations_search_hint">Buscar por paciente</string>
     <string name="consultations_select_patient">Seleccionar paciente</string>
+    <string name="consultation_patient_label">Paciente</string>
     <string name="consultation_date_label">Fecha</string>
     <string name="consultation_symptoms_label">Síntomas</string>
     <string name="consultation_vital_signs_label">Signos vitales</string>

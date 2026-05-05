@@ -106,6 +106,20 @@ private fun ConsultationFormContent(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         OutlinedTextField(
+            value = viewModel.patientName,
+            onValueChange = {},
+            label = { Text(stringResource(R.string.consultation_patient_label)) },
+            readOnly = true,
+            enabled = false,
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+            ),
+        )
+
+        OutlinedTextField(
             value = runCatching { LocalDateTime.parse(viewModel.date).format(displayFormatter) }
                 .getOrElse { viewModel.date },
             onValueChange = {},
@@ -187,6 +201,12 @@ private fun ConsultationFormPreview() {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                LabeledTextField(
+                    value = "María García",
+                    onValueChange = {},
+                    label = "Paciente",
+                    enabled = false,
+                )
                 LabeledTextField(
                     value = "27/04/2026 10:30",
                     onValueChange = {},

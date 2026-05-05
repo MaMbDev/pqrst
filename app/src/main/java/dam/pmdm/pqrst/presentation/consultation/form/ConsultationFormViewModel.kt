@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dam.pmdm.pqrst.domain.model.Consultation
 import dam.pmdm.pqrst.domain.repository.AuthRepository
 import dam.pmdm.pqrst.domain.repository.ConsultationRepository
+import dam.pmdm.pqrst.domain.repository.PatientRepository
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -36,6 +37,7 @@ class ConsultationFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val repository: ConsultationRepository,
     private val authRepository: AuthRepository,
+    private val patientRepository: PatientRepository,
 ) : ViewModel() {
 
     private val patientId: Long = checkNotNull(savedStateHandle["patientId"])
@@ -59,6 +61,9 @@ class ConsultationFormViewModel @Inject constructor(
     /** ISO date-time of the consultation. Preserved from the existing record in edit mode. */
     var date: String by mutableStateOf(LocalDateTime.now().toString())
 
+    /** Name of the patient this consultation belongs to, loaded from the repository. */
+    var patientName: String by mutableStateOf("")
+
     // ── Events ────────────────────────────────────────────────────────────
 
     private val _savedEvent = MutableSharedFlow<Unit>()
@@ -75,6 +80,11 @@ class ConsultationFormViewModel @Inject constructor(
     private var originalCreatedAt: String = ""
 
     init {
+        viewModelScope.launch {
+            patientRepository.getPatient(patientId)?.let { p ->
+                patientName = p.name
+            }
+        }
         if (consultationId != null) {
             viewModelScope.launch {
                 repository.getConsultation(consultationId)?.let { c ->

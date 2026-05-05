@@ -213,25 +213,42 @@ private fun PatientPickerDialog(
     onSelect: (Long) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    var query by remember { mutableStateOf("") }
+    val filtered = remember(query, patients) {
+        if (query.isBlank()) patients
+        else patients.filter { it.name.contains(query.trim(), ignoreCase = true) }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.consultations_select_patient)) },
         text = {
-            if (patients.isEmpty()) {
-                Text(stringResource(R.string.patients_empty))
-            } else {
-                LazyColumn {
-                    items(patients, key = { it.id }) { patient ->
-                        TextButton(
-                            onClick = { onSelect(patient.id) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                "${patient.name} · ${patient.age} años",
+            Column {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text(stringResource(R.string.patients_search_hint)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                if (filtered.isEmpty()) {
+                    Text(stringResource(R.string.patients_empty))
+                } else {
+                    LazyColumn {
+                        items(filtered, key = { it.id }) { patient ->
+                            TextButton(
+                                onClick = { onSelect(patient.id) },
                                 modifier = Modifier.fillMaxWidth(),
-                            )
+                            ) {
+                                Text(
+                                    "${patient.name} · ${patient.age} años",
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                            HorizontalDivider()
                         }
-                        HorizontalDivider()
                     }
                 }
             }
@@ -270,6 +287,7 @@ private fun PatientPickerDialogPreview() {
             patients = listOf(
                 Patient(id = 1L, name = "María García", age = 45, sex = "F"),
                 Patient(id = 2L, name = "Carlos López", age = 62, sex = "M"),
+                Patient(id = 3L, name = "Ana Martínez", age = 38, sex = "F"),
             ),
             onSelect = {},
             onDismiss = {},

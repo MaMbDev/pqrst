@@ -62,6 +62,9 @@
 
     <string name="consultations_title">CONSULTATIONS</string>
     <string name="consultations_new">NEW CONSULTATION</string>
+    <string name="consultations_search_hint">Search by patient</string>
+    <string name="consultations_select_patient">Select patient</string>
+    <string name="consultation_patient_label">Patient</string>
     <string name="consultation_date_label">Date</string>
     <string name="consultation_symptoms_label">Symptoms</string>
     <string name="consultation_vital_signs_label">Vital signs</string>
