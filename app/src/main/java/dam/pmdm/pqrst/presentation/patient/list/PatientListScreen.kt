@@ -222,8 +222,9 @@ private fun PatientRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(patient.name, style = MaterialTheme.typography.bodyLarge)
                 Text(
-                    "${patient.age} años · ${patient.sex}",
+                    "#${patient.id} · ${patient.age} años · ${patient.sex}",
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             TextButton(onClick = onView) { Text(stringResource(R.string.view)) }

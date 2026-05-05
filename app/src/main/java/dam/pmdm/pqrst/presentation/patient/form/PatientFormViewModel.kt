@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dam.pmdm.pqrst.domain.model.Patient
 import dam.pmdm.pqrst.domain.repository.AuthRepository
 import dam.pmdm.pqrst.domain.repository.PatientRepository
+import dam.pmdm.pqrst.domain.validation.FieldValidators
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -42,6 +43,8 @@ class PatientFormViewModel @Inject constructor(
     var nameError by mutableStateOf<String?>(null)
     var ageError by mutableStateOf<String?>(null)
     var sexError by mutableStateOf<String?>(null)
+    var phoneError by mutableStateOf<String?>(null)
+    var emailError by mutableStateOf<String?>(null)
 
     // ── Events ────────────────────────────────────────────────────────────
 
@@ -73,25 +76,22 @@ class PatientFormViewModel @Inject constructor(
     }
 
     fun save() {
-        var valid = true
+        nameError = FieldValidators.required(name)
+        ageError = FieldValidators.age(age)
+        sexError = FieldValidators.required(sex)
+        phoneError = FieldValidators.phone(phone)
+        emailError = FieldValidators.email(email)
 
-        nameError = if (name.isBlank()) { valid = false; "Este campo es obligatorio" } else null
+        if (listOf(nameError, ageError, sexError, phoneError, emailError).any { it != null }) return
 
-        val ageInt = age.toIntOrNull()
-        ageError = if (ageInt == null || ageInt <= 0 || ageInt > 150) {
-            valid = false; "Introduce una edad válida"
-        } else null
-
-        sexError = if (sex.isBlank()) { valid = false; "Este campo es obligatorio" } else null
-
-        if (!valid) return
+        val ageInt = age.toInt()
 
         viewModelScope.launch {
             val currentUserId = authRepository.currentSession.value?.userId ?: 0L
             val patient = Patient(
                 id = patientId ?: 0L,
                 name = name.trim(),
-                age = ageInt!!,
+                age = ageInt,
                 sex = sex,
                 phone = phone.takeIf { it.isNotBlank() },
                 email = email.takeIf { it.isNotBlank() },

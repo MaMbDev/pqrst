@@ -191,7 +191,7 @@ private fun ConsultationRow(
                     Text(item.patientName, style = MaterialTheme.typography.bodyLarge)
                 }
                 Text(
-                    consultation.date.take(10),
+                    "#${consultation.id} · ${consultation.date.take(10)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -216,7 +216,13 @@ private fun PatientPickerDialog(
     var query by remember { mutableStateOf("") }
     val filtered = remember(query, patients) {
         if (query.isBlank()) patients
-        else patients.filter { it.name.contains(query.trim(), ignoreCase = true) }
+        else {
+            val trimmed = query.trim()
+            patients.filter {
+                it.name.contains(trimmed, ignoreCase = true) ||
+                    it.id.toString().startsWith(trimmed)
+            }
+        }
     }
 
     AlertDialog(
@@ -243,7 +249,7 @@ private fun PatientPickerDialog(
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 Text(
-                                    "${patient.name} · ${patient.age} años",
+                                    "#${patient.id} · ${patient.name} · ${patient.age} años",
                                     modifier = Modifier.fillMaxWidth(),
                                 )
                             }

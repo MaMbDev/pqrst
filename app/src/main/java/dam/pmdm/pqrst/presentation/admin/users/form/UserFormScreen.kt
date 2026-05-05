@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -160,6 +162,15 @@ private fun UserFormContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+
+        LabeledTextField(
+            value = viewModel.email,
+            onValueChange = { viewModel.email = it },
+            label = stringResource(R.string.user_email_label),
+            isError = viewModel.emailError != null,
+            errorMessage = viewModel.emailError,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+        )
 
         ExposedDropdownMenuBox(
             expanded = roleExpanded,

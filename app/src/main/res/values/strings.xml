@@ -151,7 +151,7 @@
     <string name="users_title">Gestión de Usuarios</string>
     <string name="users_new">Nuevo usuario</string>
     <string name="user_username_label">Nombre de usuario</string>
-    <string name="user_email_label">E-mail</string>
+    <string name="user_email_label">Correo electrónico</string>
     <string name="user_password_label">Contraseña</string>
     <string name="user_confirm_password_label">Confirmar contraseña</string>
     <string name="user_role_label">Rol</string>

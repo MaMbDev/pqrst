@@ -22,7 +22,7 @@ interface PatientDao {
      * Emits active patients whose name contains [query], ordered alphabetically.
      * Pass null or omit [query] to return all active patients.
      */
-    @Query("SELECT * FROM patients WHERE is_active = 1 AND (:query IS NULL OR name LIKE '%' || :query || '%') ORDER BY name ASC")
+    @Query("SELECT * FROM patients WHERE is_active = 1 AND (:query IS NULL OR name LIKE '%' || :query || '%' OR CAST(id AS TEXT) LIKE :query || '%') ORDER BY id ASC")
     fun observeAll(query: String? = null): Flow<List<PatientEntity>>
 
     /** Returns the patient with [id], or null if not found. */

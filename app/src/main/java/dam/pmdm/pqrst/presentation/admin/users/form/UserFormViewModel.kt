@@ -12,6 +12,7 @@ import dam.pmdm.pqrst.domain.model.AppUser
 import dam.pmdm.pqrst.domain.model.UserRole
 import dam.pmdm.pqrst.domain.repository.AuthRepository
 import dam.pmdm.pqrst.domain.repository.UserRepository
+import dam.pmdm.pqrst.domain.validation.FieldValidators
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -42,6 +43,7 @@ class UserFormViewModel @Inject constructor(
 
     var usernameError by mutableStateOf<String?>(null)
     var passwordError by mutableStateOf<String?>(null)
+    var emailError by mutableStateOf<String?>(null)
 
     // ── Events ────────────────────────────────────────────────────────────
 
@@ -71,19 +73,11 @@ class UserFormViewModel @Inject constructor(
     }
 
     fun save() {
-        var valid = true
+        usernameError = FieldValidators.required(username)
+        passwordError = FieldValidators.password(password, isEditing)
+        emailError = FieldValidators.email(email)
 
-        usernameError = if (username.isBlank()) {
-            valid = false; "Este campo es obligatorio"
-        } else null
-
-        passwordError = when {
-            !isEditing && password.isBlank() -> { valid = false; "Este campo es obligatorio" }
-            password.isNotBlank() && password.length < 8 -> { valid = false; "Mínimo 8 caracteres" }
-            else -> null
-        }
-
-        if (!valid) return
+        if (listOf(usernameError, passwordError, emailError).any { it != null }) return
 
         viewModelScope.launch {
             val taken = repository.usernameExists(username.trim(), excludeId = userId ?: 0L)

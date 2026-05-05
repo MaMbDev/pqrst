@@ -163,6 +163,8 @@ private fun PatientFormContent(
             value = viewModel.phone,
             onValueChange = { viewModel.phone = it },
             label = stringResource(R.string.patient_phone_label),
+            isError = viewModel.phoneError != null,
+            errorMessage = viewModel.phoneError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
         )
 
@@ -170,6 +172,8 @@ private fun PatientFormContent(
             value = viewModel.email,
             onValueChange = { viewModel.email = it },
             label = stringResource(R.string.patient_email_label),
+            isError = viewModel.emailError != null,
+            errorMessage = viewModel.emailError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         )
 

@@ -181,7 +181,8 @@
     <string name="heart_anatomy_la">LA</string>
     <string name="heart_anatomy_rv">RV</string>
     <string name="heart_anatomy_lv">LV</string>
-    <string name="heart_anatomy_disclaimer">RA: Right Atrium · LA: Left Atrium · RV: Right Ventricle · LV: Left Ventricle</string>
+    <string name="heart_anatomy_legend_atria">RA: Right Atrium  LA: Left Atrium</string>
+    <string name="heart_anatomy_legend_ventricles">RV: Right Ventricle  LV: Left Ventricle</string>
     <string name="heart_anatomy_sa_label">1 — Sinoatrial Node (SA)</string>
     <string name="heart_anatomy_sa_title">The natural pacemaker of the heart</string>
     <string name="heart_anatomy_sa_desc">Located in the upper wall of the right atrium (RA), the SA node generates spontaneous electrical impulses that initiate each heartbeat.\n\n• Intrinsic rate: 60–100 bpm at rest\n• Regulated by the autonomic nervous system\n• Produces the P wave on the ECG\n• Dysfunction: sick sinus syndrome (sinus bradycardia, sinus arrest)</string>
