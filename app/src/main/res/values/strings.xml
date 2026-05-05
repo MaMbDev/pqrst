@@ -210,7 +210,8 @@
     <string name="heart_anatomy_la">AI</string>
     <string name="heart_anatomy_rv">VD</string>
     <string name="heart_anatomy_lv">VI</string>
-    <string name="heart_anatomy_disclaimer">AD: Aurícula Derecha · AI: Aurícula Izquierda · VD: Ventrículo Derecho · VI: Ventrículo Izquierdo</string>
+    <string name="heart_anatomy_legend_atria">RA: Right Atrium  LA: Left Atrium</string>
+    <string name="heart_anatomy_legend_ventricles">RV: Right Ventricle  LV: Left Ventricle</string>
     <string name="heart_anatomy_sa_label">1 — Nodo Sinoauricular (SA)</string>
     <string name="heart_anatomy_sa_title">El marcapasos natural del corazón</string>
     <string name="heart_anatomy_sa_desc">Localizado en la pared superior de la aurícula derecha (AD), el nodo SA genera impulsos eléctricos espontáneos que inician cada latido.\n\n• Frecuencia intrínseca: 60–100 lpm en reposo\n• Regulado por el sistema nervioso autónomo\n• Su activación produce la onda P en el ECG\n• Disfunción: enfermedad del nodo sinusal (bradicardia sinusal, paro sinusal)</string>

@@ -103,7 +103,13 @@ private fun HeartAnatomyContent(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(6.dp))
 
         Text(
-            text = stringResource(R.string.heart_anatomy_disclaimer),
+            text = stringResource(R.string.heart_anatomy_legend_atria),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.outline,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(R.string.heart_anatomy_legend_ventricles),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.outline,
             textAlign = TextAlign.Center,
