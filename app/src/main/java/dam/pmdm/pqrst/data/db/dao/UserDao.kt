@@ -18,8 +18,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface UserDao {
 
-    /** Emits the full user list ordered alphabetically whenever any row changes. */
-    @Query("SELECT * FROM users ORDER BY username ASC")
+    /** Emits the full user list — ADMINs first (role DESC), then by creation order (id ASC). */
+    @Query("SELECT * FROM users ORDER BY role DESC, id ASC")
     fun observeAll(): Flow<List<UserEntity>>
 
     /** Returns the user with [id], or null if not found. */
