@@ -1,6 +1,8 @@
 package dam.pmdm.pqrst.presentation.admin.users.list
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -23,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -167,19 +169,25 @@ private fun UserRow(
                     text = user.username,
                     style = MaterialTheme.typography.bodyLarge,
                 )
-                SuggestionChip(
-                    onClick = {},
-                    label = {
-                        Text(
-                            text = if (user.role == UserRole.ADMIN) {
-                                stringResource(R.string.user_role_admin)
-                            } else {
-                                stringResource(R.string.user_role_user)
-                            },
-                            style = MaterialTheme.typography.labelSmall,
+                Spacer(Modifier.padding(top = 4.dp))
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = Color(0xFF4A4A4A),
+                            shape = RoundedCornerShape(4.dp),
                         )
-                    },
-                )
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = if (user.role == UserRole.ADMIN) {
+                            stringResource(R.string.user_role_admin)
+                        } else {
+                            stringResource(R.string.user_role_user)
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFE0E0E0),
+                    )
+                }
             }
             IconButton(onClick = onEdit) {
                 Icon(
