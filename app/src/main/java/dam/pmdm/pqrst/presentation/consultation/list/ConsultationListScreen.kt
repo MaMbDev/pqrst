@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ConsultationListScreen(
     session: Session?,
+    onBack: () -> Unit,
     onLogout: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     onNewConsultation: (patientId: Long) -> Unit,
@@ -95,6 +96,7 @@ fun ConsultationListScreen(
                     title = stringResource(R.string.consultations_title),
                     role = session?.role,
                     onMenuClick = { scope.launch { drawerState.open() } },
+                    onBackClick = onBack,
                 )
             },
             bottomBar = {
@@ -191,7 +193,7 @@ private fun ConsultationRow(
                     Text(item.patientName, style = MaterialTheme.typography.bodyLarge)
                 }
                 Text(
-                    "#${consultation.id} · ${consultation.date.take(10)}",
+                    "Paciente #${consultation.patientId} · Consulta #${consultation.id} · ${consultation.date.take(10)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -217,7 +219,7 @@ private fun PatientPickerDialog(
     val filtered = remember(query, patients) {
         if (query.isBlank()) patients
         else {
-            val trimmed = query.trim()
+            val trimmed = query.trim().removePrefix("#")
             patients.filter {
                 it.name.contains(trimmed, ignoreCase = true) ||
                     it.id.toString().startsWith(trimmed)

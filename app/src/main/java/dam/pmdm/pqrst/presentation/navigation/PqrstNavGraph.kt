@@ -116,6 +116,7 @@ fun PqrstNavGraph(
         composable<ConsultationList> {
             ConsultationListScreen(
                 session = session,
+                onBack = { navController.navigateUp() },
                 onLogout = onLogout,
                 onNavigateToDetail = { navController.navigate(ConsultationDetail(it)) },
                 onNewConsultation = { patientId -> navController.navigate(ConsultationForm(patientId)) },

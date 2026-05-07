@@ -31,7 +31,7 @@ interface ConsultationDao {
         SELECT c.id, c.patient_id, c.date, c.symptoms, c.vital_signs, c.notes, c.created_at, c.created_by, p.name AS patient_name
         FROM consultations c
         JOIN patients p ON c.patient_id = p.id
-        WHERE (:query IS NULL OR p.name LIKE '%' || :query || '%' OR CAST(c.id AS TEXT) LIKE :query || '%')
+        WHERE (:query IS NULL OR p.name LIKE '%' || :query || '%' OR CAST(c.patient_id AS TEXT) LIKE :query || '%')
         ORDER BY c.date DESC
     """)
     fun observeAll(query: String? = null): Flow<List<ConsultationWithPatientEntity>>

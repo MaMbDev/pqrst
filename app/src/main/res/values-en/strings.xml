@@ -46,7 +46,7 @@
     <string name="dashboard_user_management">User Management\nManage access</string>
 
     <string name="patients_title">PATIENTS</string>
-    <string name="patients_search_hint">Search Patient</string>
+    <string name="patients_search_hint">Search by name or ID</string>
     <string name="patients_list_title">LIST</string>
     <string name="patients_new">NEW PATIENT</string>
     <string name="patients_empty">No patients registered</string>
@@ -63,7 +63,7 @@
 
     <string name="consultations_title">CONSULTATIONS</string>
     <string name="consultations_new">NEW CONSULTATION</string>
-    <string name="consultations_search_hint">Search by patient</string>
+    <string name="consultations_search_hint">Search by patient or ID</string>
     <string name="consultations_select_patient">Select patient</string>
     <string name="consultation_patient_label">Patient</string>
     <string name="consultation_date_label">Date</string>

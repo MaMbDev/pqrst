@@ -145,7 +145,7 @@ fun PatientListScreen(
             ) {
                 OutlinedTextField(
                     value = searchQuery,
-                    onValueChange = viewModel::onSearchChange,
+                    onValueChange = { viewModel.onSearchChange(it.removePrefix("#")) },
                     label = { Text(stringResource(R.string.patients_search_hint)) },
                     leadingIcon = { Icon(Icons.Default.Search, null) },
                     singleLine = true,

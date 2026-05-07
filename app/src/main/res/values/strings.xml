@@ -51,7 +51,7 @@
 
     <!-- Patients -->
     <string name="patients_title">PACIENTES</string>
-    <string name="patients_search_hint">Buscar Paciente</string>
+    <string name="patients_search_hint">Buscar por nombre o ID</string>
     <string name="patients_list_title">LISTADO</string>
     <string name="patients_new">NUEVO PACIENTE</string>
     <string name="patients_empty">No hay pacientes registrados</string>
@@ -68,7 +68,7 @@
     <string name="consultations_empty">Sin consultas registradas</string>
     <string name="consultations_title">CONSULTAS</string>
     <string name="consultations_new">NUEVA CONSULTA</string>
-    <string name="consultations_search_hint">Buscar por paciente</string>
+    <string name="consultations_search_hint">Buscar por paciente o ID</string>
     <string name="consultations_select_patient">Seleccionar paciente</string>
     <string name="consultation_patient_label">Paciente</string>
     <string name="consultation_date_label">Fecha</string>
