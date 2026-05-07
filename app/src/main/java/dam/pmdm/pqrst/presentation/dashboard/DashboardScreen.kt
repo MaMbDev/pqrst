@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.MonitorHeart
@@ -167,16 +168,30 @@ private fun DashboardContent(
         )
         Spacer(Modifier.height(8.dp))
         QuickActionCard(
-            label = stringResource(R.string.dashboard_ecg_monitor),
-            icon = Icons.Default.MonitorHeart,
-            onClick = { onNavigate("ecg_monitor") },
+            label = stringResource(R.string.dashboard_consultations),
+            icon = Icons.Default.DateRange,
+            onClick = { onNavigate("consultations") },
         )
         Spacer(Modifier.height(8.dp))
-        QuickActionCard(
-            label = stringResource(R.string.dashboard_import_ecg),
-            icon = Icons.Default.FileUpload,
-            onClick = { onNavigate("ecg_import") },
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            QuickActionCard(
+                label = stringResource(R.string.dashboard_ecg_monitor),
+                subtitle = stringResource(R.string.dashboard_ecg_guide),
+                icon = Icons.Default.MonitorHeart,
+                onClick = { onNavigate("ecg_monitor") },
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+            QuickActionCard(
+                label = stringResource(R.string.dashboard_import_ecg),
+                subtitle = stringResource(R.string.dashboard_ecg_guide),
+                icon = Icons.Default.FileUpload,
+                onClick = { onNavigate("ecg_import") },
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+            )
+        }
 
         Spacer(Modifier.height(8.dp))
 

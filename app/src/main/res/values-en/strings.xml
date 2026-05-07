@@ -39,8 +39,9 @@
     <string name="dashboard_last_access">Last access: %1$s</string>
     <string name="dashboard_quick_actions">QUICK ACCESS</string>
     <string name="dashboard_patients">PATIENTS</string>
-    <string name="dashboard_ecg_monitor">ECG MONITOR</string>
-    <string name="dashboard_import_ecg">IMPORT ECG</string>
+    <string name="dashboard_consultations">CONSULTATIONS</string>
+    <string name="dashboard_ecg_monitor">MONITOR</string>
+    <string name="dashboard_import_ecg">IMPORT</string>
     <string name="dashboard_admin_label">visible to admin only</string>
     <string name="dashboard_user_management">User Management\nManage access</string>
 
@@ -148,9 +149,9 @@
 
     <!-- Dashboard — learn section -->
     <string name="dashboard_learn_section">LEARN</string>
-    <string name="dashboard_learn">Learn</string>
+    <string name="dashboard_learn">LEARN</string>
     <string name="dashboard_ecg_guide">ECG</string>
-    <string name="dashboard_heart_anatomy">Heart</string>
+    <string name="dashboard_heart_anatomy">HEART</string>
 
     <!-- ECG Guide screen -->
     <string name="ecg_guide_title">PQRST Waveform Guide</string>
