@@ -73,6 +73,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun PatientListScreen(
     session: Session?,
+    onBack: () -> Unit,
     onLogout: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToForm: (Long?) -> Unit,
@@ -120,6 +121,7 @@ fun PatientListScreen(
                     title = stringResource(R.string.patients_title),
                     role = session?.role,
                     onMenuClick = { scope.launch { drawerState.open() } },
+                    onBackClick = onBack,
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
