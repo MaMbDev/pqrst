@@ -415,7 +415,10 @@ private fun ActionButtons(
                     Button(
                         onClick = onDemoClick,
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = PqrstBurgundy),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PqrstBurgundy,
+                            contentColor = Color.White,
+                        ),
                     ) {
                         Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))

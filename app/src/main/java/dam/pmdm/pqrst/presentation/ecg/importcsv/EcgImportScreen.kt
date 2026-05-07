@@ -332,7 +332,10 @@ private fun IdleContent(onPickFile: () -> Unit) {
         )
         Button(
             onClick = onPickFile,
-            colors = ButtonDefaults.buttonColors(containerColor = PqrstBurgundy),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PqrstBurgundy,
+                contentColor = Color.White,
+            ),
         ) {
             Icon(Icons.Default.FileOpen, null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
