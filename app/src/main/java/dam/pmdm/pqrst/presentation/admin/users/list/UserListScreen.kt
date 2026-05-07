@@ -199,7 +199,7 @@ private fun UserRow(
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = stringResource(R.string.delete),
-                    tint = MaterialTheme.colorScheme.error,
+                    tint = Color(0xFF77202E),
                 )
             }
         }
