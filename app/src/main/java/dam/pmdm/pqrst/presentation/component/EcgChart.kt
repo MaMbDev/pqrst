@@ -2,8 +2,12 @@ package dam.pmdm.pqrst.presentation.component
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -47,7 +51,6 @@ fun EcgChartWithPeaks(
     var zoomLevel by remember { mutableFloatStateOf(1f) }
     var panSamples by remember { mutableFloatStateOf(0f) }
 
-    // Reset pan position when live signal resumes
     LaunchedEffect(isPaused) {
         if (!isPaused) panSamples = 0f
     }
@@ -56,7 +59,6 @@ fun EcgChartWithPeaks(
     val visibleCount = (totalSamples / zoomLevel).coerceAtLeast(2f).roundToInt()
     val maxPan = (totalSamples - visibleCount).toFloat().coerceAtLeast(0f)
 
-    // panSamples=0 → show newest samples; panSamples=maxPan → show oldest
     val startIdx = (totalSamples - visibleCount - panSamples.roundToInt())
         .coerceIn(0, (totalSamples - visibleCount).coerceAtLeast(0))
     val endIdx = (startIdx + visibleCount).coerceAtMost(totalSamples)
@@ -66,18 +68,35 @@ fun EcgChartWithPeaks(
     Box(
         modifier = modifier
             .pointerInput(isPaused) {
-                detectTransformGestures { _, pan, zoom, _ ->
-                    val newZoom = (zoomLevel * zoom).coerceIn(ZOOM_MIN, ZOOM_MAX)
-                    zoomLevel = newZoom
-                    if (isPaused && totalSamples > 1 && size.width > 0) {
-                        val currentVisible = (totalSamples / newZoom).coerceAtLeast(2f).roundToInt()
-                        val samplesPerPx = currentVisible.toFloat() / size.width.toFloat()
-                        val newMaxPan = (totalSamples - currentVisible).toFloat().coerceAtLeast(0f)
-                        // Drag right → show older samples (positive pan.x increases panSamples)
-                        panSamples = (panSamples + pan.x * samplesPerPx).coerceIn(0f, newMaxPan)
-                    } else if (!isPaused) {
-                        panSamples = 0f
-                    }
+                // Use awaitEachGesture + calculateZoom/Pan instead of detectTransformGestures.
+                // On multi-touch (2+ fingers) we consume events immediately so the parent
+                // verticalScroll cannot steal them before the zoom gesture is established.
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    var isMultiTouch = false
+                    do {
+                        // Use Initial pass so we consume before the parent verticalScroll's
+                        // Main-pass drag detector can claim the gesture.
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.changes.size >= 2) isMultiTouch = true
+                        // Once multi-touch, consume everything (including finger-lift frames)
+                        // so the parent scroll never takes over.
+                        if (isMultiTouch) event.changes.forEach { it.consume() }
+
+                        val zoomChange = event.calculateZoom()
+                        val panChange = event.calculatePan()
+                        val newZoom = (zoomLevel * zoomChange).coerceIn(ZOOM_MIN, ZOOM_MAX)
+                        zoomLevel = newZoom
+
+                        if (isPaused && totalSamples > 1 && size.width > 0) {
+                            val currentVisible = (totalSamples / newZoom).coerceAtLeast(2f).roundToInt()
+                            val samplesPerPx = currentVisible.toFloat() / size.width.toFloat()
+                            val newMaxPan = (totalSamples - currentVisible).toFloat().coerceAtLeast(0f)
+                            panSamples = (panSamples + panChange.x * samplesPerPx).coerceIn(0f, newMaxPan)
+                        } else if (!isPaused) {
+                            panSamples = 0f
+                        }
+                    } while (event.changes.any { it.pressed })
                 }
             }
             .pointerInput(Unit) {
@@ -92,8 +111,7 @@ fun EcgChartWithPeaks(
         Canvas(modifier = Modifier.fillMaxSize()) {
             if (visibleBuffer.size < 2) return@Canvas
 
-            // Vertical zoom: shrink the visible amplitude range around the signal centre
-            val halfRange = 1.0f / zoomLevel   // zoom=1 → ±1.0 (range -0.5..1.5); zoom=2 → ±0.5 (0.0..1.0)
+            val halfRange = 1.0f / zoomLevel
             val minY = 0.5f - halfRange
             val maxY = 0.5f + halfRange
             val yRange = maxY - minY
@@ -112,11 +130,7 @@ fun EcgChartWithPeaks(
             drawPath(
                 path = path,
                 color = signalColor,
-                style = Stroke(
-                    width = 2.dp.toPx(),
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round,
-                ),
+                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
             )
 
             visiblePeaks.forEach { localIdx ->
@@ -139,14 +153,8 @@ fun EcgChartWithPeaks(
                     size = Size(size.width, barH),
                     cornerRadius = CornerRadius(barH / 2),
                 )
-                val thumbW = (size.width * visibleCount / totalSamples.toFloat())
-                    .coerceAtLeast(20.dp.toPx())
-                // thumbX: right = newest, left = oldest
-                val thumbX = if (maxPan > 0f) {
-                    (1f - panSamples / maxPan) * (size.width - thumbW)
-                } else {
-                    size.width - thumbW
-                }
+                val thumbW = (size.width * visibleCount / totalSamples.toFloat()).coerceAtLeast(20.dp.toPx())
+                val thumbX = if (maxPan > 0f) (1f - panSamples / maxPan) * (size.width - thumbW) else size.width - thumbW
                 drawRoundRect(
                     color = signalColor.copy(alpha = 0.75f),
                     topLeft = Offset(thumbX, barY),
@@ -156,7 +164,6 @@ fun EcgChartWithPeaks(
             }
         }
 
-        // Zoom level badge
         if (zoomLevel > 1.01f) {
             Text(
                 text = "×${"%.1f".format(zoomLevel)}",
@@ -170,7 +177,6 @@ fun EcgChartWithPeaks(
             )
         }
 
-        // Pinch hint — only visible when paused and not yet zoomed
         if (isPaused && zoomLevel <= 1.01f) {
             Text(
                 text = stringResource(R.string.ecg_zoom_hint),
@@ -193,31 +199,17 @@ fun EcgPaperGrid(modifier: Modifier = Modifier, zoomLevel: Float = 1f) {
     Canvas(modifier = modifier) {
         val minorStep = (20.dp.toPx() * zoomLevel).coerceAtLeast(2f)
         val majorEvery = 5
-        var col = 0
-        var x = 0f
+        var col = 0; var x = 0f
         while (x <= size.width + 1f) {
             val isMajor = col % majorEvery == 0
-            drawLine(
-                color = if (isMajor) majorColor else minorColor,
-                start = Offset(x, 0f),
-                end = Offset(x, size.height),
-                strokeWidth = if (isMajor) 1.dp.toPx() else 0.5.dp.toPx(),
-            )
-            x += minorStep
-            col++
+            drawLine(if (isMajor) majorColor else minorColor, Offset(x, 0f), Offset(x, size.height), if (isMajor) 1.dp.toPx() else 0.5.dp.toPx())
+            x += minorStep; col++
         }
-        var row = 0
-        var y = 0f
+        var row = 0; var y = 0f
         while (y <= size.height + 1f) {
             val isMajor = row % majorEvery == 0
-            drawLine(
-                color = if (isMajor) majorColor else minorColor,
-                start = Offset(0f, y),
-                end = Offset(size.width, y),
-                strokeWidth = if (isMajor) 1.dp.toPx() else 0.5.dp.toPx(),
-            )
-            y += minorStep
-            row++
+            drawLine(if (isMajor) majorColor else minorColor, Offset(0f, y), Offset(size.width, y), if (isMajor) 1.dp.toPx() else 0.5.dp.toPx())
+            y += minorStep; row++
         }
     }
 }

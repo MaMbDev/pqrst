@@ -246,4 +246,15 @@
     <string name="ecg_import_stop">Reiniciar</string>
     <string name="ecg_import_save">Guardar en consulta</string>
     <string name="ecg_import_no_consultation">Abre este ECG desde una consulta para poder guardarlo</string>
+
+    <!-- ECG live metrics -->
+    <string name="ecg_metric_bpm_avg">FC media</string>
+    <string name="ecg_metric_rr">Dist. RR</string>
+
+    <!-- Rhythm badges (short form for chips) -->
+    <string name="rhythm_normal_short">Normal</string>
+    <string name="rhythm_bradycardia_short">Bradicardia</string>
+    <string name="rhythm_tachycardia_short">Taquicardia</string>
+    <string name="rhythm_regular">Regular</string>
+    <string name="rhythm_irregular_short">Irregular</string>
 </resources>

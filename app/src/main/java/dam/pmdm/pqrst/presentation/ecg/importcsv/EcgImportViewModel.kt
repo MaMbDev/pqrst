@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 import javax.inject.Inject
 
 sealed class EcgImportUiState {
@@ -70,6 +71,12 @@ class EcgImportViewModel @Inject constructor(
     private val _bpm = MutableStateFlow<Int?>(null)
     val bpm: StateFlow<Int?> = _bpm.asStateFlow()
 
+    private val _rrMeanMs = MutableStateFlow<Double?>(null)
+    val rrMeanMs: StateFlow<Double?> = _rrMeanMs.asStateFlow()
+
+    private val _isRegular = MutableStateFlow<Boolean?>(null)
+    val isRegular: StateFlow<Boolean?> = _isRegular.asStateFlow()
+
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress.asStateFlow()
 
@@ -105,10 +112,7 @@ class EcgImportViewModel @Inject constructor(
                     parsedChannelCount = parsed.channelCount
                     playbackIndex = 0
                     hasPlayedBack = false
-                    _signalBuffer.value = List(WINDOW_SIZE) { 0f }
-                    _peaks.value = emptyList()
-                    _bpm.value = null
-                    _progress.value = 0f
+                    resetLiveMetrics()
                     _uiState.value = EcgImportUiState.Ready(
                         fileName = fileName,
                         sampleCount = parsed.samples.size,
@@ -141,8 +145,6 @@ class EcgImportViewModel @Inject constructor(
 
         val slideBuffer = ArrayDeque<Float>(WINDOW_SIZE + 1)
         if (current is EcgImportUiState.Paused && playbackIndex > 0) {
-            // Pre-fill with the samples immediately before the pause point so the
-            // chart continues seamlessly instead of showing a blank window on resume.
             val prefillStart = (playbackIndex - WINDOW_SIZE).coerceAtLeast(0)
             repeat(WINDOW_SIZE - (playbackIndex - prefillStart)) { slideBuffer.addLast(0f) }
             for (i in prefillStart until playbackIndex) slideBuffer.addLast(allSamples[i])
@@ -167,6 +169,8 @@ class EcgImportViewModel @Inject constructor(
                     _signalBuffer.value = data
                     _peaks.value = detectedPeaks
                     _bpm.value = estimateBpm(detectedPeaks)
+                    _rrMeanMs.value = computeRrMeanMs(detectedPeaks)
+                    _isRegular.value = computeIsRegular(detectedPeaks)
                 }
 
                 delay(SAMPLE_INTERVAL_MS)
@@ -191,9 +195,7 @@ class EcgImportViewModel @Inject constructor(
         playbackJob = null
         playbackIndex = 0
         _progress.value = 0f
-        _bpm.value = null
-        _signalBuffer.value = List(WINDOW_SIZE) { 0f }
-        _peaks.value = emptyList()
+        resetLiveMetrics()
         val current = _uiState.value
         val (name, rate, dur) = when (current) {
             is EcgImportUiState.Playing -> Triple(current.fileName, current.sampleRateHz, current.durationSec)
@@ -214,7 +216,6 @@ class EcgImportViewModel @Inject constructor(
         playbackJob?.cancel()
         playbackJob = null
 
-        // Only capture snapshot if playback has actually run (buffer contains real ECG data)
         val snapshotBuffer = if (hasPlayedBack) _signalBuffer.value else emptyList()
         val snapshotPeaks = if (hasPlayedBack) _peaks.value else emptyList()
 
@@ -237,21 +238,20 @@ class EcgImportViewModel @Inject constructor(
         }
     }
 
+    private fun resetLiveMetrics() {
+        _signalBuffer.value = List(WINDOW_SIZE) { 0f }
+        _peaks.value = emptyList()
+        _bpm.value = null
+        _rrMeanMs.value = null
+        _isRegular.value = null
+    }
+
     private fun resolveFileName(uri: Uri): String =
         context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
             val idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             if (cursor.moveToFirst() && idx >= 0) cursor.getString(idx) else null
         } ?: uri.lastPathSegment ?: "ecg.csv"
 
-    private fun resolveFileSize(uri: Uri): Long =
-        context.contentResolver.query(
-            uri, arrayOf(OpenableColumns.SIZE), null, null, null,
-        )?.use { cursor ->
-            val idx = cursor.getColumnIndex(OpenableColumns.SIZE)
-            if (cursor.moveToFirst() && idx >= 0) cursor.getLong(idx) else -1L
-        } ?: -1L
-
-    // Simple local-maximum threshold R-peak detector (matches EcgMonitorViewModel)
     private fun detectRPeaks(data: List<Float>): List<Int> {
         if (data.size < 10) return emptyList()
         val mean = data.average().toFloat()
@@ -273,9 +273,25 @@ class EcgImportViewModel @Inject constructor(
 
     private fun estimateBpm(peaks: List<Int>): Int? {
         if (peaks.size < 2) return null
-        val rrSamples = peaks.zipWithNext { a, b -> b - a }.filter { it > 0 }
-        if (rrSamples.isEmpty()) return null
-        return (SAMPLE_RATE_HZ * 60.0 / rrSamples.average()).roundToInt()
+        val rr = peaks.zipWithNext { a, b -> b - a }.filter { it > 0 }
+        if (rr.isEmpty()) return null
+        return (SAMPLE_RATE_HZ * 60.0 / rr.average()).roundToInt()
+    }
+
+    private fun computeRrMeanMs(peaks: List<Int>): Double? {
+        if (peaks.size < 2) return null
+        val rr = peaks.zipWithNext { a, b -> b - a }.filter { it > 0 }
+        if (rr.isEmpty()) return null
+        return rr.average() * 1000.0 / SAMPLE_RATE_HZ
+    }
+
+    private fun computeIsRegular(peaks: List<Int>): Boolean? {
+        if (peaks.size < 3) return null
+        val rr = peaks.zipWithNext { a, b -> (b - a).toDouble() }.filter { it > 0 }
+        if (rr.size < 2) return null
+        val mean = rr.average()
+        val cv = sqrt(rr.sumOf { (it - mean) * (it - mean) } / rr.size) / mean
+        return cv < 0.15 // coefficient of variation < 15% = regular
     }
 
     override fun onCleared() {

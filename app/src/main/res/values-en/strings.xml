@@ -230,6 +230,7 @@
     <string name="ecg_import_pick_file">Select CSV file</string>
     <string name="ecg_import_pick_hint">Supports MIT-BIH and single-column CSV formats</string>
     <string name="ecg_import_parsing">Reading file…</string>
+    <string name="ecg_import_parsing_pct">Reading… %1$d%%</string>
     <string name="ecg_import_error">Error: %1$s</string>
     <string name="ecg_import_retry">Try a different file</string>
     <string name="ecg_import_play">Play</string>
@@ -237,4 +238,12 @@
     <string name="ecg_import_stop">Restart</string>
     <string name="ecg_import_save">Save to consultation</string>
     <string name="ecg_import_no_consultation">Open this screen from a consultation to save the record</string>
+    <!-- Live ECG metrics -->
+    <string name="ecg_metric_bpm_avg">Avg HR</string>
+    <string name="ecg_metric_rr">RR Dist.</string>
+    <string name="rhythm_normal_short">Normal</string>
+    <string name="rhythm_bradycardia_short">Bradycardia</string>
+    <string name="rhythm_tachycardia_short">Tachycardia</string>
+    <string name="rhythm_regular">Regular</string>
+    <string name="rhythm_irregular_short">Irregular</string>
 </resources>

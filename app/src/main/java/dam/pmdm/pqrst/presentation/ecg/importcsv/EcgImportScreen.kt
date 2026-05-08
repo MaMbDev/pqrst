@@ -2,6 +2,8 @@ package dam.pmdm.pqrst.presentation.ecg.importcsv
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -68,6 +71,8 @@ fun EcgImportScreen(
     val signalBuffer by viewModel.signalBuffer.collectAsStateWithLifecycle()
     val peaks by viewModel.peaks.collectAsStateWithLifecycle()
     val bpm by viewModel.bpm.collectAsStateWithLifecycle()
+    val rrMeanMs by viewModel.rrMeanMs.collectAsStateWithLifecycle()
+    val isRegular by viewModel.isRegular.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
     val loadProgress by viewModel.loadProgress.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -158,31 +163,18 @@ fun EcgImportScreen(
                 is EcgImportUiState.Playing,
                 is EcgImportUiState.Paused -> {
                     val (fileName, sampleCount, sampleRateHz, durationSec) = when (state) {
-                        is EcgImportUiState.Ready  -> Quad(state.fileName, state.sampleCount, state.sampleRateHz, state.durationSec)
+                        is EcgImportUiState.Ready   -> Quad(state.fileName, state.sampleCount, state.sampleRateHz, state.durationSec)
                         is EcgImportUiState.Playing -> Quad(state.fileName, null, state.sampleRateHz, state.durationSec)
                         is EcgImportUiState.Paused  -> Quad(state.fileName, null, state.sampleRateHz, state.durationSec)
                         else -> return@Column
                     }
                     val isPlaying = state is EcgImportUiState.Playing
 
-                    // File info card
                     FileInfoCard(
                         fileName = fileName,
                         sampleCount = sampleCount,
                         sampleRateHz = sampleRateHz,
                         durationSec = durationSec,
-                    )
-
-                    // BPM badge — always visible once a file is loaded
-                    val bpmText = bpm
-                        ?.let { stringResource(R.string.ecg_bpm, it) }
-                        ?: stringResource(R.string.ecg_bpm_unknown)
-                    Text(
-                        text = bpmText,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.End,
                     )
 
                     // Chart
@@ -196,11 +188,15 @@ fun EcgImportScreen(
                             peaks = peaks,
                             signalColor = PqrstBurgundy,
                             peakColor = Color(0xFFFF1744),
+                            isPaused = state is EcgImportUiState.Paused,
                             modifier = Modifier.fillMaxWidth().height(220.dp),
                         )
                     }
 
-                    // Progress bar
+                    // Live metrics — visible as soon as playback produces peaks
+                    LiveMetricsCard(bpm = bpm, rrMeanMs = rrMeanMs, isRegular = isRegular)
+
+                    // Playback progress bar
                     LinearProgressIndicator(
                         progress = { progress },
                         modifier = Modifier.fillMaxWidth(),
@@ -211,11 +207,10 @@ fun EcgImportScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        // Play / Pause
                         Button(
                             onClick = { if (isPlaying) viewModel.pause() else viewModel.play() },
                             modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = PqrstBurgundy),
+                            colors = ButtonDefaults.buttonColors(containerColor = PqrstBurgundy, contentColor = Color.White),
                         ) {
                             Icon(
                                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -223,14 +218,8 @@ fun EcgImportScreen(
                                 modifier = Modifier.size(18.dp),
                             )
                             Spacer(Modifier.width(6.dp))
-                            Text(
-                                stringResource(
-                                    if (isPlaying) R.string.ecg_import_pause else R.string.ecg_import_play,
-                                ),
-                            )
+                            Text(stringResource(if (isPlaying) R.string.ecg_import_pause else R.string.ecg_import_play))
                         }
-
-                        // Stop / Restart
                         OutlinedButton(
                             onClick = { viewModel.stop() },
                             modifier = Modifier.weight(1f),
@@ -241,7 +230,6 @@ fun EcgImportScreen(
                         }
                     }
 
-                    // Save button — only available when linked to a real consultation
                     if (consultationId != 0L) {
                         FilledTonalButton(
                             onClick = { viewModel.save(consultationId) },
@@ -261,7 +249,6 @@ fun EcgImportScreen(
                         )
                     }
 
-                    // Pick a different file
                     OutlinedButton(
                         onClick = { fileLauncher.launch("*/*") },
                         modifier = Modifier.fillMaxWidth(),
@@ -292,13 +279,11 @@ fun EcgImportScreen(
                     }
                 }
 
-                // Saved is handled by the event → onImported()
                 is EcgImportUiState.Saved -> {}
             }
 
             Spacer(Modifier.height(8.dp))
 
-            // Educational disclaimer
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -314,6 +299,84 @@ fun EcgImportScreen(
                     text = stringResource(R.string.ecg_disclaimer),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+// ── Live metrics card ─────────────────────────────────────────────────────────
+
+@Composable
+private fun LiveMetricsCard(bpm: Int?, rrMeanMs: Double?, isRegular: Boolean?) {
+    AnimatedVisibility(visible = bpm != null, enter = fadeIn()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                // FC media
+                LiveMetricItem(
+                    label = stringResource(R.string.ecg_metric_bpm_avg),
+                    value = bpm?.let { "$it lpm" } ?: "—",
+                    badge = when {
+                        bpm == null -> null
+                        bpm < 60    -> stringResource(R.string.rhythm_bradycardia_short) to Color(0xFFB3D9FF) // T-wave blue
+                        bpm > 100   -> stringResource(R.string.rhythm_tachycardia_short) to Color(0xFFFFB3C1) // P-wave pink
+                        else        -> stringResource(R.string.rhythm_normal_short)      to Color(0xFFB8F0B8) // ST green
+                    },
+                )
+
+                // RR distance
+                LiveMetricItem(
+                    label = stringResource(R.string.ecg_metric_rr),
+                    value = rrMeanMs?.let { "${"%.0f".format(it)} ms" } ?: "—",
+                    badge = when (isRegular) {
+                        true  -> stringResource(R.string.rhythm_regular)        to Color(0xFFB8F0B8) // ST green
+                        false -> stringResource(R.string.rhythm_irregular_short) to Color(0xFFFFCC99) // PR peach
+                        null  -> null
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LiveMetricItem(
+    label: String,
+    value: String,
+    badge: Pair<String, Color>?,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.Black,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = PqrstBurgundy,
+        )
+        if (badge != null) {
+            Surface(
+                color = badge.second,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.wrapContentSize(),
+            ) {
+                Text(
+                    text = badge.first,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color(0xFF333333),
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                 )
             }
         }
@@ -345,10 +408,7 @@ private fun IdleContent(onPickFile: () -> Unit) {
         )
         Button(
             onClick = onPickFile,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = PqrstBurgundy,
-                contentColor = Color.White,
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = PqrstBurgundy, contentColor = Color.White),
         ) {
             Icon(Icons.Default.FileOpen, null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
@@ -362,24 +422,12 @@ private fun IdleContent(onPickFile: () -> Unit) {
 @Composable
 private fun ErrorContent(message: String, onRetry: () -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    Icons.Default.Warning,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                )
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.onErrorContainer)
                 Text(
                     text = stringResource(R.string.ecg_import_error, message),
                     style = MaterialTheme.typography.bodyMedium,
@@ -396,34 +444,18 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
 // ── File info card ────────────────────────────────────────────────────────────
 
 @Composable
-private fun FileInfoCard(
-    fileName: String,
-    sampleCount: Int?,
-    sampleRateHz: Int,
-    durationSec: Double,
-) {
+private fun FileInfoCard(fileName: String, sampleCount: Int?, sampleRateHz: Int, durationSec: Double) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = fileName,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-            )
+            Text(text = fileName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1)
             val info = buildString {
                 if (sampleCount != null) append("$sampleCount muestras · ")
-                append("${"%.1f".format(durationSec)} s · ${sampleRateHz} Hz")
+                append("${"%.1f".format(durationSec)} s · $sampleRateHz Hz")
             }
-            Text(
-                text = info,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Text(text = info, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -434,23 +466,8 @@ private fun FileInfoCard(
 @Composable
 private fun EcgImportIdlePreview() {
     PqrstTheme {
-        Scaffold(
-            topBar = {
-                PqrstTopBar(
-                    title = stringResource(R.string.ecg_import_title),
-                    role = null,
-                    onMenuClick = {},
-                    onBackClick = {},
-                )
-            },
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
+        Scaffold(topBar = { PqrstTopBar(title = stringResource(R.string.ecg_import_title), role = null, onMenuClick = {}, onBackClick = {}) }) { p ->
+            Column(Modifier.fillMaxSize().padding(p).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 IdleContent(onPickFile = {})
             }
         }
@@ -461,27 +478,9 @@ private fun EcgImportIdlePreview() {
 @Composable
 private fun EcgImportErrorPreview() {
     PqrstTheme {
-        Scaffold(
-            topBar = {
-                PqrstTopBar(
-                    title = stringResource(R.string.ecg_import_title),
-                    role = null,
-                    onMenuClick = {},
-                    onBackClick = {},
-                )
-            },
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                ErrorContent(
-                    message = "Formato CSV no reconocido",
-                    onRetry = {},
-                )
+        Scaffold(topBar = { PqrstTopBar(title = stringResource(R.string.ecg_import_title), role = null, onMenuClick = {}, onBackClick = {}) }) { p ->
+            Column(Modifier.fillMaxSize().padding(p).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ErrorContent(message = "Formato CSV no reconocido", onRetry = {})
             }
         }
     }
