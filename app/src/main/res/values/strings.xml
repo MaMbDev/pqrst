@@ -204,6 +204,9 @@
     <string name="ecg_guide_qt_label">INTERVALO QT</string>
     <string name="ecg_guide_qt_title">Sístole eléctrica ventricular</string>
     <string name="ecg_guide_qt_desc">Duración total de despolarización y repolarización ventricular. Varía con la frecuencia cardíaca; se corrige con la fórmula de Bazett.\n\n• QTc = QT / √RR\n• QTc normal: &lt; 440 ms (♂) / &lt; 460 ms (♀)\n• QTc &gt; 500 ms: mayor riesgo de torsade de pointes\n• Causas: fármacos, hipopotasemia, hipocalcemia</string>
+    <string name="ecg_guide_u_wave_label">ONDA U</string>
+    <string name="ecg_guide_u_wave_title">Repolarización tardía</string>
+    <string name="ecg_guide_u_wave_desc">La onda U es una pequeña deflexión positiva que sigue a la onda T, más visible en derivaciones precordiales (V2–V3).\n\n• Amplitud: normalmente &lt; 1 mm (&lt; 25 % de la onda T)\n• Origen probable: repolarización de los músculos papilares o del sistema de Purkinje\n• Onda U prominente: hipopotasemia, bradicardia, fármacos como la amiodarona\n• Onda U invertida: puede indicar isquemia o sobrecarga ventricular</string>
 
     <!-- Heart Anatomy screen -->
     <string name="heart_anatomy_title">Anatomía y Conducción Cardíaca</string>

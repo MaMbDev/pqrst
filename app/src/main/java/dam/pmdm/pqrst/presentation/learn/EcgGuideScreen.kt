@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -47,12 +48,20 @@ import dam.pmdm.pqrst.R
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
-// Colors matched to ECG-PQRST+popis.svg reference
-private val ColorPWave = Color(0xFFD4547A)   // rose    — P wave card
-private val ColorQRS   = Color(0xFFDB2943)   // crimson — QRS complex
-private val ColorPR    = Color(0xFFCA4800)   // orange  — PR interval
-private val ColorQT    = Color(0xFF235BA6)   // navy    — QT interval
-private val ColorST    = Color(0xFFA6368A)   // violet  — ST segment
+// Diagram band colours — matched to PqrstWaveformDiagram bands
+private val BandColorP   = Color(0xFFFFB3C1)  // pink   — P Wave
+private val BandColorPR  = Color(0xFFFFCC99)  // peach  — PR Segment
+private val BandColorQRS = Color(0xFFFFF59D)  // yellow — QRS Complex
+private val BandColorST  = Color(0xFFB8F0B8)  // green  — ST Segment
+private val BandColorT   = Color(0xFFB3D9FF)  // blue   — T Wave
+private val BandColorU   = Color(0xFFD9B3FF)  // purple — U Wave
+
+// Interval bar colours — matched to PqrstWaveformDiagram bottom bars
+private val BarColorPR   = Color(0xFF8D7355)  // brown  — PR Interval bar
+private val BarColorQT   = Color(0xFF7D8040)  // olive  — QT Interval bar
+
+private val CardBackground = Color(0xFF1C1C1E)
+private val SoftWhite      = Color(0xFFEEEEEE)
 
 @Composable
 fun EcgGuideScreen(onBack: () -> Unit) {
@@ -91,48 +100,55 @@ private fun EcgGuideContent(modifier: Modifier = Modifier) {
         PqrstWaveformDiagram(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(260.dp),
+                .height(280.dp),
         )
 
         Spacer(Modifier.height(12.dp))
 
         WaveInfoCard(
-            color = ColorPWave,
+            color = BandColorP,
             label = stringResource(R.string.ecg_guide_p_wave_label),
             title = stringResource(R.string.ecg_guide_p_wave_title),
             description = stringResource(R.string.ecg_guide_p_wave_desc),
         )
         Spacer(Modifier.height(8.dp))
         WaveInfoCard(
-            color = ColorQRS,
+            color = BandColorQRS,
             label = stringResource(R.string.ecg_guide_qrs_label),
             title = stringResource(R.string.ecg_guide_qrs_title),
             description = stringResource(R.string.ecg_guide_qrs_desc),
         )
         Spacer(Modifier.height(8.dp))
         WaveInfoCard(
-            color = ColorQT,
+            color = BandColorT,
             label = stringResource(R.string.ecg_guide_t_wave_label),
             title = stringResource(R.string.ecg_guide_t_wave_title),
             description = stringResource(R.string.ecg_guide_t_wave_desc),
         )
         Spacer(Modifier.height(8.dp))
         WaveInfoCard(
-            color = ColorPR,
+            color = BandColorU,
+            label = stringResource(R.string.ecg_guide_u_wave_label),
+            title = stringResource(R.string.ecg_guide_u_wave_title),
+            description = stringResource(R.string.ecg_guide_u_wave_desc),
+        )
+        Spacer(Modifier.height(8.dp))
+        WaveInfoCard(
+            color = BarColorPR,
             label = stringResource(R.string.ecg_guide_pr_label),
             title = stringResource(R.string.ecg_guide_pr_title),
             description = stringResource(R.string.ecg_guide_pr_desc),
         )
         Spacer(Modifier.height(8.dp))
         WaveInfoCard(
-            color = ColorST,
+            color = BandColorST,
             label = stringResource(R.string.ecg_guide_st_label),
             title = stringResource(R.string.ecg_guide_st_title),
             description = stringResource(R.string.ecg_guide_st_desc),
         )
         Spacer(Modifier.height(8.dp))
         WaveInfoCard(
-            color = ColorQT,
+            color = BarColorQT,
             label = stringResource(R.string.ecg_guide_qt_label),
             title = stringResource(R.string.ecg_guide_qt_title),
             description = stringResource(R.string.ecg_guide_qt_desc),
@@ -141,12 +157,12 @@ private fun EcgGuideContent(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(16.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF77202E)),
         ) {
             Text(
                 text = stringResource(R.string.ecg_disclaimer),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
+                color = SoftWhite,
                 modifier = Modifier.padding(12.dp),
             )
         }
@@ -158,159 +174,156 @@ private fun EcgGuideContent(modifier: Modifier = Modifier) {
 @Composable
 private fun PqrstWaveformDiagram(modifier: Modifier = Modifier) {
     val textMeasurer = rememberTextMeasurer()
-    val labelPR = stringResource(R.string.ecg_guide_pr_label)
-    val labelQT = stringResource(R.string.ecg_guide_qt_label)
+
+    val bandColors = listOf(BandColorP, BandColorPR, BandColorQRS, BandColorST, BandColorT, BandColorU)
+    val bandNames  = listOf("P",  "PR",      "QRS",     "ST",      "T",    "U")
+    val bandSubs   = listOf("Wave", "Segment", "Complex", "Segment", "Wave", "Wave")
 
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDF7)),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val W = size.width
             val H = size.height
 
-            // ── Layout zones ──────────────────────────────────────────────────
-            val topH  = H * 0.085f   // QRS bracket bar + label
-            val botH  = H * 0.200f   // PR + QT bracket bars + labels
-            val wvTop = topH
-            val wvBot = H - botH
-            val wvH   = wvBot - wvTop
+            // Band X boundaries (fractions of W): 6 bands
+            val bX = floatArrayOf(0f, 0.17f, 0.35f, 0.50f, 0.65f, 0.83f, 1f)
 
-            val padX   = 10.dp.toPx()
-            val chartW = W - 2f * padX
-            fun fx(n: Float) = padX + n * chartW
-            // fy maps signal proportions into the waveform zone only
+            // Vertical zones
+            val topLblH  = H * 0.22f   // top area for band labels
+            val botBarH  = H * 0.22f   // bottom area for interval bars
+            val wvTop    = topLblH
+            val wvBot    = H - botBarH
+            val wvH      = wvBot - wvTop
+
+            // ── Colored bands (full height) ───────────────────────────────────
+            for (i in 0 until 6) {
+                drawRect(
+                    color    = bandColors[i],
+                    topLeft  = Offset(bX[i] * W, 0f),
+                    size     = Size((bX[i + 1] - bX[i]) * W, H),
+                )
+            }
+
+            // ── Band labels at top ────────────────────────────────────────────
+            for (i in 0 until 6) {
+                val cx = (bX[i] + bX[i + 1]) / 2f * W
+                val nameLayout = textMeasurer.measure(
+                    bandNames[i],
+                    TextStyle(fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color(0xFF333333)),
+                )
+                val subLayout = textMeasurer.measure(
+                    bandSubs[i],
+                    TextStyle(fontSize = 8.sp, color = Color(0xFF555555)),
+                )
+                val gap     = 2.dp.toPx()
+                val totalH  = nameLayout.size.height + gap + subLayout.size.height
+                val startY  = (topLblH - totalH) / 2f
+                drawText(nameLayout, topLeft = Offset(cx - nameLayout.size.width / 2f, startY))
+                drawText(subLayout,  topLeft = Offset(cx - subLayout.size.width  / 2f, startY + nameLayout.size.height + gap))
+            }
+
+            // ── Waveform ──────────────────────────────────────────────────────
+            val baseline = wvTop + wvH * 0.63f
             fun fy(n: Float) = wvTop + n * wvH
+            fun fx(n: Float) = n * W
 
-            val base = fy(0.655f)   // isoelectric baseline
+            drawLine(Color(0x44000000), Offset(0f, baseline), Offset(W, baseline), 0.8.dp.toPx())
 
-            // Key X positions
-            val xPStart  = fx(0.141f);  val xPPeak = fx(0.227f); val xPEnd = fx(0.312f)
-            val xQRS     = fx(0.413f);  val xQ     = fx(0.431f); val xR    = fx(0.456f)
-            val xS       = fx(0.490f);  val xQRSEnd = fx(0.548f)
-            val xTStart  = fx(0.684f);  val xTPeak  = fx(0.770f); val xTEnd = fx(0.856f)
+            val waveColor = Color(0xFF111111)
+            val stroke    = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+            val sw        = 2.5.dp.toPx()
 
-            // ── ECG paper grid (full canvas) ──────────────────────────────────
-            val gridStep = 20.dp.toPx()
-            var xi = 0f; var ci = 0
-            while (xi <= W + 1f) {
-                val maj = ci % 5 == 0
-                drawLine(if (maj) Color(0xFFEF9A9A) else Color(0xFFFFCDD2),
-                    Offset(xi, 0f), Offset(xi, H),
-                    if (maj) 1.dp.toPx() else 0.5.dp.toPx())
-                xi += gridStep; ci++
-            }
-            var yi = 0f; var ri = 0
-            while (yi <= H + 1f) {
-                val maj = ri % 5 == 0
-                drawLine(if (maj) Color(0xFFEF9A9A) else Color(0xFFFFCDD2),
-                    Offset(0f, yi), Offset(W, yi),
-                    if (maj) 1.dp.toPx() else 0.5.dp.toPx())
-                yi += gridStep; ri++
-            }
-            // Isoelectric baseline
-            drawLine(Color(0x55000000), Offset(padX, base), Offset(W - padX, base), 0.8.dp.toPx())
+            // Key X coordinates
+            val xPStart  = fx(0.030f); val xPPeak  = fx(0.085f); val xPEnd   = fx(0.155f)
+            val xQStart  = fx(0.360f); val xQ      = fx(0.375f); val xR      = fx(0.415f)
+            val xS       = fx(0.455f); val xQRSEnd = fx(0.495f)
+            val xTStart  = fx(0.655f); val xTPeak  = fx(0.720f); val xTEnd   = fx(0.800f)
+            val xUStart  = fx(0.830f); val xUPeak  = fx(0.888f); val xUEnd   = fx(0.960f)
 
-            // ── TOP BRACKET: QRS (crimson) ────────────────────────────────────
-            val barH    = 4.dp.toPx()
-            val tickSW  = 1.5.dp.toPx()
-            val qrsBarY = topH * 0.55f
+            // Lead-in flat
+            drawLine(waveColor, Offset(0f, baseline), Offset(xPStart, baseline), sw, StrokeCap.Round)
 
-            drawRect(ColorQRS,
-                topLeft = Offset(xQRS, qrsBarY - barH / 2f),
-                size    = Size(xQRSEnd - xQRS, barH))
-            // tick lines reaching down to the waveform zone
-            drawLine(ColorQRS.copy(alpha = 0.65f), Offset(xQRS,    qrsBarY), Offset(xQRS,    wvTop), tickSW)
-            drawLine(ColorQRS.copy(alpha = 0.65f), Offset(xQRSEnd, qrsBarY), Offset(xQRSEnd, wvTop), tickSW)
+            // P wave
+            drawPath(Path().apply {
+                moveTo(xPStart, baseline)
+                cubicTo(fx(0.050f), baseline, fx(0.065f), fy(0.38f), xPPeak,  fy(0.38f))
+                cubicTo(fx(0.105f), fy(0.38f), fx(0.132f), baseline, xPEnd,   baseline)
+            }, waveColor, style = stroke)
 
-            val qrsLblLayout = textMeasurer.measure("QRS",
-                TextStyle(fontWeight = FontWeight.Bold, fontSize = 9.sp, color = ColorQRS))
-            drawText(qrsLblLayout,
-                topLeft = Offset((xQRS + xQRSEnd) / 2f - qrsLblLayout.size.width / 2f, 1.dp.toPx()))
+            // PR flat
+            drawLine(waveColor, Offset(xPEnd, baseline), Offset(xQStart, baseline), sw, StrokeCap.Round)
 
-            // ── TOP BRACKET: ST segment (violet) ─────────────────────────────
-            drawRect(ColorST,
-                topLeft = Offset(xQRSEnd, qrsBarY - barH / 2f),
-                size    = Size(xTStart - xQRSEnd, barH))
-            drawLine(ColorST.copy(alpha = 0.65f), Offset(xQRSEnd, qrsBarY), Offset(xQRSEnd, wvTop), tickSW)
-            drawLine(ColorST.copy(alpha = 0.65f), Offset(xTStart, qrsBarY), Offset(xTStart, wvTop), tickSW)
+            // QRS complex
+            drawPath(Path().apply {
+                moveTo(xQStart, baseline)
+                lineTo(xQ,      fy(0.80f))
+                lineTo(xR,      fy(0.04f))
+                lineTo(xS,      fy(0.88f))
+                lineTo(xQRSEnd, baseline)
+            }, waveColor, style = stroke)
 
-            val stLblLayout = textMeasurer.measure("ST",
-                TextStyle(fontWeight = FontWeight.Bold, fontSize = 9.sp, color = ColorST))
-            drawText(stLblLayout,
-                topLeft = Offset((xQRSEnd + xTStart) / 2f - stLblLayout.size.width / 2f, 1.dp.toPx()))
+            // ST flat
+            drawLine(waveColor, Offset(xQRSEnd, baseline), Offset(xTStart, baseline), sw, StrokeCap.Round)
 
-            // ── WAVEFORM (near-black, SVG style) ─────────────────────────────
-            val cWave  = Color(0xFF111111)
-            val stroke = Stroke(2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-            val sw     = 2.5.dp.toPx()
+            // T wave
+            drawPath(Path().apply {
+                moveTo(xTStart, baseline)
+                cubicTo(fx(0.674f), baseline, fx(0.700f), fy(0.32f), xTPeak,  fy(0.32f))
+                cubicTo(fx(0.742f), fy(0.32f), fx(0.778f), baseline, xTEnd,   baseline)
+            }, waveColor, style = stroke)
 
-            drawLine(cWave, Offset(padX, base), Offset(xPStart, base), sw, StrokeCap.Round)
+            // UT flat
+            drawLine(waveColor, Offset(xTEnd, baseline), Offset(xUStart, baseline), sw, StrokeCap.Round)
 
-            drawPath(Path().apply {                                   // P wave
-                moveTo(xPStart, base)
-                cubicTo(fx(0.168f), base, fx(0.210f), fy(0.445f), xPPeak, fy(0.445f))
-                cubicTo(fx(0.244f), fy(0.445f), fx(0.286f), base, xPEnd, base)
-            }, cWave, style = stroke)
+            // U wave (small)
+            drawPath(Path().apply {
+                moveTo(xUStart, baseline)
+                cubicTo(fx(0.848f), baseline, fx(0.872f), fy(0.50f), xUPeak,  fy(0.50f))
+                cubicTo(fx(0.906f), fy(0.50f), fx(0.938f), baseline, xUEnd,   baseline)
+            }, waveColor, style = stroke)
 
-            drawLine(cWave, Offset(xPEnd, base), Offset(xQRS, base), sw, StrokeCap.Round)
+            // Lead-out flat
+            drawLine(waveColor, Offset(xUEnd, baseline), Offset(W, baseline), sw, StrokeCap.Round)
 
-            drawPath(Path().apply {                                   // QRS
-                moveTo(xQRS, base)
-                lineTo(xQ, fy(0.782f))
-                lineTo(xR, fy(0.085f))
-                lineTo(xS, fy(0.860f))
-                lineTo(xQRSEnd, base)
-            }, cWave, style = stroke)
+            // ── Bottom interval bars ──────────────────────────────────────────
+            val barH    = botBarH * 0.50f
+            val barY    = wvBot + (botBarH - barH) * 0.42f
+            val pad     = 4.dp.toPx()
+            val cr      = CornerRadius(6.dp.toPx())
+            val lblBold = TextStyle(fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color.White)
+            val lblSub  = TextStyle(fontSize = 8.sp, color = Color.White)
 
-            drawLine(cWave, Offset(xQRSEnd, base), Offset(xTStart, base), sw, StrokeCap.Round)
+            // PR Interval bar (left edge → QRS start)
+            drawRoundRect(BarColorPR,
+                topLeft      = Offset(pad, barY),
+                size         = Size(xQStart - pad * 2f, barH),
+                cornerRadius = cr)
 
-            drawPath(Path().apply {                                   // T wave
-                moveTo(xTStart, base)
-                cubicTo(fx(0.712f), base, fx(0.752f), fy(0.445f), xTPeak, fy(0.445f))
-                cubicTo(fx(0.787f), fy(0.445f), fx(0.835f), base, xTEnd, base)
-            }, cWave, style = stroke)
+            val prName = textMeasurer.measure("PR",       lblBold)
+            val prSub  = textMeasurer.measure("Interval", lblSub)
+            val prCx   = xQStart / 2f
+            val prCy   = barY + barH / 2f
+            val prTH   = (prName.size.height + prSub.size.height).toFloat()
+            drawText(prName, topLeft = Offset(prCx - prName.size.width / 2f, prCy - prTH / 2f))
+            drawText(prSub,  topLeft = Offset(prCx - prSub.size.width  / 2f, prCy - prTH / 2f + prName.size.height))
 
-            drawLine(cWave, Offset(xTEnd, base), Offset(W - padX, base), sw, StrokeCap.Round)
+            // QT Interval bar (QRS start → T end)
+            drawRoundRect(BarColorQT,
+                topLeft      = Offset(xQStart + pad, barY),
+                size         = Size(xTEnd - xQStart - pad, barH),
+                cornerRadius = cr)
 
-            // ── POINT LABELS: P Q R S T ───────────────────────────────────────
-            val ptSt = TextStyle(fontWeight = FontWeight.Bold, fontSize = 13.sp, color = cWave)
-
-            val pLbl = textMeasurer.measure("P", ptSt)
-            drawText(pLbl, topLeft = Offset(xPPeak - pLbl.size.width / 2f, fy(0.445f) - pLbl.size.height - 2.dp.toPx()))
-            val qLbl = textMeasurer.measure("Q", ptSt)
-            drawText(qLbl, topLeft = Offset(xQ - qLbl.size.width - 1.dp.toPx(), fy(0.782f)))
-            val rLbl = textMeasurer.measure("R", ptSt)
-            drawText(rLbl, topLeft = Offset(xR - rLbl.size.width / 2f, fy(0.085f) - rLbl.size.height - 2.dp.toPx()))
-            val sLbl = textMeasurer.measure("S", ptSt)
-            drawText(sLbl, topLeft = Offset(xS + 1.dp.toPx(), fy(0.860f)))
-            val tLbl = textMeasurer.measure("T", ptSt)
-            drawText(tLbl, topLeft = Offset(xTPeak - tLbl.size.width / 2f, fy(0.445f) - tLbl.size.height - 2.dp.toPx()))
-
-            // ── BOTTOM BRACKETS ───────────────────────────────────────────────
-            val lblSt = TextStyle(fontWeight = FontWeight.Bold, fontSize = 9.sp)
-            val gap   = 3.dp.toPx()
-
-            // PR interval (orange)
-            val prBarY = wvBot + botH * 0.28f
-            drawRect(ColorPR,
-                topLeft = Offset(xPStart, prBarY - barH / 2f),
-                size    = Size(xQRS - xPStart, barH))
-            drawLine(ColorPR.copy(alpha = 0.65f), Offset(xPStart, prBarY), Offset(xPStart, wvBot), tickSW)
-            drawLine(ColorPR.copy(alpha = 0.65f), Offset(xQRS,    prBarY), Offset(xQRS,    wvBot), tickSW)
-            val prLbl = textMeasurer.measure(labelPR, lblSt.copy(color = ColorPR))
-            drawText(prLbl, topLeft = Offset((xPStart + xQRS) / 2f - prLbl.size.width / 2f, prBarY + barH / 2f + gap))
-
-            // QT interval (navy)
-            val qtBarY = wvBot + botH * 0.65f
-            drawRect(ColorQT,
-                topLeft = Offset(xQRS, qtBarY - barH / 2f),
-                size    = Size(xTEnd - xQRS, barH))
-            drawLine(ColorQT.copy(alpha = 0.65f), Offset(xQRS, qtBarY), Offset(xQRS, wvBot), tickSW)
-            drawLine(ColorQT.copy(alpha = 0.65f), Offset(xTEnd, qtBarY), Offset(xTEnd, wvBot), tickSW)
-            val qtLbl = textMeasurer.measure(labelQT, lblSt.copy(color = ColorQT))
-            drawText(qtLbl, topLeft = Offset((xQRS + xTEnd) / 2f - qtLbl.size.width / 2f, qtBarY + barH / 2f + gap))
+            val qtName = textMeasurer.measure("QT",       lblBold)
+            val qtSub  = textMeasurer.measure("Interval", lblSub)
+            val qtCx   = (xQStart + xTEnd) / 2f
+            val qtCy   = barY + barH / 2f
+            val qtTH   = (qtName.size.height + qtSub.size.height).toFloat()
+            drawText(qtName, topLeft = Offset(qtCx - qtName.size.width / 2f, qtCy - qtTH / 2f))
+            drawText(qtSub,  topLeft = Offset(qtCx - qtSub.size.width  / 2f, qtCy - qtTH / 2f + qtName.size.height))
         }
     }
 }
@@ -326,9 +339,7 @@ private fun WaveInfoCard(
     Card(
         onClick = { expanded = !expanded },
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = color.copy(alpha = 0.10f),
-        ),
+        colors = CardDefaults.cardColors(containerColor = CardBackground),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -344,28 +355,30 @@ private fun WaveInfoCard(
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelSmall,
-                        color = color,
+                        color = SoftWhite,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleSmall,
+                        color = SoftWhite,
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
                 Text(
                     text = if (expanded) "▲" else "▼",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = SoftWhite.copy(alpha = 0.60f),
                 )
             }
             if (expanded) {
                 Spacer(Modifier.height(10.dp))
-                HorizontalDivider(color = color.copy(alpha = 0.30f))
+                HorizontalDivider(color = color)
                 Spacer(Modifier.height(10.dp))
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
+                    color = SoftWhite,
                 )
             }
         }
