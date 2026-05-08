@@ -76,7 +76,9 @@ class EcgImportViewModel @Inject constructor(
     private val _events = Channel<EcgImportEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    private var allSamples: List<Float> = emptyList()
+    private var allSamples: FloatArray = floatArrayOf()
+    private var parsedSampleRate = 360
+    private var parsedChannelCount = 1
     private var playbackIndex = 0
     private var currentUri: Uri? = null
     private var playbackJob: Job? = null
@@ -95,6 +97,8 @@ class EcgImportViewModel @Inject constructor(
             }.fold(
                 onSuccess = { parsed ->
                     allSamples = parsed.samples
+                    parsedSampleRate = parsed.sampleRateHz
+                    parsedChannelCount = parsed.channelCount
                     playbackIndex = 0
                     hasPlayedBack = false
                     _signalBuffer.value = List(WINDOW_SIZE) { 0f }
@@ -206,7 +210,11 @@ class EcgImportViewModel @Inject constructor(
         _uiState.value = EcgImportUiState.Saving
 
         viewModelScope.launch(ioDispatcher) {
-            ecgRepository.importFromCsv(uri, consultationId, snapshotBuffer, snapshotPeaks).fold(
+            ecgRepository.importFromCsv(
+                uri, consultationId,
+                allSamples.size, parsedSampleRate, parsedChannelCount,
+                snapshotBuffer, snapshotPeaks,
+            ).fold(
                 onSuccess = {
                     _uiState.value = EcgImportUiState.Saved
                     _events.trySend(EcgImportEvent.ImportedSuccessfully)

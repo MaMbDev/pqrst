@@ -8,7 +8,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dam.pmdm.pqrst.data.csv.CsvEcgParser
 import dam.pmdm.pqrst.data.db.dao.EcgRecordDao
 import dam.pmdm.pqrst.data.db.entity.EcgRecordEntity
 import dam.pmdm.pqrst.data.db.toDomain
@@ -47,14 +46,13 @@ class EcgRepositoryImpl @Inject constructor(
     override suspend fun importFromCsv(
         uri: Uri,
         consultationId: Long,
+        sampleCount: Int,
+        sampleRateHz: Int,
+        channelCount: Int,
         snapshotBuffer: List<Float>,
         snapshotPeaks: List<Int>,
     ): Result<EcgRecord> = withContext(ioDispatcher) {
         runCatching {
-            val parsed = context.contentResolver.openInputStream(uri)
-                ?.use { CsvEcgParser.parse(it).getOrThrow() }
-                ?: error("Cannot open file URI")
-
             val dir = File(context.filesDir, "ecg").also { it.mkdirs() }
             val dest = File(dir, "ecg_${System.currentTimeMillis()}.csv")
             context.contentResolver.openInputStream(uri)?.use { src ->
@@ -66,7 +64,7 @@ class EcgRepositoryImpl @Inject constructor(
             } else null
 
             val now = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            val duration = parsed.samples.size.toDouble() / parsed.sampleRateHz
+            val duration = sampleCount.toDouble() / sampleRateHz
             val userId = authRepository.currentSession.value?.userId
                 ?: error("No active session — cannot save ECG record")
 
@@ -75,12 +73,12 @@ class EcgRepositoryImpl @Inject constructor(
                     consultationId = consultationId,
                     filePath = dest.absolutePath,
                     captureDate = now,
-                    sampleRateHz = parsed.sampleRateHz,
+                    sampleRateHz = sampleRateHz,
                     duration = duration,
                     signalQuality = null,
                     status = "Pendiente",
                     createdBy = userId,
-                    channelCount = parsed.channelCount,
+                    channelCount = channelCount,
                     snapshotPath = snapshotPath,
                 ),
             )

@@ -42,6 +42,9 @@ interface EcgRepository {
     suspend fun importFromCsv(
         uri: Uri,
         consultationId: Long,
+        sampleCount: Int,
+        sampleRateHz: Int,
+        channelCount: Int,
         snapshotBuffer: List<Float> = emptyList(),
         snapshotPeaks: List<Int> = emptyList(),
     ): Result<EcgRecord>
