@@ -117,6 +117,28 @@
     <string name="about_educational_notice">PQRST Learn is an educational tool. ECG analysis results do not constitute a clinical diagnosis.</string>
     <string name="about_mit_bih_attribution">Reference patterns derived from the MIT-BIH Arrhythmia database.</string>
 
+    <string name="ecg_monitor_title">ECG Monitor</string>
+    <string name="ecg_connect_esp32">Connect ESP32</string>
+    <string name="ecg_esp32_description">Connect ESP32 + AD8232 device via Bluetooth</string>
+    <string name="ecg_demo_mode">Test signal</string>
+    <string name="ecg_demo_description">Simulated normal sinus ECG — 72 bpm</string>
+    <string name="ecg_paired_devices">Paired</string>
+    <string name="ecg_nearby_devices">Nearby</string>
+    <string name="ecg_scan">Scan</string>
+    <string name="ecg_scanning">Scanning…</string>
+    <string name="ecg_no_devices">No devices found</string>
+    <string name="ecg_connecting">Connecting to %1$s…</string>
+    <string name="ecg_source_demo">DEMO</string>
+    <string name="ecg_source_bt">Bluetooth</string>
+    <string name="ecg_samples">%1$d samples</string>
+    <string name="ecg_bpm">Estimated HR: %1$d bpm</string>
+    <string name="ecg_stop_save">Stop and save</string>
+    <string name="ecg_cancel_capture">Cancel capture</string>
+    <string name="ecg_saving">Saving record…</string>
+    <string name="ecg_saved">Record saved successfully</string>
+    <string name="ecg_permission_rationale">Bluetooth permissions are required to connect to the ESP32</string>
+    <string name="ecg_bt_unavailable">Bluetooth is not available on this device</string>
+    <string name="ecg_zoom_hint">Pinch to zoom · double-tap to reset</string>
     <string name="ecg_bt_connection_failed">Could not connect to device</string>
     <string name="ecg_bt_waiting_signal">Connected. Waiting for ECG signal from ESP32…</string>
     <string name="ecg_disconnect">Disconnect</string>
@@ -174,6 +196,9 @@
     <string name="ecg_guide_qt_label">QT INTERVAL</string>
     <string name="ecg_guide_qt_title">Ventricular electrical systole</string>
     <string name="ecg_guide_qt_desc">Total duration of ventricular depolarisation and repolarisation. Rate-dependent — corrected with Bazett\'s formula.\n\n• QTc = QT / √RR\n• Normal QTc: &lt; 440 ms (♂) / &lt; 460 ms (♀)\n• QTc &gt; 500 ms: increased risk of torsade de pointes\n• Causes: drugs, hypokalaemia, hypocalcaemia</string>
+    <string name="ecg_guide_u_wave_label">U WAVE</string>
+    <string name="ecg_guide_u_wave_title">Late repolarisation</string>
+    <string name="ecg_guide_u_wave_desc">The U wave is a small positive deflection that follows the T wave, best seen in precordial leads (V2–V3).\n\n• Amplitude: normally &lt; 1 mm (&lt; 25% of the T wave)\n• Likely origin: repolarisation of papillary muscles or the Purkinje system\n• Prominent U wave: hypokalaemia, bradycardia, drugs such as amiodarone\n• Inverted U wave: may indicate ischaemia or ventricular overload</string>
 
     <!-- Heart Anatomy screen -->
     <string name="heart_anatomy_title">Heart Anatomy &amp; Conduction</string>

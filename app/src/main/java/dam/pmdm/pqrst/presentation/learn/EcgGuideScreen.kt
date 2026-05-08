@@ -60,7 +60,7 @@ private val BandColorU   = Color(0xFFD9B3FF)  // purple — U Wave
 private val BarColorPR   = Color(0xFF8D7355)  // brown  — PR Interval bar
 private val BarColorQT   = Color(0xFF7D8040)  // olive  — QT Interval bar
 
-private val CardBackground = Color(0xFF1C1C1E)
+private val CardBackground = Color(0xFF2E2E2E)
 private val SoftWhite      = Color(0xFFEEEEEE)
 
 @Composable

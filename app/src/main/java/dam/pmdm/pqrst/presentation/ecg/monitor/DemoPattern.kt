@@ -17,7 +17,7 @@ enum class DemoPattern(
         descRes = R.string.ecg_pattern_normal_desc,
         detailRes = R.string.ecg_pattern_normal_detail,
         nominalBpm = 72,
-        lineColor = Color(0xFF1B5E20),   // deep green — calm, healthy
+        lineColor = Color(0xFFB8F0B8),   // ST-segment green — healthy
         isPathological = false,
     ),
     TACHYCARDIA(
@@ -25,7 +25,7 @@ enum class DemoPattern(
         descRes = R.string.ecg_pattern_tachy_desc,
         detailRes = R.string.ecg_pattern_tachy_detail,
         nominalBpm = 150,
-        lineColor = Color(0xFFE65100),   // deep orange — elevated
+        lineColor = Color(0xFFFFB3C1),   // P-wave pink — alert/elevated
         isPathological = true,
     ),
     BRADYCARDIA(
@@ -33,7 +33,7 @@ enum class DemoPattern(
         descRes = R.string.ecg_pattern_brady_desc,
         detailRes = R.string.ecg_pattern_brady_detail,
         nominalBpm = 42,
-        lineColor = Color(0xFF5B8ED9),   // medium cornflower blue — slow/cold
+        lineColor = Color(0xFFB3D9FF),   // T-wave blue — slow/cool
         isPathological = true,
     ),
     ATRIAL_FIBRILLATION(
@@ -41,7 +41,7 @@ enum class DemoPattern(
         descRes = R.string.ecg_pattern_afib_desc,
         detailRes = R.string.ecg_pattern_afib_detail,
         nominalBpm = 88,
-        lineColor = Color(0xFFC62828),   // deep red — arrhythmia
+        lineColor = Color(0xFFFFCC99),   // PR-segment peach — conduction warning
         isPathological = true,
     ),
     VENTRICULAR_FIBRILLATION(
@@ -49,11 +49,11 @@ enum class DemoPattern(
         descRes = R.string.ecg_pattern_vfib_desc,
         detailRes = R.string.ecg_pattern_vfib_detail,
         nominalBpm = 280,
-        lineColor = Color(0xFF9B6EC5),   // medium amethyst — critical
+        lineColor = Color(0xFFD9B3FF),   // U-wave purple — critical
         isPathological = true,
     ),
     ;
 
     val areaColor: Color get() = lineColor.copy(alpha = 0.12f)
-    val peakColor: Color get() = if (isPathological) Color(0xFFB71C1C) else Color(0xFF558B2F)
+    val peakColor: Color get() = lineColor
 }

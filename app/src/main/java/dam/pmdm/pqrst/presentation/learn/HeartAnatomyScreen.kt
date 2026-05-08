@@ -160,12 +160,12 @@ private fun HeartAnatomyContent(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(16.dp))
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF77202E)),
         ) {
             Text(
                 text = stringResource(R.string.ecg_disclaimer),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
+                color = Color(0xFFEEEEEE),
                 modifier = Modifier.padding(12.dp),
             )
         }
@@ -382,10 +382,12 @@ private fun ConduccionInfoCard(
     title: String,
     description: String,
 ) {
+    val softWhite = Color(0xFFEEEEEE)
     var expanded by remember { mutableStateOf(false) }
     Card(
         onClick = { expanded = !expanded },
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2E2E2E)),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -410,28 +412,30 @@ private fun ConduccionInfoCard(
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelSmall,
-                        color = badgeColor,
+                        color = softWhite,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleSmall,
+                        color = softWhite,
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
                 Text(
                     text = if (expanded) "▲" else "▼",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = softWhite.copy(alpha = 0.60f),
                 )
             }
             if (expanded) {
                 Spacer(Modifier.height(10.dp))
-                HorizontalDivider()
+                HorizontalDivider(color = badgeColor)
                 Spacer(Modifier.height(10.dp))
                 Text(
                     text = description,
                     style = MaterialTheme.typography.bodySmall,
+                    color = softWhite,
                 )
             }
         }

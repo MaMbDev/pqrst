@@ -261,10 +261,10 @@ private fun StatusRow(uiState: EcgMonitorUiState) {
             is EcgMonitorUiState.DemoRunning -> {
                 StatusChip(
                     label = "DEMO · ${stringResource(uiState.pattern.labelRes)}",
-                    containerColor = Color(0xFFFFF3F3),
-                    contentColor = uiState.pattern.lineColor,
-                    icon = { Icon(Icons.Default.MonitorHeart, null, modifier = Modifier.size(14.dp)) },
-                    border = BorderStroke(1.5.dp, uiState.pattern.lineColor.copy(alpha = 0.60f)),
+                    containerColor = Color(0xFF2E2E2E),
+                    contentColor = Color.White,
+                    icon = { Icon(Icons.Default.MonitorHeart, null, tint = Color.White, modifier = Modifier.size(14.dp)) },
+                    border = BorderStroke(1.5.dp, uiState.pattern.lineColor),
                 )
             }
             is EcgMonitorUiState.BtConnected -> {
@@ -460,7 +460,7 @@ private fun ActionButtons(
                 Button(
                     onClick = onStopDemo,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB71C1C)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB71C1C), contentColor = Color.White),
                 ) {
                     Icon(Icons.Default.Stop, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
@@ -666,62 +666,50 @@ private fun DeviceSection(
 
 @Composable
 private fun PatternDescriptionCard(pattern: DemoPattern) {
+    val softWhite = Color(0xFFEEEEEE)
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = pattern.lineColor.copy(alpha = 0.22f),
-        ),
-        border = BorderStroke(
-            width = 1.5.dp,
-            color = pattern.lineColor.copy(alpha = 0.60f),
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2E2E2E)),
+        border = BorderStroke(width = 1.5.dp, color = pattern.lineColor),
     ) {
         // ── Demo banner ──
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(pattern.lineColor.copy(alpha = 0.22f))
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MonitorHeart,
-                    contentDescription = null,
-                    tint = pattern.lineColor,
-                    modifier = Modifier.size(16.dp),
-                )
-                Text(
-                    text = "DEMO · ${stringResource(pattern.labelRes).uppercase()}",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = pattern.lineColor,
-                )
-            }
-        }
-
-        // ── Pattern features header ──
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(pattern.lineColor.copy(alpha = 0.22f))
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        ) {
+            Icon(
+                imageVector = Icons.Default.MonitorHeart,
+                contentDescription = null,
+                tint = pattern.lineColor,
+                modifier = Modifier.size(16.dp),
+            )
             Text(
-                text = stringResource(R.string.ecg_pattern_features).uppercase(),
-                style = MaterialTheme.typography.labelMedium,
+                text = "DEMO · ${stringResource(pattern.labelRes).uppercase()}",
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = pattern.lineColor,
+                color = softWhite,
             )
         }
+
+        HorizontalDivider(color = pattern.lineColor)
+
+        // ── Pattern features header ──
+        Text(
+            text = stringResource(R.string.ecg_pattern_features).uppercase(),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = softWhite,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+
+        HorizontalDivider(color = pattern.lineColor)
 
         // ── Pattern detail ──
         Text(
             text = stringResource(pattern.detailRes),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = softWhite,
             lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.4f,
             modifier = Modifier.padding(16.dp),
         )
@@ -732,7 +720,7 @@ private fun PatternDescriptionCard(pattern: DemoPattern) {
 
 @Composable
 private fun signalColorFor(uiState: EcgMonitorUiState): Color = when (uiState) {
-    is EcgMonitorUiState.DemoRunning -> uiState.pattern.lineColor
+    is EcgMonitorUiState.DemoRunning -> Color(0xFF77202E)
     is EcgMonitorUiState.BtConnected -> Color(0xFF0097A7)
     else -> Color(0xFF9E9E9E)
 }
