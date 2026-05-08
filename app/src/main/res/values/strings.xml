@@ -238,6 +238,7 @@
     <string name="ecg_import_pick_file">Seleccionar archivo CSV</string>
     <string name="ecg_import_pick_hint">Compatible con MIT-BIH y CSV de columna única</string>
     <string name="ecg_import_parsing">Analizando archivo…</string>
+    <string name="ecg_import_parsing_pct">Analizando… %1$d%%</string>
     <string name="ecg_import_error">Error: %1$s</string>
     <string name="ecg_import_retry">Intentar con otro archivo</string>
     <string name="ecg_import_play">Reproducir</string>

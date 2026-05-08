@@ -69,6 +69,7 @@ fun EcgImportScreen(
     val peaks by viewModel.peaks.collectAsStateWithLifecycle()
     val bpm by viewModel.bpm.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val loadProgress by viewModel.loadProgress.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val fileLauncher = rememberLauncherForActivityResult(
@@ -121,10 +122,22 @@ fun EcgImportScreen(
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.padding(horizontal = 32.dp),
                         ) {
-                            CircularProgressIndicator()
+                            if (loadProgress > 0f) {
+                                LinearProgressIndicator(
+                                    progress = { loadProgress },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            } else {
+                                CircularProgressIndicator()
+                            }
                             Text(
-                                text = stringResource(R.string.ecg_import_parsing),
+                                text = if (loadProgress > 0f) {
+                                    stringResource(R.string.ecg_import_parsing_pct, (loadProgress * 100).toInt())
+                                } else {
+                                    stringResource(R.string.ecg_import_parsing)
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

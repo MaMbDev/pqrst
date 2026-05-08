@@ -73,6 +73,9 @@ class EcgImportViewModel @Inject constructor(
     private val _progress = MutableStateFlow(0f)
     val progress: StateFlow<Float> = _progress.asStateFlow()
 
+    private val _loadProgress = MutableStateFlow(0f)
+    val loadProgress: StateFlow<Float> = _loadProgress.asStateFlow()
+
     private val _events = Channel<EcgImportEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
@@ -87,12 +90,13 @@ class EcgImportViewModel @Inject constructor(
     fun loadCsv(uri: Uri) {
         currentUri = uri
         _uiState.value = EcgImportUiState.Parsing
+        _loadProgress.value = 0f
 
         viewModelScope.launch(ioDispatcher) {
             val fileName = resolveFileName(uri)
             runCatching {
                 context.contentResolver.openInputStream(uri)
-                    ?.use { CsvEcgParser.parse(it).getOrThrow() }
+                    ?.use { CsvEcgParser.parse(it) { p -> _loadProgress.value = p }.getOrThrow() }
                     ?: error("Cannot open file")
             }.fold(
                 onSuccess = { parsed ->
@@ -135,8 +139,15 @@ class EcgImportViewModel @Inject constructor(
 
         _uiState.value = EcgImportUiState.Playing(name, rate, dur)
 
-        val slideBuffer = ArrayDeque<Float>(WINDOW_SIZE + 1).also { buf ->
-            repeat(WINDOW_SIZE) { buf.addLast(0f) }
+        val slideBuffer = ArrayDeque<Float>(WINDOW_SIZE + 1)
+        if (current is EcgImportUiState.Paused && playbackIndex > 0) {
+            // Pre-fill with the samples immediately before the pause point so the
+            // chart continues seamlessly instead of showing a blank window on resume.
+            val prefillStart = (playbackIndex - WINDOW_SIZE).coerceAtLeast(0)
+            repeat(WINDOW_SIZE - (playbackIndex - prefillStart)) { slideBuffer.addLast(0f) }
+            for (i in prefillStart until playbackIndex) slideBuffer.addLast(allSamples[i])
+        } else {
+            repeat(WINDOW_SIZE) { slideBuffer.addLast(0f) }
         }
 
         playbackJob = viewModelScope.launch(ioDispatcher) {
@@ -231,6 +242,14 @@ class EcgImportViewModel @Inject constructor(
             val idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             if (cursor.moveToFirst() && idx >= 0) cursor.getString(idx) else null
         } ?: uri.lastPathSegment ?: "ecg.csv"
+
+    private fun resolveFileSize(uri: Uri): Long =
+        context.contentResolver.query(
+            uri, arrayOf(OpenableColumns.SIZE), null, null, null,
+        )?.use { cursor ->
+            val idx = cursor.getColumnIndex(OpenableColumns.SIZE)
+            if (cursor.moveToFirst() && idx >= 0) cursor.getLong(idx) else -1L
+        } ?: -1L
 
     // Simple local-maximum threshold R-peak detector (matches EcgMonitorViewModel)
     private fun detectRPeaks(data: List<Float>): List<Int> {

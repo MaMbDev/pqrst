@@ -9,7 +9,6 @@ data class ParsedCsv(
     val sampleRateHz: Int,
     val channelCount: Int,
 ) {
-    // FloatArray does not implement equals/hashCode by value — provide them so data class works correctly.
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ParsedCsv) return false
@@ -27,13 +26,23 @@ data class ParsedCsv(
 
 object CsvEcgParser {
 
-    fun parse(stream: InputStream): Result<ParsedCsv> = runCatching {
-        val reader = BufferedReader(InputStreamReader(stream))
-        var detectedSampleRate = 360 // MIT-BIH default
-        var columnCount = 1
+    // Cap at ~30 min of MIT-BIH data (360 Hz). Larger files are truncated to this window.
+    const val MAX_SAMPLES = 650_000
+    private val DELIMITER_REGEX = Regex("[,;\\t]+")
 
-        // Growable primitive float buffer — avoids boxing overhead of List<Float>.
-        var buf = FloatArray(65_536)
+    /**
+     * @param onProgress Called with values 0..1 based on samples loaded vs MAX_SAMPLES.
+     *   Reaches 1.0 when MAX_SAMPLES are loaded or the file ends, whichever comes first.
+     */
+    fun parse(
+        stream: InputStream,
+        fileSizeBytes: Long = -1L,
+        onProgress: ((Float) -> Unit)? = null,
+    ): Result<ParsedCsv> = runCatching {
+        val reader = BufferedReader(InputStreamReader(stream))
+        var detectedSampleRate = 360
+        var columnCount = 0
+        val buf = FloatArray(MAX_SAMPLES)
         var count = 0
 
         reader.useLines { lines ->
@@ -41,23 +50,25 @@ object CsvEcgParser {
                 val trimmed = line.trim()
                 if (trimmed.isEmpty()) continue
 
-                if (trimmed.startsWith('#') || trimmed.startsWith('%') || trimmed.startsWith('\'')) {
+                val first = trimmed[0]
+                if (first == '#' || first == '%' || first == '\'') {
                     extractSampleRate(trimmed)?.let { detectedSampleRate = it }
                     continue
                 }
 
-                val parts = trimmed.split(Regex("[,;\\t]+"))
+                val parts = trimmed.split(DELIMITER_REGEX)
                 val numeric = parts.mapNotNull { it.trim().toFloatOrNull() }
+                if (numeric.isEmpty()) continue // text header row
 
-                if (numeric.isEmpty()) continue
+                if (columnCount == 0) columnCount = numeric.size
+                buf[count++] = if (columnCount >= 2) numeric[1] else numeric[0]
 
-                columnCount = numeric.size
-                val value = if (numeric.size >= 2) numeric[1] else numeric[0]
-
-                if (count == buf.size) buf = buf.copyOf(buf.size * 2)
-                buf[count++] = value
+                if (count % 10_000 == 0) onProgress?.invoke(count.toFloat() / MAX_SAMPLES)
+                if (count >= MAX_SAMPLES) break
             }
         }
+
+        onProgress?.invoke(1f)
 
         require(count >= 2) { "Not enough samples: found $count" }
 
@@ -79,10 +90,7 @@ object CsvEcgParser {
             if (v > max) max = v
         }
         val range = max - min
-        if (range < 1e-6f) {
-            values.fill(0.5f)
-            return
-        }
+        if (range < 1e-6f) { values.fill(0.5f); return }
         for (i in values.indices) values[i] = (values[i] - min) / range
     }
 
