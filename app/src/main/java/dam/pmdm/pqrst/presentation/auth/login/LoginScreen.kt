@@ -47,30 +47,44 @@ import dam.pmdm.pqrst.presentation.component.PrimaryButton
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
 /**
- * Stateful login screen that observes [LoginViewModel] and delegates all rendering to [LoginContent].
+ * Stateful entry point for the login screen.
  *
- * Handles side effects: navigates on [LoginUiState.Success] via [onLoginSuccess],
- * shows an error Snackbar on [LoginUiState.Error], and presents a "Forgot password"
- * informational dialog.
+ * Observes [LoginViewModel] and delegates all visual rendering to the stateless [LoginContent].
+ * Responsible for:
+ * - Collecting [LoginViewModel.uiState] and reacting to [LoginUiState.Success] /
+ *   [LoginUiState.Error] side-effects via [LaunchedEffect].
+ * - Showing an error [Snackbar] and clearing the error from the ViewModel afterwards.
+ * - Presenting a "Forgot password" informational [ConfirmDialog].
  *
- * @param onLoginSuccess Callback invoked after a successful login. Navigation is driven by auth
- *                       state in [dam.pmdm.pqrst.presentation.navigation.PqrstNavGraph], so this
- *                       is typically a no-op.
- * @param viewModel The Hilt-provided [LoginViewModel]; can be overridden in tests.
+ * State hoisting pattern: all mutable UI state (username, password, dialog visibility)
+ * lives inside [LoginContent] or the ViewModel — this function only bridges the two.
+ *
+ * @param onLoginSuccess Callback invoked after a successful login. In practice the
+ *                       navigation graph reacts to the session state change, so this
+ *                       is typically a no-op, but remains available for testing or
+ *                       alternative nav setups.
+ * @param viewModel The Hilt-provided [LoginViewModel]; can be overridden in tests via
+ *                  a custom [ViewModelStoreOwner].
  */
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
+    // collectAsStateWithLifecycle is preferred over collectAsState because it suspends
+    // collection when the Composable is not visible (e.g. app backgrounded), preventing
+    // Snackbar re-triggers and wasted work during inactive lifecycle states.
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showForgotDialog by remember { mutableStateOf(false) }
 
+    // Re-runs whenever uiState changes. Using uiState as the key means the effect
+    // fires exactly once per distinct state value — not on every recomposition.
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) onLoginSuccess()
         if (uiState is LoginUiState.Error) {
             snackbarHostState.showSnackbar((uiState as LoginUiState.Error).message)
+            // Clear the error after showing it to avoid re-triggering on recomposition.
             viewModel.clearError()
         }
     }
@@ -82,6 +96,8 @@ fun LoginScreen(
         onForgotPassword = { showForgotDialog = true },
     )
 
+    // Show the "Forgot password" dialog on request. ConfirmDialog is used (not an
+    // AlertDialog) for consistency with other confirmation dialogs in the app.
     if (showForgotDialog) {
         ConfirmDialog(
             title = stringResource(R.string.forgot_password_title),
@@ -95,15 +111,27 @@ fun LoginScreen(
 }
 
 /**
- * Stateless login form that renders username and password fields, a login button,
- * and a "Forgot password" link.
+ * Stateless login form that renders the full login UI.
  *
- * Extracted from [LoginScreen] to enable Compose previews and simplify testing.
+ * Extracted from [LoginScreen] so it can be used in Compose previews and snapshot tests
+ * without requiring a Hilt component or a real ViewModel.
  *
- * @param uiState The current login UI state driving the loading indicator and disabled fields.
- * @param snackbarHostState Host that manages Snackbar visibility for error messages.
- * @param onLogin Callback invoked with the entered username and password when the login button is tapped.
- * @param onForgotPassword Callback invoked when the user taps the "Forgot password" link.
+ * Renders:
+ * - App name header and ECG icon.
+ * - Username and password [LabeledTextField]s (disabled while [isLoading]).
+ * - A password visibility toggle icon.
+ * - A [CircularProgressIndicator] while loading, otherwise the primary login button.
+ * - A "Forgot password" [TextButton].
+ * - A [SnackbarHost] pinned inside the [Column] to display error messages.
+ *
+ * @param uiState The current login UI state. Drives [isLoading] and whether inputs
+ *                are enabled.
+ * @param snackbarHostState Manages the visibility and queue of Snackbar messages.
+ *                          Passed in from [LoginScreen] so the same host is used for
+ *                          both the effect trigger and the display site.
+ * @param onLogin Callback invoked with the entered (username, password) pair when the
+ *                login button is tapped.
+ * @param onForgotPassword Callback invoked when the "Forgot password" link is tapped.
  */
 @Composable
 private fun LoginContent(
@@ -112,6 +140,8 @@ private fun LoginContent(
     onLogin: (String, String) -> Unit,
     onForgotPassword: () -> Unit,
 ) {
+    // rememberSaveable preserves field values across configuration changes (rotation),
+    // so the user does not have to re-type their credentials after rotating the device.
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
@@ -147,6 +177,7 @@ private fun LoginContent(
             value = username,
             onValueChange = { username = it },
             label = stringResource(R.string.login_username_hint),
+            // Disable input during loading to prevent duplicate submissions.
             enabled = !isLoading,
         )
 
@@ -157,6 +188,7 @@ private fun LoginContent(
             onValueChange = { password = it },
             label = stringResource(R.string.login_password_hint),
             enabled = !isLoading,
+            // Toggle between obscured and plain-text display based on user preference.
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -170,6 +202,8 @@ private fun LoginContent(
 
         Spacer(Modifier.height(24.dp))
 
+        // Replace the login button with a progress indicator during the async call
+        // to give immediate visual feedback and prevent double-taps.
         if (isLoading) {
             CircularProgressIndicator()
         } else {
@@ -192,7 +226,9 @@ private fun LoginContent(
 }
 
 /**
- * Preview of [LoginContent] in its idle state for the Android Studio design canvas.
+ * Preview of [LoginContent] in its idle (no active request) state.
+ *
+ * Rendered on the Android Studio design canvas to verify layout and theming.
  */
 @Preview(showBackground = true)
 @Composable
