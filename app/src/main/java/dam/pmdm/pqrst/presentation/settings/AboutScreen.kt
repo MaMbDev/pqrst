@@ -13,10 +13,18 @@ import dam.pmdm.pqrst.R
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 
 /**
- * Screen that displays information about the application: version, educational disclaimer,
- * and attribution for the MIT-BIH Arrhythmia Database used in pattern comparison.
+ * About / Help screen.
  *
- * @param onBack Callback invoked when the user taps the back arrow.
+ * Displays static informational content that does not require a ViewModel:
+ * - **App name and version** — identifies the build to support staff.
+ * - **Educational disclaimer** — mandatory per the project's educational-only constraint
+ *   (CLAUDE.md) — clarifies that ECG analysis results are not clinical diagnoses.
+ * - **MIT-BIH attribution** — acknowledges the PhysioNet MIT-BIH Arrhythmia Database used
+ *   for CSV import examples and educational patterns.
+ *
+ * All string values are loaded via [stringResource] to support localisation.
+ *
+ * @param onBack Callback invoked when the user taps the back arrow in [PqrstTopBar].
  */
 @Composable
 fun AboutScreen(onBack: () -> Unit) {

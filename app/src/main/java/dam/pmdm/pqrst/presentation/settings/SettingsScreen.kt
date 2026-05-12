@@ -30,6 +30,26 @@ import dam.pmdm.pqrst.R
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
+/**
+ * Application settings screen.
+ *
+ * Provides two user-configurable preferences persisted via [SettingsViewModel]:
+ * 1. **Dark mode** — a [Switch] toggles between light and dark themes. The change takes
+ *    effect immediately in the current composition via the [PqrstTheme] wrapper in
+ *    [MainActivity], which observes the same DataStore value.
+ * 2. **Language** — a segmented button selects "English" or "Spanish". The locale is
+ *    applied by [MainActivity] via [AppCompatDelegate], which recreates the activity so
+ *    all string resources reload in the chosen language.
+ *
+ * The screen is scrollable to accommodate future additional settings without a layout
+ * redesign.
+ *
+ * State is hoisted to [SettingsViewModel] which reads from and writes to
+ * [SettingsStore] (DataStore-backed).
+ *
+ * @param onBack Callback invoked when the user taps the back arrow.
+ * @param viewModel Hilt-injected ViewModel; overridable for tests.
+ */
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
@@ -79,6 +99,14 @@ fun SettingsScreen(
     }
 }
 
+/**
+ * A coloured section header label used to group related settings rows.
+ *
+ * Uses [MaterialTheme.colorScheme.primary] as the text colour to visually separate
+ * sections without adding extra dividers, following the Material 3 settings pattern.
+ *
+ * @param text The section title string.
+ */
 @Composable
 private fun SettingsSectionHeader(text: String) {
     Text(
@@ -89,6 +117,19 @@ private fun SettingsSectionHeader(text: String) {
     )
 }
 
+/**
+ * A settings row with a title, subtitle, and a trailing [Switch].
+ *
+ * The [Switch] is placed at the trailing end with [Arrangement.SpaceBetween] so it
+ * aligns with the row edge regardless of label length. The subtitle provides the current
+ * value in words (e.g. "Light" / "Dark") as a secondary cue alongside the toggle position.
+ *
+ * @param title Primary label for the setting (e.g. "Dark mode").
+ * @param subtitle Secondary description showing the current value (e.g. "Light").
+ * @param checked Whether the [Switch] is in the on state.
+ * @param onCheckedChange Callback invoked when the user flips the switch.
+ * @param modifier Optional [Modifier] for the row.
+ */
 @Composable
 private fun SettingsSwitchRow(
     title: String,
@@ -118,6 +159,17 @@ private fun SettingsSwitchRow(
     }
 }
 
+/**
+ * A segmented button row for selecting the application language.
+ *
+ * Uses [SingleChoiceSegmentedButtonRow] so exactly one option is always selected,
+ * matching the "single choice" semantics of a locale switch. [SegmentedButtonDefaults.itemShape]
+ * rounds the first and last items to give the group its characteristic pill shape.
+ *
+ * @param selectedLanguage The currently active language code (e.g. "en" or "es").
+ * @param onLanguageSelected Callback invoked with the new language code when the user taps a button.
+ * @param modifier Optional [Modifier] for the row.
+ */
 @Composable
 private fun LanguageSelector(
     selectedLanguage: String,
@@ -143,6 +195,7 @@ private fun LanguageSelector(
     }
 }
 
+/** Design-canvas preview of [SettingsScreen] with light mode and Spanish selected. */
 @Preview(showBackground = true)
 @Composable
 private fun SettingsPreview() {
