@@ -41,6 +41,29 @@ import dam.pmdm.pqrst.ui.theme.PqrstTheme
 import java.io.FileOutputStream
 import java.io.IOException
 
+/**
+ * Report preview and export screen (RF-08).
+ *
+ * Renders the PDF generation lifecycle and provides two export actions once the PDF is ready:
+ * - **Print** — invokes the Android [PrintManager] with [PdfPrintAdapter], which streams
+ *   the generated PDF to any printer or "Save to PDF" virtual printer the system offers.
+ * - **Share** — fires an [Intent.ACTION_SEND] with the PDF URI so the user can send it
+ *   via email, Drive, or any other share target.
+ *
+ * **Layout states**
+ * - [ReportState.isLoading] = true → spinner + "Generating…" text.
+ * - [ReportState.error] != null → error message + "Retry" button (calls [ReportPreviewViewModel.generate]).
+ * - [ReportState.pdfUri] != null → "Ready" text + Print and Share buttons.
+ *
+ * State is hoisted to [ReportPreviewViewModel]. The [LocalContext] is retrieved in this
+ * composable (not the ViewModel) because [PrintManager] and [Intent.createChooser] require
+ * an Activity context, which must not be held by the ViewModel.
+ *
+ * @param consultationId The ID of the consultation whose data populates the report.
+ * @param ecgRecordId The ID of the ECG record to include in the report; null omits the ECG section.
+ * @param onBack Callback invoked when the user taps the back arrow.
+ * @param viewModel Hilt-injected ViewModel; overridable for tests.
+ */
 @Composable
 fun ReportPreviewScreen(
     consultationId: Long,
@@ -109,6 +132,7 @@ fun ReportPreviewScreen(
                     )
                     Spacer(Modifier.height(4.dp))
 
+                    // Print button — delegates to Android PrintManager with a custom adapter
                     Button(
                         onClick = {
                             val pm = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
@@ -125,6 +149,8 @@ fun ReportPreviewScreen(
                         Text(stringResource(R.string.report_print))
                     }
 
+                    // Share button — ACTION_SEND with FLAG_GRANT_READ_URI_PERMISSION so the
+                    // receiving app can read the FileProvider URI without needing storage permission.
                     OutlinedButton(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -146,6 +172,7 @@ fun ReportPreviewScreen(
     }
 }
 
+/** Preview of the screen in its loading / generating state. */
 @Preview(showBackground = true)
 @Composable
 private fun ReportLoadingPreview() {
@@ -181,6 +208,7 @@ private fun ReportLoadingPreview() {
     }
 }
 
+/** Preview of the screen with the PDF ready for printing / sharing. */
 @Preview(showBackground = true)
 @Composable
 private fun ReportReadyPreview() {
@@ -220,6 +248,16 @@ private fun ReportReadyPreview() {
     }
 }
 
+/**
+ * [PrintDocumentAdapter] that streams a PDF file stored at [pdfUri] to the Android print system.
+ *
+ * This adapter is intentionally minimal: it reports the document as A4 with an unknown page count
+ * (suitable for a pre-rendered PDF) and copies the raw PDF bytes directly to the print destination.
+ * This approach avoids re-rendering the PDF in memory and works with any standard PDF viewer.
+ *
+ * @param context Context used to open the PDF content stream via [ContentResolver].
+ * @param pdfUri FileProvider URI of the generated PDF file.
+ */
 private class PdfPrintAdapter(
     private val context: Context,
     private val pdfUri: android.net.Uri,
