@@ -36,17 +36,28 @@ import dam.pmdm.pqrst.presentation.component.PrimaryButton
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
-/** Sex options as (stored value, display label) pairs. */
+/**
+ * Pairs of (stored value, display label) used to populate the sex dropdown.
+ *
+ * The stored value ("M", "F", "Otro") is what is persisted to the database; the
+ * display label is what the user sees in the UI.
+ */
 private val SEX_OPTIONS = listOf("M" to "Masculino", "F" to "Femenino", "Otro" to "Otro")
 
 /**
  * Screen for creating a new patient or editing an existing one.
  *
- * Binds directly to the mutable state on [PatientFormViewModel]. Validation errors are
- * shown inline below each field. On a successful save, [onSaved] is invoked; on a repository
- * error, the message is shown in a Snackbar.
+ * Binds directly to the mutable Compose state exposed by [PatientFormViewModel] for each
+ * form field. Validation errors are shown inline below each field. On a successful save
+ * [onSaved] is invoked; on a repository error the message is shown in a Snackbar.
+ *
+ * State hoisting pattern: all form field values and validation errors live in
+ * [PatientFormViewModel] (single source of truth). This screen only holds transient UI
+ * state (Snackbar host).
  *
  * @param patientId The ID of the patient to edit, or null when creating a new patient.
+ *                  This value is already injected into [PatientFormViewModel] via
+ *                  [SavedStateHandle]; the parameter exists here for the nav graph call site.
  * @param onBack Callback invoked when the user taps the back arrow without saving.
  * @param onSaved Callback invoked after the patient record has been successfully persisted.
  * @param viewModel The Hilt-provided [PatientFormViewModel]; can be overridden in tests.
@@ -60,10 +71,14 @@ fun PatientFormScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // LaunchedEffect(Unit) runs once on first composition. The savedEvent SharedFlow has
+    // replay = 0, so collecting here guarantees the callback fires exactly once per event.
     LaunchedEffect(Unit) {
         viewModel.savedEvent.collect { onSaved() }
     }
 
+    // Separate LaunchedEffect for errors so the two collectors run concurrently
+    // and neither blocks the other.
     LaunchedEffect(Unit) {
         viewModel.error.collect { message ->
             snackbarHostState.showSnackbar(message)
@@ -73,6 +88,7 @@ fun PatientFormScreen(
     Scaffold(
         topBar = {
             PqrstTopBar(
+                // Show context-appropriate title based on create vs edit mode.
                 title = if (viewModel.isEditing) "Editar Paciente" else "Nuevo Paciente",
                 role = null,
                 onMenuClick = {},
@@ -89,10 +105,22 @@ fun PatientFormScreen(
 }
 
 /**
- * Stateless form body for the patient create/edit screen.
+ * Stateless form body containing all patient input fields and the save button.
  *
- * @param viewModel The ViewModel whose mutable state fields drive every field.
- * @param modifier Modifier applied to the root [Column].
+ * Reads from and writes to the ViewModel's mutable state fields directly (no callbacks
+ * needed for simple field bindings). Extracted from [PatientFormScreen] to keep the
+ * scaffold setup separate from the field layout and to simplify previewing.
+ *
+ * Fields rendered:
+ * - Name (required, text)
+ * - Age (required, numeric keyboard)
+ * - Sex (required, exposed dropdown)
+ * - Phone (optional, phone keyboard)
+ * - Email (optional, email keyboard)
+ * - Medical history (optional, multiline)
+ *
+ * @param viewModel The ViewModel whose mutable state fields are bound to each input.
+ * @param modifier Modifier applied to the root scrollable [Column].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,7 +128,9 @@ private fun PatientFormContent(
     viewModel: PatientFormViewModel,
     modifier: Modifier = Modifier,
 ) {
+    // Local UI state for the dropdown; does not need to survive configuration changes.
     var sexExpanded by remember { mutableStateOf(false) }
+    // Derive the display label from the stored value so the dropdown shows the human-readable text.
     val sexDisplayLabel = SEX_OPTIONS.firstOrNull { it.first == viewModel.sex }?.second ?: ""
 
     Column(
@@ -124,9 +154,13 @@ private fun PatientFormContent(
             label = stringResource(R.string.patient_age_label),
             isError = viewModel.ageError != null,
             errorMessage = viewModel.ageError,
+            // Numeric keyboard to avoid non-digit input; actual parsing/validation
+            // is performed in the ViewModel via FieldValidators.
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
 
+        // Sex is presented as an exposed dropdown rather than a text field because
+        // it is a fixed enumeration — free text would allow invalid values.
         ExposedDropdownMenuBox(
             expanded = sexExpanded,
             onExpandedChange = { sexExpanded = it },
@@ -141,6 +175,8 @@ private fun PatientFormContent(
                 supportingText = viewModel.sexError?.let { { Text(it) } },
                 modifier = Modifier
                     .fillMaxWidth()
+                    // PrimaryNotEditable anchors the dropdown to the text field without
+                    // triggering the software keyboard (field is readOnly).
                     .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = true),
             )
             ExposedDropdownMenu(
@@ -177,6 +213,8 @@ private fun PatientFormContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         )
 
+        // Medical history is free text and has no validation; singleLine = false
+        // to allow multi-line input for longer histories.
         LabeledTextField(
             value = viewModel.medicalHistory,
             onValueChange = { viewModel.medicalHistory = it },
@@ -195,7 +233,8 @@ private fun PatientFormContent(
 /**
  * Preview of the patient form scaffold and field layout in create mode.
  *
- * Uses a static Scaffold to avoid [hiltViewModel] which is unavailable in preview.
+ * Uses a static [Scaffold] and placeholder [LabeledTextField]s to avoid requiring
+ * [hiltViewModel], which is unavailable in the Android Studio preview environment.
  */
 @Preview(showBackground = true)
 @Composable
