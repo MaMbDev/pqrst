@@ -13,13 +13,21 @@ import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
 /**
- * Screen that displays the automated analysis results for a stored ECG record.
+ * Screen that displays the automated analysis results for a stored ECG record (RF-06, CU-03).
  *
- * Shows detected R-peaks, RR intervals, BPM estimate, regularity classification,
- * and pattern comparison result. Currently a placeholder; full implementation is pending.
+ * When fully implemented this screen will show:
+ * - Detected R-peak positions overlaid on the ECG waveform.
+ * - RR intervals and mean RR interval in milliseconds.
+ * - Estimated heart rate in BPM.
+ * - Rhythm regularity classification.
+ * - Pattern comparison result with similarity score (RF-07).
  *
- * @param ecgRecordId The ID of the ECG record to analyse and display.
- * @param onBack Callback invoked when the user taps the back arrow.
+ * Currently a placeholder pending the ECG analysis ViewModel and domain use case.
+ * The scaffold and back-navigation are in place so this route is reachable from
+ * [ConsultationDetailScreen] without crashing.
+ *
+ * @param ecgRecordId The primary-key ID of the ECG record in the `ecg_records` table to analyse.
+ * @param onBack Callback invoked when the user taps the back arrow in [PqrstTopBar].
  */
 @Composable
 fun EcgAnalysisScreen(
@@ -45,6 +53,7 @@ fun EcgAnalysisScreen(
     }
 }
 
+/** Design-canvas preview of [EcgAnalysisScreen] in its placeholder state. */
 @Preview(showBackground = true)
 @Composable
 private fun EcgAnalysisScreenPreview() {
