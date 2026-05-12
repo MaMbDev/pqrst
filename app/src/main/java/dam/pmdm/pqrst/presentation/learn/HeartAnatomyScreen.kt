@@ -48,14 +48,43 @@ import dam.pmdm.pqrst.R
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
-// Learn palette: #0ffff8 · #7fffea · #91074a · #da1154 · #ff8376
-private val ColorBadge          = Color(0xFF91074A)  // color3 — info card badges
-private val ColorNodeFill       = Color(0xFFDA1154)  // color4 — SA / AV / bifurcation circles
-private val ColorConductionPath = Color(0xFFFFE221)  // yellow — connecting lines between nodes
-private val ColorPurkinje       = Color(0xFFFFE221)  // yellow — Purkinje fibers to node 4
-private val ColorWall           = Color(0xFF91074A)  // color3 — heart muscle wall
-private val ColorLVWall         = Color(0xFFDA1154)  // color4 — LV thick wall (vivid)
+// ── Anatomy diagram colour palette ────────────────────────────────────────────
+// Derived from the project's "Learn palette": #0ffff8 · #7fffea · #91074a · #da1154 · #ff8376
 
+/** Crimson — used for info card number badges. */
+private val ColorBadge          = Color(0xFF91074A)
+/** Vivid crimson — used for SA/AV node and bifurcation circle fills. */
+private val ColorNodeFill       = Color(0xFFDA1154)
+/** Yellow — conduction pathway dashed lines (internodal, His bundle, bundle branches). */
+private val ColorConductionPath = Color(0xFFFFE221)
+/** Yellow — Purkinje fibre dotted lines (same as conduction to indicate terminal path). */
+private val ColorPurkinje       = Color(0xFFFFE221)
+/** Crimson — heart muscle wall outlines. */
+private val ColorWall           = Color(0xFF91074A)
+/** Vivid crimson — LV thick wall outline (more prominent due to LV's thicker myocardium). */
+private val ColorLVWall         = Color(0xFFDA1154)
+
+/**
+ * Heart anatomy and electrical conduction system educational screen.
+ *
+ * Teaches users the four-chamber structure of the heart and the sequence of electrical
+ * activation that produces the ECG waveform, through:
+ * 1. An introductory paragraph.
+ * 2. [HeartCrossSectionDiagram] — a Canvas-drawn cross-section of the heart showing:
+ *    - Right atrium (RA) and left atrium (LA) with a dashed interatrial septum.
+ *    - Right ventricle (RV) and left ventricle (LV, thicker wall) with a dashed
+ *      interventricular septum.
+ *    - Conduction system overlay: SA node (1), internodal pathway → AV node (2),
+ *      His bundle (3), left/right bundle branches, and Purkinje fibres (4).
+ *    - Numbered badges matching the [ConduccionInfoCard] list below.
+ * 3. [ConduccionInfoCard] entries (1–5) for SA node, AV node, His bundle,
+ *    Purkinje fibres, and overall conduction sequence — each tappable to expand.
+ * 4. An educational disclaimer card.
+ *
+ * No ViewModel or state persistence is needed; all content is static string resources.
+ *
+ * @param onBack Callback invoked when the user taps the back arrow.
+ */
 @Composable
 fun HeartAnatomyScreen(onBack: () -> Unit) {
     Scaffold(
@@ -72,6 +101,13 @@ fun HeartAnatomyScreen(onBack: () -> Unit) {
     }
 }
 
+/**
+ * Stateless scrollable content of [HeartAnatomyScreen].
+ *
+ * Extracted to allow preview rendering without a Scaffold wrapper.
+ *
+ * @param modifier Optional modifier applied to the root [Column].
+ */
 @Composable
 private fun HeartAnatomyContent(modifier: Modifier = Modifier) {
     Column(
@@ -102,6 +138,7 @@ private fun HeartAnatomyContent(modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(6.dp))
 
+        // Legend for the chamber fill colours
         Text(
             text = stringResource(R.string.heart_anatomy_legend_atria),
             style = MaterialTheme.typography.labelSmall,
@@ -117,6 +154,7 @@ private fun HeartAnatomyContent(modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(14.dp))
 
+        // Conduction system info cards (1 per component, matching diagram badge numbers)
         ConduccionInfoCard(
             badgeNumber = "1",
             badgeColor = ColorBadge,
@@ -159,6 +197,7 @@ private fun HeartAnatomyContent(modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(16.dp))
 
+        // Mandatory disclaimer
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFF77202E)),
         ) {
@@ -174,6 +213,30 @@ private fun HeartAnatomyContent(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Canvas-drawn schematic cross-section of the heart with conduction system overlay.
+ *
+ * All geometry is specified as normalised fractions of canvas width/height (`fx`/`fy` helpers)
+ * so the diagram scales correctly across screen sizes without explicit pixel values.
+ *
+ * **Colour convention**
+ * - Cyan tint (0x0FFFF8 at 28 % alpha) — right-sided chambers (RA, RV); lower venous pressure.
+ * - Orange-pink tint (0xFF8376 at 38 % alpha) — left-sided chambers (LA, LV); higher arterial pressure.
+ * - [ColorConductionPath] yellow dashed/solid lines — electrical pathways.
+ * - [ColorNodeFill] crimson filled circles — conduction nodes (SA, AV, bifurcation).
+ * - [ColorPurkinje] yellow dotted lines — terminal Purkinje fibre distribution.
+ *
+ * **Septum rendering**
+ * Both the interatrial and interventricular septa are drawn as dashed lines rather than
+ * filled areas, mimicking how anatomical cross-section diagrams distinguish structural
+ * boundaries from cavity surfaces.
+ *
+ * @param modifier Modifier applied to the wrapping [Card].
+ * @param labelRA Localised label for the right atrium.
+ * @param labelLA Localised label for the left atrium.
+ * @param labelRV Localised label for the right ventricle.
+ * @param labelLV Localised label for the left ventricle.
+ */
 @Composable
 private fun HeartCrossSectionDiagram(
     modifier: Modifier = Modifier,
@@ -201,7 +264,7 @@ private fun HeartCrossSectionDiagram(
             fun fy(n: Float) = n * h
 
             val wallSw = 2.5.dp.toPx()
-            val lvWallSw = 3.dp.toPx()
+            val lvWallSw = 3.dp.toPx()   // LV wall is thicker — higher pressure myocardium
             val conductionSw = 2.dp.toPx()
             val dash = PathEffect.dashPathEffect(floatArrayOf(10f, 5f))
             val dot = PathEffect.dashPathEffect(floatArrayOf(5f, 4f))
@@ -232,7 +295,7 @@ private fun HeartCrossSectionDiagram(
             drawPath(laPath, colorLeft)
             drawPath(laPath, ColorWall, style = strokeWall)
 
-            // Interatrial septum gap (dashed)
+            // Interatrial septum gap (dashed) — the thin wall between the two atria
             val septumDash = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
             drawPath(
                 Path().apply {
@@ -256,6 +319,7 @@ private fun HeartCrossSectionDiagram(
             drawPath(rvPath, ColorWall, style = strokeWall)
 
             // ── LV (Ventrículo Izquierdo — lower right, dominant, thick wall) ─
+            // Drawn with a thicker stroke to reflect the LV's greater myocardial mass.
             val lvPath = Path().apply {
                 moveTo(fx(0.54f), fy(0.46f))
                 cubicTo(fx(0.64f), fy(0.44f), fx(0.82f), fy(0.44f), fx(0.91f), fy(0.46f))
@@ -281,12 +345,12 @@ private fun HeartCrossSectionDiagram(
 
             // ── Conduction system ─────────────────────────────────────────────
 
-            // 1 — SA node  (color4 fill — crimson, stands out on cyan chamber)
+            // 1 — SA node: pacemaker in the right atrium — drawn as a crimson filled circle
             val saCenter = Offset(fx(0.22f), fy(0.16f))
             drawCircle(ColorNodeFill, 9.dp.toPx(), saCenter)
             drawCircle(Color.White, 4.5.dp.toPx(), saCenter)
 
-            // Internodal pathway SA → AV (dashed, color1 — electric cyan)
+            // Internodal pathway SA → AV (dashed yellow — electrical impulse route)
             val internodalPath = Path().apply {
                 moveTo(fx(0.22f), fy(0.16f))
                 cubicTo(fx(0.34f), fy(0.08f), fx(0.45f), fy(0.22f), fx(0.46f), fy(0.38f))
@@ -296,12 +360,12 @@ private fun HeartCrossSectionDiagram(
                 style = Stroke(conductionSw, cap = StrokeCap.Round, pathEffect = dash),
             )
 
-            // 2 — AV node
+            // 2 — AV node: gateway at the AV junction — delays impulse to allow ventricular filling
             val avCenter = Offset(fx(0.46f), fy(0.44f))
             drawCircle(ColorNodeFill, 7.5.dp.toPx(), avCenter)
             drawCircle(Color.White, 3.5.dp.toPx(), avCenter)
 
-            // 3 — His bundle (solid, along septum)
+            // 3 — His bundle: solid line along the interventricular septum
             drawLine(
                 ColorConductionPath,
                 Offset(fx(0.47f), fy(0.48f)),
@@ -310,7 +374,7 @@ private fun HeartCrossSectionDiagram(
                 StrokeCap.Round,
             )
 
-            // His bifurcation node
+            // His bundle bifurcation into left and right bundle branches
             val hisBifurc = Offset(fx(0.48f), fy(0.64f))
             drawCircle(ColorNodeFill, 5.dp.toPx(), hisBifurc)
 
@@ -320,7 +384,8 @@ private fun HeartCrossSectionDiagram(
             // Left bundle branch → LV
             drawLine(ColorConductionPath, hisBifurc, Offset(fx(0.66f), fy(0.80f)), conductionSw, StrokeCap.Round)
 
-            // 4 — Purkinje fibers RV (dotted, color2 — mint)
+            // 4 — Purkinje fibres: dotted lines fanning out to the ventricular walls
+            // RV Purkinje
             val purkinjeRPath = Path().apply {
                 moveTo(fx(0.30f), fy(0.80f))
                 cubicTo(fx(0.18f), fy(0.87f), fx(0.10f), fy(0.92f), fx(0.26f), fy(0.94f))
@@ -330,7 +395,7 @@ private fun HeartCrossSectionDiagram(
                 style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, pathEffect = dot),
             )
 
-            // 4 — Purkinje fibers LV (dotted)
+            // LV Purkinje
             val purkinjeL = Path().apply {
                 moveTo(fx(0.66f), fy(0.80f))
                 cubicTo(fx(0.78f), fy(0.87f), fx(0.88f), fy(0.90f), fx(0.76f), fy(0.95f))
@@ -340,7 +405,7 @@ private fun HeartCrossSectionDiagram(
                 style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Round, pathEffect = dot),
             )
 
-            // ── Number badges ─────────────────────────────────────────────────
+            // ── Number badges (match ConduccionInfoCard list) ─────────────────
             fun drawBadge(center: Offset, num: String) {
                 drawCircle(ColorNodeFill, 8.dp.toPx(), center)
                 val lay = textMeasurer.measure(
@@ -350,11 +415,11 @@ private fun HeartCrossSectionDiagram(
                 drawText(lay, topLeft = Offset(center.x - lay.size.width / 2f, center.y - lay.size.height / 2f))
             }
 
-            drawBadge(Offset(fx(0.22f), fy(0.16f)), "1")
-            drawBadge(Offset(fx(0.46f), fy(0.44f)), "2")
-            drawBadge(Offset(fx(0.48f), fy(0.64f)), "3")
-            drawBadge(Offset(fx(0.18f), fy(0.88f)), "4")
-            drawBadge(Offset(fx(0.78f), fy(0.88f)), "4")
+            drawBadge(Offset(fx(0.22f), fy(0.16f)), "1")  // SA node
+            drawBadge(Offset(fx(0.46f), fy(0.44f)), "2")  // AV node
+            drawBadge(Offset(fx(0.48f), fy(0.64f)), "3")  // His bifurcation
+            drawBadge(Offset(fx(0.18f), fy(0.88f)), "4")  // RV Purkinje endpoint
+            drawBadge(Offset(fx(0.78f), fy(0.88f)), "4")  // LV Purkinje endpoint
 
             // ── Chamber labels ────────────────────────────────────────────────
             val labelStyle = TextStyle(fontWeight = FontWeight.Bold, fontSize = 13.sp)
@@ -374,6 +439,19 @@ private fun HeartCrossSectionDiagram(
     }
 }
 
+/**
+ * Expandable info card for a single conduction system component.
+ *
+ * Uses the same dark-card/expand pattern as [WaveInfoCard] in [EcgGuideScreen] for
+ * visual consistency across the educational section. A numbered circle badge (matching
+ * the diagram overlay numbers) provides spatial context.
+ *
+ * @param badgeNumber The number displayed in the circular badge (e.g. "1" for SA node).
+ * @param badgeColor Background colour of the badge circle.
+ * @param label Short label shown above the title (e.g. "NODE 1").
+ * @param title Component name (e.g. "SA Node — Sinoatrial Node").
+ * @param description Full educational description shown when expanded.
+ */
 @Composable
 private fun ConduccionInfoCard(
     badgeNumber: String,
@@ -394,6 +472,7 @@ private fun ConduccionInfoCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                // Numbered badge circle
                 Surface(
                     shape = CircleShape,
                     color = badgeColor,
@@ -422,6 +501,7 @@ private fun ConduccionInfoCard(
                         fontWeight = FontWeight.SemiBold,
                     )
                 }
+                // Expand/collapse chevron
                 Text(
                     text = if (expanded) "▲" else "▼",
                     style = MaterialTheme.typography.labelMedium,
@@ -442,6 +522,7 @@ private fun ConduccionInfoCard(
     }
 }
 
+/** Design-canvas preview of [HeartAnatomyContent]. */
 @Preview(showBackground = true)
 @Composable
 private fun HeartAnatomyPreview() {
