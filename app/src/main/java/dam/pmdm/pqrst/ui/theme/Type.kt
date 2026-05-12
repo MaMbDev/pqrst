@@ -9,10 +9,18 @@ import androidx.compose.ui.unit.sp
 /**
  * Material 3 typography scale for the PQRST Learn application.
  *
- * Only [Typography.bodyLarge] is overridden from the Material defaults;
- * all other text styles inherit the standard Material 3 values.
- * Additional overrides (e.g. [Typography.titleLarge], [Typography.labelSmall])
- * can be added here as the design system evolves.
+ * The [Typography] object is passed directly to [MaterialTheme] inside [PqrstTheme].
+ *
+ * **Current overrides**
+ * Only [Typography.bodyLarge] is customised; it uses the system default font family
+ * ([FontFamily.Default]) at 16 sp with 24 sp line height and 0.5 sp letter spacing —
+ * matching the Material 3 recommended baseline for body text.
+ *
+ * **Future overrides**
+ * Commented-out examples are retained to guide future typography adjustments (e.g. a
+ * custom branded font for [titleLarge], tighter letter-spacing for [labelSmall] in data
+ * tables). Uncomment and populate the relevant slots in the [Typography] constructor
+ * to apply them.
  */
 val Typography = Typography(
     bodyLarge = TextStyle(

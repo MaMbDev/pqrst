@@ -7,7 +7,14 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-/** Material 3 colour scheme applied when the system is in light mode. */
+/**
+ * Material 3 colour scheme applied when the device is in light mode.
+ *
+ * Burgundy is the primary colour (buttons, FABs, active indicators).
+ * Mauve provides the secondary and surface-variant tones.
+ * All tokens come from [Color.kt]; the explicit mapping here documents which colour
+ * fills which Material 3 role.
+ */
 private val LightColorScheme = lightColorScheme(
     primary = PqrstBurgundy,
     onPrimary = Color.White,
@@ -26,7 +33,13 @@ private val LightColorScheme = lightColorScheme(
     outline = PqrstOutline,
 )
 
-/** Material 3 colour scheme applied when the system is in dark mode. */
+/**
+ * Material 3 colour scheme applied when the device is in dark mode.
+ *
+ * Light variants of the brand colours ([PqrstBurgundyDark80], [PqrstMauveDark80]) are
+ * used as primary/secondary to preserve the contrast ratio on dark backgrounds.
+ * Dark surfaces ([PqrstDarkBackground], [PqrstDarkSurface]) replace the light-theme whites.
+ */
 private val DarkColorScheme = darkColorScheme(
     primary = PqrstBurgundyDark80,
     onPrimary = PqrstBurgundyDark,
@@ -46,12 +59,21 @@ private val DarkColorScheme = darkColorScheme(
 /**
  * Root Material 3 theme for the PQRST Learn application.
  *
- * Automatically switches between [LightColorScheme] and [DarkColorScheme] based on the
- * system dark-mode setting. All composable screens must be wrapped in this theme to
- * receive the correct colours and typography.
+ * Every screen composable must be rendered inside this theme (directly or indirectly
+ * through [MainActivity]) to receive the correct colour scheme and typography scale.
  *
- * @param darkTheme Whether to apply the dark colour scheme. Defaults to the system preference.
- * @param content The composable content to render within the theme.
+ * **Dark/light switching**
+ * The theme delegates to [isSystemInDarkTheme] by default, so it respects the device's
+ * system-level dark mode setting. The [SettingsViewModel] / [SettingsStore] layer writes
+ * a preference to DataStore; [MainActivity] reads this preference and passes a resolved
+ * boolean to the [darkTheme] parameter to allow an in-app override.
+ *
+ * **Typography**
+ * The [Typography] scale is defined in [Type.kt]. Only [Typography.bodyLarge] is currently
+ * overridden; all other text styles inherit Material 3 defaults.
+ *
+ * @param darkTheme Whether to apply [DarkColorScheme]. Defaults to the system preference.
+ * @param content The composable content tree to render within this theme.
  */
 @Composable
 fun PqrstTheme(
