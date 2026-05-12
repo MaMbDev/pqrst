@@ -56,18 +56,32 @@ import dam.pmdm.pqrst.ui.theme.PqrstTheme
 import kotlinx.coroutines.launch
 
 /**
- * Screen that displays a searchable, scrollable list of patients.
+ * Screen that displays a searchable, scrollable list of all patients in the database.
  *
- * Allows the user to view, edit, or delete individual patients, and navigate to the
- * new-patient form. Deletion requires confirmation via [ConfirmDialog]. Error messages
- * from failed deletions are shown in a Snackbar.
+ * Allows the authenticated user to:
+ * - Search/filter patients by name in real time via [PatientListViewModel.onSearchChange].
+ * - View the full detail of a patient by tapping "View".
+ * - Edit a patient record by tapping "Edit".
+ * - Delete a patient (with a [ConfirmDialog] guard) by tapping the delete icon.
+ * - Navigate to the new-patient form via the "New patient" bottom button.
+ * - Access the [PqrstNavigationDrawer] via the top-bar menu icon.
  *
- * @param session The currently authenticated user's session.
+ * Deletion errors (e.g. Room constraint violations) are surfaced via a Snackbar rather
+ * than crashing, in line with the app's error-handling policy.
+ *
+ * State hoisting pattern: all screen state is owned by [PatientListViewModel]; the
+ * Composable only holds transient UI state (drawer open/closed, which patient is
+ * pending deletion).
+ *
+ * @param session The currently authenticated user's session. Passed to [PqrstNavigationDrawer]
+ *                and [PqrstTopBar] so they can display the user's role.
+ * @param onBack Callback invoked when the user taps the top-bar back arrow.
  * @param onLogout Callback invoked when the user selects logout from the navigation drawer.
  * @param onNavigateToDetail Callback invoked with a patient ID when the user taps "View".
- * @param onNavigateToForm Callback invoked with a patient ID (or null for a new patient) when
- *                         the user taps "Edit" or the "New patient" button.
- * @param onDrawerNavigate Callback invoked with a route string when the user taps a drawer item.
+ * @param onNavigateToForm Callback invoked with a patient ID when tapping "Edit", or
+ *                         null when tapping "New patient" (signals create mode).
+ * @param onDrawerNavigate Callback invoked with a route string when the user taps a
+ *                         navigation drawer item.
  * @param viewModel The Hilt-provided [PatientListViewModel]; can be overridden in tests.
  */
 @Composable
@@ -80,6 +94,8 @@ fun PatientListScreen(
     onDrawerNavigate: (String) -> Unit,
     viewModel: PatientListViewModel = hiltViewModel(),
 ) {
+    // collectAsStateWithLifecycle suspends collection when the screen is not active,
+    // avoiding DB queries and Snackbar triggers while the app is in the background.
     val patients by viewModel.patients.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val deleteError by viewModel.deleteError.collectAsStateWithLifecycle()
@@ -87,8 +103,10 @@ fun PatientListScreen(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    // Tracks which patient the user has chosen to delete; non-null triggers the dialog.
     var patientToDelete by remember { mutableStateOf<Patient?>(null) }
 
+    // Show a Snackbar when a delete error arrives, then clear it to prevent re-show.
     LaunchedEffect(deleteError) {
         deleteError?.let {
             snackbarHostState.showSnackbar(it)
@@ -99,6 +117,7 @@ fun PatientListScreen(
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
+            // Only render the drawer when the session is available to avoid a blank drawer.
             if (session != null) {
                 PqrstNavigationDrawer(
                     session = session,
@@ -145,6 +164,7 @@ fun PatientListScreen(
             ) {
                 OutlinedTextField(
                     value = searchQuery,
+                    // Strip leading "#" to allow searching by patient ID (e.g. "#3") or plain name.
                     onValueChange = { viewModel.onSearchChange(it.removePrefix("#")) },
                     label = { Text(stringResource(R.string.patients_search_hint)) },
                     leadingIcon = { Icon(Icons.Default.Search, null) },
@@ -158,6 +178,7 @@ fun PatientListScreen(
                     modifier = Modifier.padding(vertical = 8.dp),
                 )
 
+                // Show an empty-state message rather than a blank list for clarity.
                 if (patients.isEmpty()) {
                     Text(
                         text = stringResource(R.string.patients_empty),
@@ -166,11 +187,14 @@ fun PatientListScreen(
                     )
                 } else {
                     LazyColumn {
+                        // Stable keys prevent unnecessary recompositions when the list
+                        // is updated after a delete or search query change.
                         items(patients, key = { it.id }) { patient ->
                             PatientRow(
                                 patient = patient,
                                 onView = { onNavigateToDetail(patient.id) },
                                 onEdit = { onNavigateToForm(patient.id) },
+                                // Setting patientToDelete triggers the ConfirmDialog below.
                                 onDelete = { patientToDelete = patient },
                             )
                             HorizontalDivider()
@@ -181,6 +205,8 @@ fun PatientListScreen(
         }
     }
 
+    // A ConfirmDialog is shown before any destructive delete action so the user cannot
+    // accidentally remove a patient and all their cascade-linked data (consultations, ECG records).
     patientToDelete?.let { patient ->
         ConfirmDialog(
             title = stringResource(R.string.confirm_delete_title),
@@ -195,13 +221,17 @@ fun PatientListScreen(
 }
 
 /**
- * A single row in the patient list, displaying the patient's name, age, and sex
- * along with view, edit, and delete actions.
+ * A single row in the patient list card layout.
  *
- * @param patient The patient data to render.
- * @param onView Callback invoked when the user taps the "View" button.
- * @param onEdit Callback invoked when the user taps the "Edit" button.
- * @param onDelete Callback invoked when the user taps the delete icon.
+ * Displays the patient's name, ID, age, and sex, along with "View", "Edit", and
+ * delete action controls. The delete action does not confirm here — confirmation is
+ * handled by the parent screen via [ConfirmDialog].
+ *
+ * @param patient The patient whose data is rendered in this row.
+ * @param onView Callback invoked when the user taps the "View" text button.
+ * @param onEdit Callback invoked when the user taps the "Edit" text button.
+ * @param onDelete Callback invoked when the user taps the delete [IconButton].
+ *                 The caller is responsible for showing a confirmation dialog.
  */
 @Composable
 private fun PatientRow(
@@ -239,7 +269,7 @@ private fun PatientRow(
 }
 
 /**
- * Preview of [PatientRow] for the Android Studio design canvas.
+ * Preview of a single [PatientRow] for the Android Studio design canvas.
  */
 @Preview(showBackground = true)
 @Composable
@@ -254,6 +284,11 @@ private fun PatientRowPreview() {
     }
 }
 
+/**
+ * Preview of the full patient list scaffold with sample data for the Android Studio design canvas.
+ *
+ * Uses a static [Scaffold] to avoid requiring a Hilt component or a real [PatientListViewModel].
+ */
 @Preview(showBackground = true)
 @Composable
 private fun PatientListScreenPreview() {

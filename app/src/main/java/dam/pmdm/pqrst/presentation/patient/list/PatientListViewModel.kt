@@ -18,10 +18,21 @@ import javax.inject.Inject
 /**
  * ViewModel for the patient list screen.
  *
- * Combines a live patient list from [PatientRepository] with a reactive search query so that
- * the displayed list updates immediately as the user types.
+ * Serves [PatientListScreen]. Combines a live, Room-backed patient list with a reactive
+ * search query so that the displayed list filters instantly as the user types, without
+ * any additional manual triggers.
  *
- * @param repository Repository used to observe and delete patient records.
+ * State exposed:
+ * - [patients] — live, filtered list of [Patient] records.
+ * - [searchQuery] — the current search string entered by the user.
+ * - [deleteError] — a one-shot error string to show in a Snackbar after a failed deletion.
+ *
+ * Actions handled:
+ * - [onSearchChange] — update the query, which triggers a new DB observation.
+ * - [deletePatient] — permanently remove a patient by ID.
+ * - [clearDeleteError] — dismiss the Snackbar after it has been shown.
+ *
+ * @param repository Repository used to observe filtered patient records and perform deletions.
  */
 @HiltViewModel
 class PatientListViewModel @Inject constructor(
@@ -30,20 +41,33 @@ class PatientListViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
 
-    /** The current search string typed by the user. */
+    /**
+     * The current search string typed by the user.
+     *
+     * Collected by the screen to keep the [OutlinedTextField] value in sync with the
+     * ViewModel (single source of truth for the query).
+     */
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     private val _deleteError = MutableStateFlow<String?>(null)
 
-    /** Holds an error message from the last failed delete operation, or null when there is no error. */
+    /**
+     * Holds an error message from the last failed delete operation, or null when there
+     * is no pending error. The screen collects this via [LaunchedEffect] and shows a
+     * Snackbar, then calls [clearDeleteError].
+     */
     val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
 
     /**
-     * A live list of patients filtered by [searchQuery].
+     * A live, filtered list of [Patient] records driven by [searchQuery].
      *
-     * Uses [flatMapLatest] so each new query cancels the previous database observation
-     * and starts a fresh one. Kept active for 5 seconds after the last subscriber
-     * disappears to survive configuration changes.
+     * [flatMapLatest] is used so that each new query value cancels the previous database
+     * Flow subscription and starts a fresh one — this prevents stale results from an
+     * earlier query from appearing when the user types quickly.
+     *
+     * `SharingStarted.WhileSubscribed(5_000)` keeps the upstream Flow active for 5 seconds
+     * after the last collector disappears (e.g. during a configuration change), so the
+     * list does not need to reload from the DB every time the screen rotates.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     val patients: StateFlow<List<Patient>> = _searchQuery
@@ -51,20 +75,25 @@ class PatientListViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /**
-     * Updates the search query, which reactively filters [patients].
+     * Updates the search query, which immediately re-filters [patients] via [flatMapLatest].
      *
-     * @param query The new search string entered by the user.
+     * @param query The new search string entered by the user. An empty or blank string
+     *              returns all patients (null is passed to the repository).
      */
     fun onSearchChange(query: String) {
         _searchQuery.value = query
     }
 
     /**
-     * Permanently deletes the patient with the given ID.
+     * Permanently deletes the patient with the given [id] from the local database.
      *
-     * On failure, exposes an error message via [deleteError] for display in a Snackbar.
+     * The repository is expected to cascade-delete associated consultations and ECG records
+     * (enforced by Room's `@ForeignKey(onDelete = CASCADE)` constraint).
      *
-     * @param id The ID of the patient to delete.
+     * On failure, [deleteError] is set so the screen can show a Snackbar. On success
+     * the Room-backed [patients] Flow updates automatically — no explicit refresh needed.
+     *
+     * @param id The primary key of the patient to delete.
      */
     fun deletePatient(id: Long) {
         viewModelScope.launch {
@@ -75,8 +104,10 @@ class PatientListViewModel @Inject constructor(
     }
 
     /**
-     * Clears [deleteError] after the error Snackbar has been shown,
-     * preventing it from re-triggering on recomposition.
+     * Clears [deleteError] after the error Snackbar has been shown.
+     *
+     * Prevents the same error from re-triggering the Snackbar on recomposition
+     * (e.g. after the screen is resumed following a configuration change).
      */
     fun clearDeleteError() {
         _deleteError.value = null
