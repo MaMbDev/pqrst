@@ -46,15 +46,25 @@ import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
 /**
- * Screen for creating a new application user or editing an existing one (ADMIN only).
+ * Screen for creating a new application user account or editing an existing one (ADMIN only).
  *
- * Binds to [UserFormViewModel] state for each field. In edit mode, the password field
- * shows a hint and can be left blank to retain the existing hash. Validation errors
- * are shown inline; repository errors appear in a Snackbar.
+ * Binds directly to the mutable Compose state exposed by [UserFormViewModel] for each
+ * form field. Validation errors are shown inline below each field. In edit mode a hint
+ * below the password field reminds the admin that the field can be left blank to retain
+ * the current password.
  *
- * @param userId The ID of the user to edit, or null when creating a new user.
- * @param onBack Callback invoked when the user taps the back arrow without saving.
- * @param onSaved Callback invoked after the user record has been successfully persisted.
+ * On a successful save [onSaved] is invoked; on a repository error the message is
+ * shown in a Snackbar.
+ *
+ * State hoisting pattern: all form field values and validation errors live in
+ * [UserFormViewModel] (single source of truth). This screen only holds transient UI
+ * state (password visibility toggle, role dropdown open/closed, Snackbar host).
+ *
+ * @param userId The ID of the user account to edit, or null when creating a new account.
+ *               Already injected into [UserFormViewModel] via [SavedStateHandle]; present
+ *               here for the nav graph call site.
+ * @param onBack Callback invoked when the admin taps the back arrow without saving.
+ * @param onSaved Callback invoked after the user account has been successfully persisted.
  * @param viewModel The Hilt-provided [UserFormViewModel]; can be overridden in tests.
  */
 @Composable
@@ -66,10 +76,14 @@ fun UserFormScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // LaunchedEffect(Unit) runs once on first composition. The savedEvent SharedFlow has
+    // replay = 0, so collecting here guarantees the callback fires exactly once per event.
     LaunchedEffect(Unit) {
         viewModel.savedEvent.collect { onSaved() }
     }
 
+    // Separate LaunchedEffect so error collection runs concurrently with savedEvent
+    // collection and neither blocks the other.
     LaunchedEffect(Unit) {
         viewModel.error.collect { message ->
             snackbarHostState.showSnackbar(message)
@@ -79,6 +93,7 @@ fun UserFormScreen(
     Scaffold(
         topBar = {
             PqrstTopBar(
+                // Show context-appropriate title based on create vs edit mode.
                 title = if (viewModel.isEditing) "Editar Usuario" else "Nuevo Usuario",
                 role = null,
                 onMenuClick = {},
@@ -95,10 +110,21 @@ fun UserFormScreen(
 }
 
 /**
- * Stateless form body for the user create/edit screen.
+ * Stateless form body containing all user account input fields and the save button.
  *
- * @param viewModel The ViewModel whose mutable state fields drive every input.
- * @param modifier Modifier applied to the root [Column].
+ * Reads from and writes to the ViewModel's mutable state fields directly. Extracted from
+ * [UserFormScreen] to keep the scaffold setup separate from the field layout and to
+ * simplify previewing.
+ *
+ * Fields rendered:
+ * - Username (required)
+ * - Password (required on create, optional on edit) with visibility toggle
+ * - Edit-mode hint: "Leave blank to keep the current password"
+ * - Email (optional, email keyboard)
+ * - Role (exposed dropdown: USER or ADMIN)
+ *
+ * @param viewModel The ViewModel whose mutable state fields are bound to each input.
+ * @param modifier Modifier applied to the root scrollable [Column].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,9 +132,11 @@ private fun UserFormContent(
     viewModel: UserFormViewModel,
     modifier: Modifier = Modifier,
 ) {
+    // Local transient state: does not need to survive configuration changes.
     var passwordVisible by remember { mutableStateOf(false) }
     var roleExpanded by remember { mutableStateOf(false) }
 
+    // Derive the display label from the stored enum value.
     val roleLabel = if (viewModel.role == UserRole.ADMIN) {
         stringResource(R.string.user_role_admin)
     } else {
@@ -136,6 +164,7 @@ private fun UserFormContent(
             label = stringResource(R.string.user_password_label),
             isError = viewModel.passwordError != null,
             errorMessage = viewModel.passwordError,
+            // Toggle between obscured and plain-text display based on user preference.
             visualTransformation = if (passwordVisible) {
                 VisualTransformation.None
             } else {
@@ -155,6 +184,8 @@ private fun UserFormContent(
             },
         )
 
+        // In edit mode, show a hint reminding the admin they can leave the password blank
+        // to retain the existing bcrypt hash without re-entering the password.
         if (viewModel.isEditing) {
             Text(
                 text = stringResource(R.string.user_password_edit_hint),
@@ -172,6 +203,8 @@ private fun UserFormContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         )
 
+        // Role is presented as an exposed dropdown (not a text field) because it is a
+        // fixed enumeration — free text would allow invalid or misspelled role values.
         ExposedDropdownMenuBox(
             expanded = roleExpanded,
             onExpandedChange = { roleExpanded = it },
@@ -184,6 +217,8 @@ private fun UserFormContent(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = roleExpanded) },
                 modifier = Modifier
                     .fillMaxWidth()
+                    // PrimaryNotEditable anchors the dropdown to the text field without
+                    // triggering the software keyboard (field is readOnly).
                     .menuAnchor(type = MenuAnchorType.PrimaryNotEditable, enabled = true),
             )
             ExposedDropdownMenu(
@@ -218,7 +253,8 @@ private fun UserFormContent(
 /**
  * Preview of the user form scaffold and field layout in create mode.
  *
- * Uses a static Scaffold to avoid [hiltViewModel] which is unavailable in preview.
+ * Uses a static [Scaffold] and placeholder [LabeledTextField]s to avoid requiring
+ * [hiltViewModel], which is unavailable in the Android Studio preview environment.
  */
 @Preview(showBackground = true)
 @Composable
