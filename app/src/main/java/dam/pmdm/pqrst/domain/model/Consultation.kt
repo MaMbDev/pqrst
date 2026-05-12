@@ -24,5 +24,5 @@ data class Consultation(
     val notes: String? = null,
     val createdAt: String = "",
     val date: String = "",
-    val createdBy: Long = 0,
+    val createdBy: Long? = null,
 )

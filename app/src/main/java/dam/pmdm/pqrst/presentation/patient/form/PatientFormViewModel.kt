@@ -55,7 +55,7 @@ class PatientFormViewModel @Inject constructor(
     val error: SharedFlow<String> = _error.asSharedFlow()
 
     // Preserved from the loaded record in edit mode
-    private var originalCreatedBy: Long = 0L
+    private var originalCreatedBy: Long? = null
     private var originalCreatedAt: String = ""
 
     init {

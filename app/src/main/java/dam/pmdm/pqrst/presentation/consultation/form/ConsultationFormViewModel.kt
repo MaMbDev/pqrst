@@ -76,7 +76,7 @@ class ConsultationFormViewModel @Inject constructor(
     /** Emits an error message to display in a Snackbar after a failed save. */
     val error: SharedFlow<String> = _error.asSharedFlow()
 
-    private var originalCreatedBy: Long = 0L
+    private var originalCreatedBy: Long? = null
     private var originalCreatedAt: String = ""
 
     init {

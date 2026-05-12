@@ -32,7 +32,7 @@ import androidx.room.PrimaryKey
             entity = UserEntity::class,
             parentColumns = ["id"],
             childColumns = ["created_by"],
-            onDelete = ForeignKey.RESTRICT,
+            onDelete = ForeignKey.SET_NULL,
         ),
     ],
 )
@@ -47,5 +47,5 @@ data class PatientEntity(
     val email: String?,
     @ColumnInfo(name = "created_at") val createdAt: String,
     @ColumnInfo(name = "is_active") val isActive: Int,
-    @ColumnInfo(name = "created_by") val createdBy: Long,
+    @ColumnInfo(name = "created_by") val createdBy: Long?,
 )

@@ -54,7 +54,7 @@ class UserFormViewModel @Inject constructor(
     val error: SharedFlow<String> = _error.asSharedFlow()
 
     private var existingPasswordHash: String? = null
-    private var originalCreatedBy: Long = 0L
+    private var originalCreatedBy: Long? = null
     private var originalCreatedAt: String = ""
 
     init {

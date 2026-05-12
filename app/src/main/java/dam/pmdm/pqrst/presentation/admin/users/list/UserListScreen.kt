@@ -66,6 +66,7 @@ fun UserListScreen(
     viewModel: UserListViewModel = hiltViewModel(),
 ) {
     val users by viewModel.users.collectAsStateWithLifecycle()
+    val currentUserId: Long? by viewModel.currentUserId.collectAsStateWithLifecycle()
     val deleteError by viewModel.deleteError.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -115,6 +116,7 @@ fun UserListScreen(
                     items(users, key = { it.id }) { user ->
                         UserRow(
                             user = user,
+                            isSelf = user.id == currentUserId,
                             onEdit = { onNavigateToForm(user.id) },
                             onDelete = { userToDelete = user },
                         )
@@ -141,12 +143,14 @@ fun UserListScreen(
  * A single row in the user list, showing the username and role badge with edit and delete actions.
  *
  * @param user The user data to render.
+ * @param isSelf True when this row represents the currently logged-in user; hides the delete button.
  * @param onEdit Callback invoked when the user taps the edit icon.
  * @param onDelete Callback invoked when the user taps the delete icon.
  */
 @Composable
 private fun UserRow(
     user: AppUser,
+    isSelf: Boolean,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -195,12 +199,14 @@ private fun UserRow(
                     contentDescription = stringResource(R.string.edit),
                 )
             }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.delete),
-                    tint = Color(0xFF77202E),
-                )
+            if (!isSelf) {
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.delete),
+                        tint = Color(0xFF77202E),
+                    )
+                }
             }
         }
     }
@@ -215,6 +221,7 @@ private fun UserRowPreview() {
     PqrstTheme {
         UserRow(
             user = AppUser(id = 1L, username = "admin", email = "admin@preview.local", passwordHash = "hash", role = UserRole.ADMIN),
+            isSelf = true,
             onEdit = {},
             onDelete = {},
         )
@@ -257,6 +264,7 @@ private fun UserListScreenPreview() {
                     items(users, key = { it.id }) { user ->
                         UserRow(
                             user = user,
+                            isSelf = user.id == 1L,
                             onEdit = {},
                             onDelete = {},
                         )

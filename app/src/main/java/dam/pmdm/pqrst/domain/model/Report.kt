@@ -22,5 +22,5 @@ data class Report(
     val format: String = "PDF",
     val summary: String? = null,
     val pdfPath: String? = null,
-    val createdBy: Long = 0,
+    val createdBy: Long? = null,
 )

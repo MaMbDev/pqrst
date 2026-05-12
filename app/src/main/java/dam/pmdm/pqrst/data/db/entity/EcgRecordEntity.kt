@@ -41,7 +41,7 @@ import androidx.room.PrimaryKey
             entity = UserEntity::class,
             parentColumns = ["id"],
             childColumns = ["created_by"],
-            onDelete = ForeignKey.RESTRICT,
+            onDelete = ForeignKey.SET_NULL,
         ),
     ],
 )
@@ -55,7 +55,7 @@ data class EcgRecordEntity(
     val duration: Double,
     @ColumnInfo(name = "signal_quality") val signalQuality: String?,
     val status: String,
-    @ColumnInfo(name = "created_by") val createdBy: Long,
+    @ColumnInfo(name = "created_by") val createdBy: Long?,
     @ColumnInfo(name = "channel_count") val channelCount: Int?,
     @ColumnInfo(name = "snapshot_path") val snapshotPath: String? = null,
 )

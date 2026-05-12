@@ -28,5 +28,5 @@ data class Patient(
     val email: String? = null,
     val createdAt: String = "",
     val isActive: Boolean = true,
-    val createdBy: Long = 0,
+    val createdBy: Long? = null,
 )

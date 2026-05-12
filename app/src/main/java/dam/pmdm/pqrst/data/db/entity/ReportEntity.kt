@@ -38,7 +38,7 @@ import androidx.room.PrimaryKey
             entity = UserEntity::class,
             parentColumns = ["id"],
             childColumns = ["created_by"],
-            onDelete = ForeignKey.RESTRICT,
+            onDelete = ForeignKey.SET_NULL,
         ),
     ],
 )
@@ -50,5 +50,5 @@ data class ReportEntity(
     val format: String,
     val summary: String?,
     @ColumnInfo(name = "pdf_path") val pdfPath: String?,
-    @ColumnInfo(name = "created_by") val createdBy: Long,
+    @ColumnInfo(name = "created_by") val createdBy: Long?,
 )

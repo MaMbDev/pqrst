@@ -48,7 +48,7 @@ import dam.pmdm.pqrst.data.db.entity.UserEntity
         ComparisonEntity::class,
         ReportEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 abstract class PqrstDatabase : RoomDatabase() {

@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dam.pmdm.pqrst.domain.model.AppUser
+import dam.pmdm.pqrst.domain.repository.AuthRepository
 import dam.pmdm.pqrst.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,12 +19,15 @@ import javax.inject.Inject
  * ViewModel for the user management list screen (ADMIN only).
  *
  * Exposes a live list of all application users and handles account deletion.
+ * Prevents the currently logged-in admin from deleting their own account.
  *
  * @param repository Repository used to observe and delete user records.
+ * @param authRepository Repository used to read the current session.
  */
 @HiltViewModel
 class UserListViewModel @Inject constructor(
     private val repository: UserRepository,
+    private val authRepository: AuthRepository,
 ) : ViewModel() {
 
     /**
@@ -31,6 +36,11 @@ class UserListViewModel @Inject constructor(
      */
     val users: StateFlow<List<AppUser>> = repository.observeUsers()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** ID of the currently authenticated user, so the UI can prevent self-deletion. */
+    val currentUserId: StateFlow<Long?> = authRepository.currentSession
+        .map { it?.userId }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val _deleteError = MutableStateFlow<String?>(null)
 

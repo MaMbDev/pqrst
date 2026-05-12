@@ -27,7 +27,7 @@ data class EcgRecord(
     val durationSeconds: Double = 0.0,
     val signalQuality: String? = null,
     val status: String = "Pendiente",
-    val createdBy: Long = 0,
+    val createdBy: Long? = null,
     val channelCount: Int? = null,
     val snapshotPath: String? = null,
 )

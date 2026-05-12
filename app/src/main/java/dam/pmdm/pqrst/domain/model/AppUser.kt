@@ -28,5 +28,5 @@ data class AppUser(
     val isActive: Boolean = true,
     val createdAt: String = "",
     val lastAccess: String? = null,
-    val createdBy: Long = 0,
+    val createdBy: Long? = null,
 )

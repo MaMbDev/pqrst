@@ -38,7 +38,7 @@ import androidx.room.PrimaryKey
             entity = UserEntity::class,
             parentColumns = ["id"],
             childColumns = ["created_by"],
-            onDelete = ForeignKey.RESTRICT,
+            onDelete = ForeignKey.SET_NULL,
         ),
     ],
 )
@@ -51,5 +51,5 @@ data class ConsultationEntity(
     val notes: String?,
     @ColumnInfo(name = "created_at") val createdAt: String,
     val date: String,
-    @ColumnInfo(name = "created_by") val createdBy: Long,
+    @ColumnInfo(name = "created_by") val createdBy: Long?,
 )
