@@ -50,17 +50,25 @@ import dam.pmdm.pqrst.ui.theme.PqrstTheme
 import kotlinx.coroutines.launch
 
 /**
- * Main dashboard screen shown immediately after login.
+ * Main dashboard screen shown immediately after login (CU-01 entry point).
  *
- * Displays a welcome card and quick-action cards for the primary features.
- * ADMIN users also see a "User Management" card. Wraps the content in a
- * [ModalNavigationDrawer] for app-wide navigation.
+ * Wraps the content in a [ModalNavigationDrawer] backed by [PqrstNavigationDrawer] to
+ * provide app-wide navigation. The drawer opens when the user taps the menu icon in
+ * [PqrstTopBar] and closes after a navigation item is tapped.
  *
- * @param session The currently authenticated user's session; may be null during the
- *                initial session-restore check.
- * @param onLogout Callback invoked when the user selects logout from the drawer.
- * @param onNavigate Callback invoked with a route string when the user taps a quick-action card
- *                   or a drawer item.
+ * The welcome card colour changes based on [Session.role] — a sandy warm tone for ADMIN
+ * users and a cool blue for regular users — giving an immediate visual confirmation of the
+ * active role without reading the role badge in the top bar.
+ *
+ * State for logout and navigation is passed as lambdas rather than going through a ViewModel
+ * because the dashboard itself is stateless; the parent ([MainActivity] / nav graph)
+ * owns the session and handles navigation.
+ *
+ * @param session The currently authenticated user's session; may be null during the initial
+ *                session-restore check (drawn as an empty welcome card).
+ * @param onLogout Callback invoked when the user selects "Logout" from the navigation drawer.
+ * @param onNavigate Callback invoked with a route string when the user taps a quick-action
+ *                   card or a drawer navigation item.
  */
 @Composable
 fun DashboardScreen(
@@ -69,16 +77,19 @@ fun DashboardScreen(
     onNavigate: (String) -> Unit,
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    // rememberCoroutineScope gives a scope tied to the composition for drawer open/close animations
     val scope = rememberCoroutineScope()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
+            // Only render the drawer content once a session is available
             if (session != null) {
                 PqrstNavigationDrawer(
                     session = session,
                     currentRoute = "dashboard",
                     onNavigate = { route ->
+                        // Close the drawer before navigating so the animation completes first
                         scope.launch { drawerState.close() }
                         onNavigate(route)
                     },
@@ -109,9 +120,17 @@ fun DashboardScreen(
 }
 
 /**
- * Stateless inner content of the dashboard: welcome card and scrollable quick-action grid.
+ * Stateless scrollable grid of quick-action cards shown inside the dashboard scaffold.
  *
- * Extracted from [DashboardScreen] to enable Compose previews.
+ * Extracted from [DashboardScreen] to enable the [DashboardPreview] composable to render
+ * the content without needing a [ModalNavigationDrawer].
+ *
+ * The card grid adapts to the user's role:
+ * - All users see: Patients, Consultations, ECG Monitor, ECG Import, ECG Guide, Heart Anatomy.
+ * - ADMIN users additionally see a "User Management" card styled in the sandy ADMIN colour.
+ *
+ * ECG-related cards are laid out in two-column rows using [IntrinsicSize.Min] so both
+ * cards in a row stretch to the same height regardless of label length.
  *
  * @param session The currently authenticated session, used for the welcome message and role check.
  * @param onNavigate Callback invoked with a route string when a quick-action card is tapped.
@@ -131,6 +150,7 @@ private fun DashboardContent(
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        // Welcome card — colour differs for ADMIN vs USER to reinforce role awareness
         val welcomeColor = if (session?.role == UserRole.ADMIN) Color(0xFFE6E2CC) else Color(0xFFB7D2E5)
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -173,6 +193,7 @@ private fun DashboardContent(
             onClick = { onNavigate("consultations") },
         )
         Spacer(Modifier.height(8.dp))
+        // ECG Monitor + ECG Import: side-by-side with equal height
         Row(
             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -195,6 +216,7 @@ private fun DashboardContent(
 
         Spacer(Modifier.height(8.dp))
 
+        // ECG Guide + Heart Anatomy: side-by-side
         Row(
             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -215,6 +237,7 @@ private fun DashboardContent(
             )
         }
 
+        // ADMIN-only user management card — full width, sandy colour to match the role badge
         if (session?.role == UserRole.ADMIN) {
             Spacer(Modifier.height(8.dp))
             QuickActionCard(
@@ -229,14 +252,22 @@ private fun DashboardContent(
 }
 
 /**
- * A tappable card that represents a single quick-action entry on the dashboard.
+ * A tappable Material 3 card representing a single quick-action on the dashboard.
  *
- * Displays a bold label and an icon centred inside a Material 3 card.
+ * Each card displays an optional [subtitle] and a [label] stacked above a centred icon.
+ * The two-line layout (label + subtitle) is used for multi-function sections like
+ * "Learn / ECG Guide" and "Learn / Heart Anatomy".
  *
- * @param label The action name displayed inside the card.
- * @param icon The vector icon displayed below the label.
+ * Custom [containerColor] and [contentColor] are accepted so the ADMIN card can use the
+ * sandy brand colour without creating a separate composable variant.
+ *
+ * @param label The primary action name shown in the card (bold title-medium text).
+ * @param icon Vector icon displayed below the label.
  * @param onClick Callback invoked when the user taps the card.
- * @param modifier Optional [Modifier] applied to the card.
+ * @param modifier Optional [Modifier] applied to the card (e.g. [Modifier.weight]).
+ * @param subtitle Optional secondary line below [label] (e.g. section sub-label).
+ * @param containerColor Card background colour. Defaults to the Material 3 card default.
+ * @param contentColor Text/icon foreground colour. Defaults to [MaterialTheme.colorScheme.onSurface].
  */
 @Composable
 private fun QuickActionCard(
@@ -286,9 +317,7 @@ private fun QuickActionCard(
     }
 }
 
-/**
- * Preview of [DashboardContent] with an ADMIN session for the Android Studio design canvas.
- */
+/** Preview of [DashboardContent] with an ADMIN session for the Android Studio design canvas. */
 @Preview(showBackground = true)
 @Composable
 private fun DashboardPreview() {
