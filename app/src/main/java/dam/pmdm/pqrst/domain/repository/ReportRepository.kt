@@ -3,19 +3,50 @@ package dam.pmdm.pqrst.domain.repository
 import android.net.Uri
 
 /**
- * Contract for generating PDF reports from consultation and ECG data.
+ * Domain contract for generating PDF reports from consultation and ECG data (RF-08).
+ *
+ * This interface lives in the domain layer and defines the boundary between report generation
+ * logic and the concrete data-layer implementation (PDF rendering library, `FileProvider`).
+ * The presentation layer depends only on this interface, never on the implementation.
+ *
+ * ### Report content
+ * The generated PDF includes (per RF-08):
+ * - Patient demographic data sourced from [dam.pmdm.pqrst.domain.model.Patient].
+ * - Consultation summary (date, symptoms, vital signs, notes) from
+ *   [dam.pmdm.pqrst.domain.model.Consultation].
+ * - ECG waveform image from [dam.pmdm.pqrst.domain.model.EcgRecord.snapshotPath].
+ * - Analysis parameters (BPM, R-peaks, regularity) from [dam.pmdm.pqrst.domain.model.EcgAnalysis].
+ * - Pattern comparison result from [dam.pmdm.pqrst.domain.model.Comparison], if available.
+ *
+ * ### File sharing
+ * The implementation writes the PDF to the device's shared storage under a `FileProvider`
+ * authority and returns a content [Uri]. The presentation layer passes this URI directly to an
+ * Android share-sheet Intent so the user can save it to Drive, send via e-mail, etc.
+ *
+ * ### Offline-first constraint (RNF-03)
+ * No implementation of this interface may make external network calls. All report content must
+ * be assembled from locally stored data only.
  */
 interface ReportRepository {
 
     /**
-     * Generates a PDF report for the given consultation and optionally includes ECG analysis data.
+     * Generates a PDF report for the given consultation and optionally includes ECG data.
      *
-     * The report is written to the device's shared storage and a content [Uri] is returned,
-     * ready to be shared via the Android share sheet.
+     * The implementation assembles all required data from Room, renders the PDF using the bundled
+     * PDF library, writes the file to shared storage, and persists a [dam.pmdm.pqrst.domain.model.Report]
+     * record in the database. All I/O runs on `Dispatchers.IO`.
      *
-     * @param consultationId The ID of the consultation to include in the report.
-     * @param recordId Optional ID of the ECG record to include; pass null to omit.
-     * @return [Result.success] containing the [Uri] of the generated PDF, or [Result.failure] on error.
+     * If [recordId] is non-null the report includes the ECG waveform snapshot, analysis metrics,
+     * and any pattern comparison result associated with that record. If `null`, only the patient
+     * and consultation sections are included.
+     *
+     * @param consultationId The ID of the consultation to include in the report. Must reference
+     *   an existing [dam.pmdm.pqrst.domain.model.Consultation].
+     * @param recordId Optional ID of the [dam.pmdm.pqrst.domain.model.EcgRecord] to include;
+     *   pass `null` to generate a report without ECG data.
+     * @return [Result.success] containing the content [Uri] of the generated PDF file (ready to
+     *   pass to a share-sheet Intent), or [Result.failure] if the consultation is not found, the
+     *   PDF library fails to render, or an I/O error occurs during file writing.
      */
     suspend fun generatePdf(consultationId: Long, recordId: Long?): Result<Uri>
 }
