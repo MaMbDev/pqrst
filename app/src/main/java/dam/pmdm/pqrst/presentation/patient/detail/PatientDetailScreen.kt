@@ -46,18 +46,30 @@ import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
 /**
- * Screen that displays the full detail of a single patient, including their consultations.
+ * Screen that displays the full detail of a single patient, including their consultation history.
  *
- * Loads the patient and their consultation list from [PatientDetailViewModel]. Delete is
- * confirmed via a dialog before the ViewModel is asked to proceed; on success the screen
- * navigates back via [onBack].
+ * Renders a [PatientInfoCard] at the top followed by a live list of [ConsultationRow] items.
+ * Provides top-bar actions for editing and deleting the patient; deletion requires explicit
+ * confirmation via [ConfirmDialog] to guard against accidental data loss (the operation is
+ * irreversible and cascade-deletes all associated records).
  *
- * @param patientId The ID of the patient to display (used by the nav graph; the ViewModel
- *                  receives it independently via [SavedStateHandle]).
+ * Side-effect handling:
+ * - [PatientDetailViewModel.deletedEvent] is collected in a `LaunchedEffect(Unit)` so that
+ *   back-navigation fires exactly once after a successful delete, even if the screen
+ *   recomposes in the interim.
+ * - [PatientDetailViewModel.error] triggers a Snackbar; the effect uses [error] as its key
+ *   so it re-runs only when a new error string arrives.
+ *
+ * State hoisting pattern: all persistent state lives in [PatientDetailViewModel]; only
+ * transient UI flags (dialog visibility, Snackbar host) are held locally.
+ *
+ * @param patientId The Room primary key of the patient to display. Used by the navigation
+ *                  graph to pass the argument; [PatientDetailViewModel] reads it independently
+ *                  from [SavedStateHandle].
  * @param onBack Callback invoked when the user taps the back arrow or after a successful delete.
- * @param onEditPatient Callback invoked when the user taps the edit icon.
+ * @param onEditPatient Callback invoked when the user taps the edit icon in the top bar.
  * @param onConsultationClick Callback invoked with the consultation ID when the user taps a row.
- * @param onNewConsultation Callback invoked when the user taps the FAB to create a consultation.
+ * @param onNewConsultation Callback invoked when the user taps the FAB to add a consultation.
  * @param viewModel The Hilt-provided [PatientDetailViewModel]; can be overridden in tests.
  */
 @Composable
@@ -69,17 +81,25 @@ fun PatientDetailScreen(
     onNewConsultation: () -> Unit,
     viewModel: PatientDetailViewModel = hiltViewModel(),
 ) {
+    // collectAsStateWithLifecycle pauses collection while the screen is inactive,
+    // avoiding unnecessary work and preventing stale Snackbar re-triggers.
     val patient by viewModel.patient.collectAsStateWithLifecycle()
     val consultations by viewModel.consultations.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    // Non-null value triggers the ConfirmDialog; set to true to request deletion.
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    // LaunchedEffect(Unit) runs once on composition and stays active for the lifetime
+    // of the screen. Collecting deletedEvent here means back-navigation happens exactly
+    // once when the SharedFlow emits, regardless of recompositions.
     LaunchedEffect(Unit) {
         viewModel.deletedEvent.collect { onBack() }
     }
 
+    // Re-runs whenever a new error string arrives. Shows the Snackbar, then clears the
+    // error to prevent the same message from reappearing on the next recomposition.
     LaunchedEffect(error) {
         error?.let {
             snackbarHostState.showSnackbar(it)
@@ -90,6 +110,8 @@ fun PatientDetailScreen(
     Scaffold(
         topBar = {
             PqrstTopBar(
+                // Show the patient name in the top bar once loaded; fall back to a
+                // loading placeholder so the bar is never blank.
                 title = patient?.name ?: stringResource(R.string.loading),
                 role = null,
                 onMenuClick = {},
@@ -101,6 +123,8 @@ fun PatientDetailScreen(
                             contentDescription = stringResource(R.string.edit),
                         )
                     }
+                    // Setting showDeleteDialog triggers the ConfirmDialog rather than
+                    // calling deletePatient directly — prevents accidental deletion.
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
@@ -127,6 +151,7 @@ fun PatientDetailScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // Render the patient info card as the first lazy item, only when loaded.
             patient?.let { p ->
                 item { PatientInfoCard(patient = p) }
             }
@@ -139,6 +164,7 @@ fun PatientDetailScreen(
                 )
             }
 
+            // Show an empty-state message rather than a blank section.
             if (consultations.isEmpty()) {
                 item {
                     Text(
@@ -148,6 +174,7 @@ fun PatientDetailScreen(
                     )
                 }
             } else {
+                // Stable keys prevent item recomposition when the list updates.
                 items(consultations, key = { it.id }) { consultation ->
                     ConsultationRow(
                         consultation = consultation,
@@ -158,6 +185,8 @@ fun PatientDetailScreen(
         }
     }
 
+    // Guard all destructive operations with a confirmation dialog to satisfy RF-01
+    // (deletion must show a confirmation dialog) and prevent accidental cascade-deletes.
     if (showDeleteDialog) {
         ConfirmDialog(
             title = stringResource(R.string.confirm_delete_title),
@@ -172,9 +201,12 @@ fun PatientDetailScreen(
 }
 
 /**
- * Card displaying the patient's personal and contact information.
+ * Card displaying the patient's demographic and contact information.
  *
- * @param patient The patient whose data is rendered.
+ * Optional fields (phone, email, medical history) are only shown when non-null,
+ * keeping the card concise for patients with minimal data.
+ *
+ * @param patient The [Patient] record whose data is rendered.
  */
 @Composable
 private fun PatientInfoCard(patient: Patient) {
@@ -199,10 +231,13 @@ private fun PatientInfoCard(patient: Patient) {
 }
 
 /**
- * A single label-value row inside the patient info card.
+ * A single label-value row rendered inside [PatientInfoCard].
  *
- * @param label Field label displayed in a subdued colour.
- * @param value The field value displayed alongside the label.
+ * The label is displayed in the surface-variant colour to visually distinguish it
+ * from the bolder value text, following Material Design 3 typography hierarchy.
+ *
+ * @param label The field name (e.g. "Edad", "Sexo").
+ * @param value The field value to display alongside the label.
  */
 @Composable
 private fun InfoRow(label: String, value: String) {
@@ -217,11 +252,12 @@ private fun InfoRow(label: String, value: String) {
 }
 
 /**
- * A tappable card representing a single consultation entry in the list.
+ * A tappable card representing a single consultation entry in the patient's history.
  *
- * Displays the consultation date and a snippet of symptoms if available.
+ * Shows the consultation date (highlighted in primary colour) and up to two lines of
+ * symptoms if present. Tapping navigates to the consultation detail screen.
  *
- * @param consultation The consultation data to render.
+ * @param consultation The [Consultation] data to render.
  * @param onClick Callback invoked when the card is tapped.
  */
 @Composable
@@ -267,6 +303,9 @@ private fun ConsultationRowPreview() {
     }
 }
 
+/**
+ * Preview of the full patient detail scaffold with sample data for the Android Studio design canvas.
+ */
 @Preview(showBackground = true)
 @Composable
 private fun PatientDetailScreenPreview() {
