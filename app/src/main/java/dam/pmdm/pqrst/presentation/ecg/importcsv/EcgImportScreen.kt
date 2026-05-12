@@ -60,6 +60,30 @@ import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstBurgundy
 import dam.pmdm.pqrst.ui.theme.PqrstTheme
 
+/**
+ * ECG CSV import screen (RF-04).
+ *
+ * Allows the user to pick a CSV file (e.g. MIT-BIH Arrhythmia Database format) from device
+ * storage, parse it, preview the signal via animated playback, review live analysis metrics,
+ * and optionally save the record linked to a consultation.
+ *
+ * **State-driven layout** — the visible content changes based on [EcgImportUiState]:
+ * - [EcgImportUiState.Idle]: [IdleContent] with a prominent file-picker button.
+ * - [EcgImportUiState.Parsing]: loading indicator (determinate if progress available).
+ * - [EcgImportUiState.Error]: [ErrorContent] with a retry button.
+ * - [EcgImportUiState.Ready] / [EcgImportUiState.Playing] / [EcgImportUiState.Paused]:
+ *   [FileInfoCard], [EcgChartWithPeaks], [LiveMetricsCard], playback progress bar,
+ *   playback controls, and an optional Save button.
+ * - [EcgImportUiState.Saving]: spinner.
+ *
+ * All state is hoisted to [EcgImportViewModel]; this composable only forwards events.
+ *
+ * @param consultationId The ID of the consultation to link the imported record to.
+ *                       Pass 0 to allow import without linking (the Save button is hidden).
+ * @param onBack Callback invoked when the user taps the back arrow.
+ * @param onImported Callback invoked after a successful save (triggers back-navigation).
+ * @param viewModel Hilt-injected ViewModel; overridable for tests.
+ */
 @Composable
 fun EcgImportScreen(
     consultationId: Long,
@@ -77,12 +101,16 @@ fun EcgImportScreen(
     val loadProgress by viewModel.loadProgress.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // The file launcher uses GetContent with "*/*" so it accepts CSV files regardless of
+    // the MIME type reported by the provider (some file managers use text/plain or text/csv).
     val fileLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent(),
     ) { uri ->
         if (uri != null) viewModel.loadCsv(uri)
     }
 
+    // Collect one-shot import-success event and forward to the parent callback.
+    // LaunchedEffect(Unit) runs once per composition, consuming events until unmounted.
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -129,6 +157,7 @@ fun EcgImportScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.padding(horizontal = 32.dp),
                         ) {
+                            // Show determinate bar once the parser begins reporting progress
                             if (loadProgress > 0f) {
                                 LinearProgressIndicator(
                                     progress = { loadProgress },
@@ -159,6 +188,8 @@ fun EcgImportScreen(
                 }
 
                 // ── Ready / Playing / Paused ───────────────────────────────────
+                // All three states share the same chart + controls layout; only the
+                // play/pause button icon and isPaused flag on the chart differ.
                 is EcgImportUiState.Ready,
                 is EcgImportUiState.Playing,
                 is EcgImportUiState.Paused -> {
@@ -177,7 +208,7 @@ fun EcgImportScreen(
                         durationSec = durationSec,
                     )
 
-                    // Chart
+                    // Warm off-white background mimics ECG paper, consistent with EcgMonitorScreen.
                     Surface(
                         color = Color(0xFFFFF3F3),
                         shape = MaterialTheme.shapes.large,
@@ -202,7 +233,7 @@ fun EcgImportScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
 
-                    // Playback controls
+                    // Playback controls: play/pause toggle + stop/reset
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -230,6 +261,7 @@ fun EcgImportScreen(
                         }
                     }
 
+                    // Save button is only shown when this screen was opened from a consultation.
                     if (consultationId != 0L) {
                         FilledTonalButton(
                             onClick = { viewModel.save(consultationId) },
@@ -279,11 +311,13 @@ fun EcgImportScreen(
                     }
                 }
 
+                // Saved state is transient; navigation is triggered via the event channel.
                 is EcgImportUiState.Saved -> {}
             }
 
             Spacer(Modifier.height(8.dp))
 
+            // Educational disclaimer — always shown at the bottom of the screen (RF-06).
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -307,6 +341,18 @@ fun EcgImportScreen(
 
 // ── Live metrics card ─────────────────────────────────────────────────────────
 
+/**
+ * Card showing real-time BPM, mean RR interval, and rhythm regularity.
+ *
+ * Uses [AnimatedVisibility] (fade-in) so the card appears smoothly once [bpm] becomes
+ * non-null (i.e. after at least two R-peaks have been detected). The badge colours for
+ * BPM classification reuse the same DemoPattern palette so the visual language is
+ * consistent across the ECG-related screens.
+ *
+ * @param bpm Estimated heart rate in beats per minute; null before the first two peaks.
+ * @param rrMeanMs Mean RR interval in milliseconds; null before the first two peaks.
+ * @param isRegular Rhythm regularity classification; null when insufficient data.
+ */
 @Composable
 private fun LiveMetricsCard(bpm: Int?, rrMeanMs: Double?, isRegular: Boolean?) {
     AnimatedVisibility(visible = bpm != null, enter = fadeIn()) {
@@ -320,7 +366,7 @@ private fun LiveMetricsCard(bpm: Int?, rrMeanMs: Double?, isRegular: Boolean?) {
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                // FC media
+                // BPM metric with bradycardia/normal/tachycardia badge
                 LiveMetricItem(
                     label = stringResource(R.string.ecg_metric_bpm_avg),
                     value = bpm?.let { "$it lpm" } ?: "—",
@@ -332,7 +378,7 @@ private fun LiveMetricsCard(bpm: Int?, rrMeanMs: Double?, isRegular: Boolean?) {
                     },
                 )
 
-                // RR distance
+                // RR interval metric with regular/irregular badge
                 LiveMetricItem(
                     label = stringResource(R.string.ecg_metric_rr),
                     value = rrMeanMs?.let { "${"%.0f".format(it)} ms" } ?: "—",
@@ -347,6 +393,16 @@ private fun LiveMetricsCard(bpm: Int?, rrMeanMs: Double?, isRegular: Boolean?) {
     }
 }
 
+/**
+ * A single metric column (label, large value, optional colour badge) within [LiveMetricsCard].
+ *
+ * Displays the metric label in small print, the value in a large bold [PqrstBurgundy] number,
+ * and an optional pill-shaped classification badge below.
+ *
+ * @param label Short descriptor (e.g. "Avg BPM", "Mean RR").
+ * @param value Formatted value string (e.g. "72 lpm", "830 ms").
+ * @param badge Pair of badge label and background colour, or null to omit the badge.
+ */
 @Composable
 private fun LiveMetricItem(
     label: String,
@@ -385,6 +441,15 @@ private fun LiveMetricItem(
 
 // ── Idle content ──────────────────────────────────────────────────────────────
 
+/**
+ * Empty-state UI shown when no file has been picked yet.
+ *
+ * A large file icon and explanatory text guide the user towards the file-picker button.
+ * Vertical padding ensures the content is visually centred on the screen even without
+ * a keyboard, and scales gracefully with the system font size.
+ *
+ * @param onPickFile Callback invoked when the user taps the "Pick file" button.
+ */
 @Composable
 private fun IdleContent(onPickFile: () -> Unit) {
     Column(
@@ -419,6 +484,15 @@ private fun IdleContent(onPickFile: () -> Unit) {
 
 // ── Error content ─────────────────────────────────────────────────────────────
 
+/**
+ * Error card displayed when parsing or saving fails.
+ *
+ * Uses the Material 3 `errorContainer` token for the background so the colour adapts
+ * to both light and dark themes without hard-coding a red.
+ *
+ * @param message Human-readable error description from the caught exception.
+ * @param onRetry Callback invoked when the user taps "Retry" (opens the file picker again).
+ */
 @Composable
 private fun ErrorContent(message: String, onRetry: () -> Unit) {
     Card(
@@ -443,6 +517,17 @@ private fun ErrorContent(message: String, onRetry: () -> Unit) {
 
 // ── File info card ────────────────────────────────────────────────────────────
 
+/**
+ * Summary card showing the loaded file's name, sample count, duration, and sample rate.
+ *
+ * [sampleCount] is nullable because it is only available in the [EcgImportUiState.Ready]
+ * state; during playback/pause only the rate and duration are exposed by the state.
+ *
+ * @param fileName Display name of the CSV file.
+ * @param sampleCount Total number of samples, or null during active playback.
+ * @param sampleRateHz Detected or inferred sample rate in Hz.
+ * @param durationSec Total signal duration in seconds.
+ */
 @Composable
 private fun FileInfoCard(fileName: String, sampleCount: Int?, sampleRateHz: Int, durationSec: Double) {
     Card(
@@ -462,6 +547,7 @@ private fun FileInfoCard(fileName: String, sampleCount: Int?, sampleRateHz: Int,
 
 // ── Previews ──────────────────────────────────────────────────────────────────
 
+/** Preview of the screen in its initial Idle state. */
 @Preview(showBackground = true)
 @Composable
 private fun EcgImportIdlePreview() {
@@ -474,6 +560,7 @@ private fun EcgImportIdlePreview() {
     }
 }
 
+/** Preview of the screen showing a parse error. */
 @Preview(showBackground = true)
 @Composable
 private fun EcgImportErrorPreview() {
@@ -488,6 +575,10 @@ private fun EcgImportErrorPreview() {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * A simple 4-component data holder used to destructure state triple-plus-one values
+ * inside the when-branch without creating named data classes for each case.
+ */
 private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 private operator fun <A, B, C, D> Quad<A, B, C, D>.component1() = first
