@@ -77,6 +77,32 @@ import dam.pmdm.pqrst.presentation.component.EcgChartWithPeaks
 import dam.pmdm.pqrst.presentation.component.PqrstTopBar
 import dam.pmdm.pqrst.ui.theme.PqrstBurgundy
 
+/**
+ * Live ECG monitor screen (RF-03).
+ *
+ * Serves two modes:
+ * - **Demo mode**: synthesises ECG waveforms from [DemoPattern] without hardware.
+ * - **Bluetooth mode**: connects to an ESP32 via Classic Bluetooth SPP and streams
+ *   the incoming signal into the chart in real time.
+ *
+ * Layout (top → bottom, scrollable):
+ * 1. [StatusRow] — source chip (demo/BT/idle) and animated BPM display.
+ * 2. [EcgChartWithPeaks] inside a warm-tinted surface — the live waveform.
+ * 3. [ColorLegend] — maps chart colours to pattern name and peak label.
+ * 4. [ActionButtons] — context-sensitive controls that change with [EcgMonitorUiState].
+ * 5. [PatternDescriptionCard] — educational description of the active demo pattern.
+ * 6. Educational disclaimer (required by RF-06 and the educational-only constraint).
+ *
+ * A [ModalBottomSheet] for the BT device picker is conditionally rendered on top.
+ *
+ * State is hoisted to [EcgMonitorViewModel]. The screen only handles UI events
+ * (permission result, menu dismissal) and delegates all logic to the ViewModel.
+ *
+ * @param consultationId The ID of the consultation this recording will be linked to.
+ *                       Passed through to [EcgMonitorViewModel] for future save operations.
+ * @param onBack Callback invoked when the user taps the back arrow in [PqrstTopBar].
+ * @param viewModel Hilt-injected ViewModel; overridable for tests.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EcgMonitorScreen(
@@ -94,7 +120,8 @@ fun EcgMonitorScreen(
     var showBtSheet by remember { mutableStateOf(false) }
     val btSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Bluetooth permission launcher
+    // Select the correct permission set: BLUETOOTH_SCAN/CONNECT on Android 12+,
+    // ACCESS_FINE_LOCATION on older versions (required for BT discovery pre-S).
     val btPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
     } else {
@@ -113,12 +140,15 @@ fun EcgMonitorScreen(
         }
     }
 
-    // Show BT sheet when the ViewModel transitions to a BT state
+    // Open the BT sheet automatically when the ViewModel transitions to BtDeviceList
+    // (e.g. on permission grant or when the user re-opens the picker).
     LaunchedEffect(uiState) {
         if (uiState is EcgMonitorUiState.BtDeviceList) showBtSheet = true
     }
 
-    // Collect one-shot events
+    // Collect one-shot events from the ViewModel Channel.
+    // LaunchedEffect(Unit) runs once per composition; the Channel is consumed
+    // until the composable leaves the composition.
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -153,6 +183,7 @@ fun EcgMonitorScreen(
             StatusRow(uiState = uiState)
 
             // ── ECG chart area ─────────────────────────────────────────────────
+            // Warm off-white background mimics ECG paper to aid pattern recognition.
             Surface(
                 color = Color(0xFFFFF3F3),
                 shape = MaterialTheme.shapes.large,
@@ -192,13 +223,15 @@ fun EcgMonitorScreen(
                 onDisconnectBt = { viewModel.disconnectBt() },
             )
 
-            // ── Pattern description ────────────────────────────────────────────
+            // ── Pattern description card ───────────────────────────────────────
+            // Only visible when a demo is active; cast is safe because we guard on non-null.
             val demoState = uiState as? EcgMonitorUiState.DemoRunning
             if (demoState != null) {
                 PatternDescriptionCard(pattern = demoState.pattern)
             }
 
             // ── Educational disclaimer ─────────────────────────────────────────
+            // Required by the educational-only constraint in CLAUDE.md and RF-06.
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -223,6 +256,7 @@ fun EcgMonitorScreen(
     }
 
     // ── Bluetooth device picker bottom sheet ───────────────────────────────────
+    // Rendered outside the Scaffold Column so it overlays the entire screen correctly.
     if (showBtSheet) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -249,6 +283,16 @@ fun EcgMonitorScreen(
 
 // ── Status row ────────────────────────────────────────────────────────────────
 
+/**
+ * Horizontal row showing the active signal source chip and an animated BPM readout.
+ *
+ * The chip appearance (icon, background, border) varies with [uiState] to give users
+ * an immediate visual cue about the current signal source without reading text.
+ * The BPM counter uses [AnimatedVisibility] to fade in only when a demo is running
+ * so it doesn't compete with the chip for attention in idle/BT states.
+ *
+ * @param uiState The current monitor state, used to derive chip appearance and BPM value.
+ */
 @Composable
 private fun StatusRow(uiState: EcgMonitorUiState) {
     Row(
@@ -256,7 +300,7 @@ private fun StatusRow(uiState: EcgMonitorUiState) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Source chip
+        // Source chip — label and icon change per state
         when (uiState) {
             is EcgMonitorUiState.DemoRunning -> {
                 StatusChip(
@@ -308,6 +352,18 @@ private fun StatusRow(uiState: EcgMonitorUiState) {
     }
 }
 
+/**
+ * Small pill-shaped chip used in [StatusRow] to indicate the active signal source.
+ *
+ * Accepts a slot-based [icon] parameter so each call site can supply the correct icon
+ * without creating separate composable variants.
+ *
+ * @param label Text shown next to the icon.
+ * @param containerColor Background colour of the chip.
+ * @param contentColor Foreground colour applied to the [label] text.
+ * @param icon Composable slot for the leading icon.
+ * @param border Optional border stroke drawn around the chip (used for demo patterns).
+ */
 @Composable
 private fun StatusChip(
     label: String,
@@ -342,6 +398,15 @@ private fun StatusChip(
 
 // ── Color legend ──────────────────────────────────────────────────────────────
 
+/**
+ * Horizontal legend mapping chart colours to their meaning.
+ *
+ * The signal colour and label adapt to the active [uiState]: in demo mode the label
+ * includes the pattern name and its nominal BPM; in BT mode it shows the source device
+ * label; otherwise a generic "Signal" label is used.
+ *
+ * @param uiState The current monitor state, used to derive the signal label and colour.
+ */
 @Composable
 private fun ColorLegend(uiState: EcgMonitorUiState) {
     val signalColor = signalColorFor(uiState)
@@ -363,6 +428,12 @@ private fun ColorLegend(uiState: EcgMonitorUiState) {
     }
 }
 
+/**
+ * A single coloured circle + text label entry within [ColorLegend].
+ *
+ * @param color The fill colour of the indicator dot.
+ * @param label The text shown beside the dot.
+ */
 @Composable
 private fun LegendItem(color: Color, label: String) {
     Row(
@@ -384,6 +455,30 @@ private fun LegendItem(color: Color, label: String) {
 
 // ── Action buttons ────────────────────────────────────────────────────────────
 
+/**
+ * Context-sensitive action area that adapts its content to [uiState].
+ *
+ * - **Idle**: shows "Connect ESP32" and "Demo mode" buttons side-by-side.
+ *   The demo button anchors the [DemoPatternDropdown] so the dropdown appears
+ *   directly below it.
+ * - **DemoRunning**: shows Pause/Resume and Stop buttons.
+ * - **BtConnecting**: shows a spinner with connecting text.
+ * - **BtConnected**: shows a waiting message and a Disconnect button.
+ *
+ * All callbacks are lambdas passed in from the parent to keep this composable
+ * stateless and easily testable.
+ *
+ * @param uiState Current monitor state controlling which button set is shown.
+ * @param onConnectEsp32 Called when the user taps the Bluetooth connect button.
+ * @param onDemoClick Called when the user taps the Demo mode button (shows the dropdown).
+ * @param showDemoMenu Whether the [DemoPatternDropdown] should be visible.
+ * @param onDemoPatternSelected Called when the user selects a pattern from the dropdown.
+ * @param onDemoMenuDismiss Called when the dropdown is dismissed without a selection.
+ * @param onPauseDemo Called to suspend demo sample generation.
+ * @param onResumeDemo Called to resume demo sample generation.
+ * @param onStopDemo Called to end the demo and return to idle.
+ * @param onDisconnectBt Called to close the Bluetooth socket and return to idle.
+ */
 @Composable
 private fun ActionButtons(
     uiState: EcgMonitorUiState,
@@ -411,6 +506,7 @@ private fun ActionButtons(
                     Spacer(Modifier.width(6.dp))
                     Text(stringResource(R.string.ecg_connect_esp32))
                 }
+                // Box wraps both the button and its dropdown so the anchor position is correct.
                 Box(modifier = Modifier.weight(1f)) {
                     Button(
                         onClick = onDemoClick,
@@ -438,6 +534,7 @@ private fun ActionButtons(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (uiState.isPaused) {
+                    // Resume button uses the pattern's own accent colour for visual continuity.
                     Button(
                         onClick = onResumeDemo,
                         modifier = Modifier.weight(1f),
@@ -503,6 +600,17 @@ private fun ActionButtons(
     }
 }
 
+/**
+ * Dropdown menu listing all available [DemoPattern] entries.
+ *
+ * Each item shows a colour dot matching [DemoPattern.lineColor], the pattern name,
+ * and a one-line description. This gives students a visual preview of the pattern
+ * before they select it.
+ *
+ * @param expanded Whether the dropdown is currently visible.
+ * @param onPatternSelected Called with the chosen [DemoPattern] when the user taps an item.
+ * @param onDismiss Called when the dropdown is dismissed without a selection.
+ */
 @Composable
 private fun DemoPatternDropdown(
     expanded: Boolean,
@@ -544,6 +652,17 @@ private fun DemoPatternDropdown(
 
 // ── Bluetooth device picker ───────────────────────────────────────────────────
 
+/**
+ * Content rendered inside the Bluetooth bottom sheet.
+ *
+ * Displays paired and nearby (discovered) devices in separate [DeviceSection] groups.
+ * A loading spinner is shown if [uiState] has not yet transitioned to [EcgMonitorUiState.BtDeviceList].
+ *
+ * @param uiState Current monitor state. Cast to [EcgMonitorUiState.BtDeviceList] to access device lists.
+ * @param onScanClick Called when the user taps the re-scan button.
+ * @param onDeviceSelected Called with the [BtDeviceInfo] the user taps "Connect" on.
+ * @param onDismiss Called when the user taps Cancel or the sheet scrim.
+ */
 @Composable
 private fun BtDevicePickerContent(
     uiState: EcgMonitorUiState,
@@ -595,6 +714,7 @@ private fun BtDevicePickerContent(
         }
 
         if (btState == null) {
+            // Still waiting for the ViewModel to deliver BtDeviceList state
             Box(modifier = Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -633,6 +753,16 @@ private fun BtDevicePickerContent(
     }
 }
 
+/**
+ * A labelled group of Bluetooth devices inside [BtDevicePickerContent].
+ *
+ * Renders a section header followed by a [ListItem] for each device. Returns early
+ * if the list is empty so no empty header is shown.
+ *
+ * @param title Section header text (e.g. "Paired devices" or "Nearby devices").
+ * @param devices The list of [BtDeviceInfo] to display.
+ * @param onDeviceSelected Called with the selected device when the user taps "Connect".
+ */
 @Composable
 private fun DeviceSection(
     title: String,
@@ -664,6 +794,16 @@ private fun DeviceSection(
 
 // ── Pattern description card ──────────────────────────────────────────────────
 
+/**
+ * Dark-themed card shown below the chart while a demo is running.
+ *
+ * Displays a "DEMO · PATTERN_NAME" banner, a "Pattern features" header, and the
+ * multi-line educational detail text from [DemoPattern.detailRes]. The card border
+ * uses the pattern's [DemoPattern.lineColor] so the card visually ties into the
+ * waveform colour on screen.
+ *
+ * @param pattern The [DemoPattern] currently being simulated.
+ */
 @Composable
 private fun PatternDescriptionCard(pattern: DemoPattern) {
     val softWhite = Color(0xFFEEEEEE)
@@ -718,6 +858,12 @@ private fun PatternDescriptionCard(pattern: DemoPattern) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * Returns the waveform line colour appropriate for the current [uiState].
+ *
+ * Demo patterns use their own burgundy-derived colour; BT connected uses teal to
+ * distinguish real hardware data; all other states use a neutral grey.
+ */
 @Composable
 private fun signalColorFor(uiState: EcgMonitorUiState): Color = when (uiState) {
     is EcgMonitorUiState.DemoRunning -> Color(0xFF77202E)
@@ -725,6 +871,13 @@ private fun signalColorFor(uiState: EcgMonitorUiState): Color = when (uiState) {
     else -> Color(0xFF9E9E9E)
 }
 
+/**
+ * Returns the R-peak marker colour appropriate for the current [uiState].
+ *
+ * During demo mode each pattern's [DemoPattern.peakColor] is used so peaks stand out
+ * in the same hue family as the waveform. In all other states a bright red is used
+ * for maximum visibility.
+ */
 @Composable
 private fun peakColorFor(uiState: EcgMonitorUiState): Color = when (uiState) {
     is EcgMonitorUiState.DemoRunning -> uiState.pattern.peakColor
@@ -733,6 +886,7 @@ private fun peakColorFor(uiState: EcgMonitorUiState): Color = when (uiState) {
 
 // ── Previews ──────────────────────────────────────────────────────────────────
 
+/** Preview of [ColorLegend] for three distinct demo pattern states. */
 @Preview(showBackground = true)
 @Composable
 private fun ColorLegendPreview() {
@@ -745,6 +899,7 @@ private fun ColorLegendPreview() {
     }
 }
 
+/** Preview of the [DemoPatternDropdown] in its expanded state. */
 @Preview(showBackground = true)
 @Composable
 private fun DemoPatternDropdownPreview() {
@@ -759,6 +914,7 @@ private fun DemoPatternDropdownPreview() {
     }
 }
 
+/** Full-screen static preview of [EcgMonitorScreen] in the Idle state. */
 @Preview(showBackground = true)
 @Composable
 private fun EcgMonitorScreenPreview() {
