@@ -16,18 +16,31 @@ import dam.pmdm.pqrst.R
 import dam.pmdm.pqrst.domain.model.UserRole
 
 /**
- * App-wide top bar following Material 3 guidelines.
+ * App-wide top app bar following Material 3 guidelines (RNF-01).
  *
- * The navigation icon shows a back arrow when [onBackClick] is provided, or a hamburger menu
- * icon that opens the navigation drawer otherwise. If [role] is non-null, a role badge chip is
- * displayed in the actions area alongside any [actions] composables.
+ * Exists as a shared component because every screen in the app uses an identical top bar
+ * structure. Extracting it here ensures consistent title style, icon logic, and role badge
+ * placement, and makes it trivial to apply a future branding change across all screens.
  *
- * @param title The screen title shown in the centre of the bar.
- * @param role The authenticated user's role, used to render the role badge. Pass null to hide the badge.
- * @param onMenuClick Callback invoked when the user taps the menu (hamburger) icon.
- * @param onBackClick Callback invoked when the user taps the back arrow.
+ * **Navigation icon logic**
+ * - When [onBackClick] is non-null a back arrow is rendered — this screen sits at a
+ *   non-root position in the back stack.
+ * - When [onBackClick] is null a hamburger (menu) icon is rendered — this screen is a
+ *   top-level destination and opens the navigation drawer via [onMenuClick].
+ *
+ * **Role badge**
+ * When [role] is non-null a [SuggestionChip] showing "Admin" or "User" is appended to
+ * the actions area. This gives immediate visual confirmation of the authenticated role
+ * without navigating to a profile screen.
+ *
+ * @param title The screen title shown as the top bar's headline text.
+ * @param role The authenticated user's [UserRole] for the role badge, or null to hide it.
+ * @param onMenuClick Callback invoked when the hamburger icon is tapped.
+ *                    Only used when [onBackClick] is null.
+ * @param onBackClick Callback invoked when the back arrow is tapped.
  *                    When non-null, the back arrow is shown instead of the menu icon.
- * @param actions Additional action composables placed in the trailing area before the role badge.
+ * @param actions Additional trailing action composables rendered before the role badge.
+ *                Defaults to an empty slot.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +55,7 @@ fun PqrstTopBar(
         title = { Text(title) },
         navigationIcon = {
             if (onBackClick != null) {
+                // Back-arrow for non-root screens
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
@@ -49,6 +63,7 @@ fun PqrstTopBar(
                     )
                 }
             } else {
+                // Hamburger for top-level screens with a navigation drawer
                 IconButton(onClick = onMenuClick) {
                     Icon(
                         imageVector = Icons.Default.Menu,

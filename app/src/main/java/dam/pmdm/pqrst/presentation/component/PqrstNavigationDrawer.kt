@@ -33,17 +33,31 @@ import dam.pmdm.pqrst.domain.model.Session
 import dam.pmdm.pqrst.domain.model.UserRole
 
 /**
- * The application's modal navigation drawer content.
+ * The application's modal navigation drawer sheet content.
  *
- * Displays the authenticated user's identity at the top, followed by navigation items for
- * all main sections of the app. The logout action is pinned to the bottom.
- * Admin-only items (e.g. user management) are not currently conditionally hidden here
- * but can be gated on [Session.role] as the feature set grows.
+ * Exists as a reusable component because multiple screens (Dashboard, PatientList,
+ * ConsultationList) all embed a [androidx.compose.material3.ModalNavigationDrawer] with
+ * identical content — extracting it here avoids duplication and ensures the navigation
+ * items stay in sync across screens.
  *
- * @param session The currently authenticated user's session, used to display the user header.
- * @param currentRoute The route identifier of the currently active screen, used to highlight
- *                     the selected drawer item.
- * @param onNavigate Callback invoked with the target route string when a navigation item is tapped.
+ * **Structure**
+ * - A **user header** (surfaceVariant background) shows the authenticated username,
+ *   optional email, and role label.
+ * - **Navigation items** cover all primary app sections; the selected item is highlighted
+ *   based on [currentRoute].
+ * - A **logout item** is pinned to the bottom, separated by a divider.
+ *
+ * **Role gating**
+ * Role-specific items (e.g. user management) are not currently gated on [Session.role]
+ * inside the drawer itself; the navigation graph enforces access control. Future iterations
+ * can add `if (session.role == UserRole.ADMIN)` guards here.
+ *
+ * @param session The currently authenticated user's session, used to populate the header.
+ * @param currentRoute The route identifier of the currently displayed screen.
+ *                     Passed to [NavigationDrawerItem.selected] for visual feedback.
+ * @param onNavigate Callback invoked with the target route string when the user taps an item.
+ *                   The caller (e.g. [DashboardScreen]) is responsible for closing the drawer
+ *                   and navigating.
  * @param onLogout Callback invoked when the user taps the logout item.
  */
 @Composable
@@ -60,7 +74,7 @@ fun PqrstNavigationDrawer(
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
         ) {
-            // User header
+            // User header — surfaceVariant background distinguishes it from the list
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -120,13 +134,14 @@ fun PqrstNavigationDrawer(
                 onClick = { onNavigate("about") },
             )
 
+            // Push the logout item to the bottom of the drawer sheet
             Spacer(Modifier.weight(1f))
             HorizontalDivider()
 
             NavigationDrawerItem(
                 icon = { Icon(Icons.Default.ExitToApp, null) },
                 label = { Text(stringResource(R.string.nav_logout)) },
-                selected = false,
+                selected = false, // logout is never in a "selected" state
                 onClick = onLogout,
             )
         }
