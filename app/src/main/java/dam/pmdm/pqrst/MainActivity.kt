@@ -19,17 +19,45 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Single-activity entry point for the application.
+ * Single-activity entry point for the PQRST Learn application.
  *
- * Hosts the entire Compose UI tree and wires two cross-cutting concerns at the root:
+ * This activity hosts the entire Jetpack Compose UI tree and is responsible for
+ * wiring two cross-cutting, app-wide concerns at the composition root:
  *
- * 1. **Authentication** — [AuthRepository.currentSession] drives navigation via [PqrstNavGraph],
- *    so every screen automatically reacts to login and logout events.
+ * ## 1. Authentication and navigation
+ * [AuthRepository.currentSession] is collected as Compose state and forwarded to
+ * [PqrstNavGraph]. The nav graph decides which start destination to show (login or
+ * home) based on whether a session is active, so every screen in the app automatically
+ * reacts to login and logout events without needing to observe session state themselves.
  *
- * 2. **Theme and locale** — [SettingsStore] provides the stored dark-mode and language
- *    preferences. Dark mode is applied to [PqrstTheme] on every recomposition. The locale
- *    is applied via [AppCompatDelegate.setApplicationLocales], which triggers an automatic
- *    activity recreation so all string resources reload in the chosen language.
+ * [AuthRepository.isCheckingSession] is also forwarded so the nav graph can display a
+ * loading/splash state while the background session-restore coroutine completes,
+ * preventing a flash of the login screen for users who are already authenticated.
+ *
+ * ## 2. Theme and locale
+ * [SettingsStore.darkMode] drives the `darkTheme` parameter of [PqrstTheme]. Because
+ * the value is collected as Compose state, theme changes recompose the tree without
+ * requiring an activity restart.
+ *
+ * [SettingsStore.language] is applied via [AppCompatDelegate.setApplicationLocales],
+ * which re-creates the activity automatically so all string resources reload in the
+ * chosen locale. The [LaunchedEffect] guards against applying the locale before the
+ * DataStore value has loaded (initial `null`).
+ *
+ * **Why [AppCompatActivity] instead of [androidx.activity.ComponentActivity]?**
+ * [AppCompatDelegate.setApplicationLocales] requires AppCompat for correct per-app
+ * locale handling on API < 33. Using [AppCompatActivity] gives us that support without
+ * extra configuration.
+ *
+ * **Why field injection instead of ViewModel injection?**
+ * [AuthRepository] and [SettingsStore] must be available before [setContent] is called
+ * (in [onCreate]), so they are injected as fields by Hilt. They are not injected into
+ * a ViewModel here because the activity itself is the root composition host.
+ *
+ * @property authRepository Injected authentication repository; drives session state
+ *   and navigation.
+ * @property settingsStore Injected settings store; drives dark mode and language
+ *   preferences.
  */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -43,14 +71,20 @@ class MainActivity : AppCompatActivity() {
     /**
      * Called when the activity is first created.
      *
-     * Enables edge-to-edge display and sets up the Compose content root.
-     * Collects session state from [AuthRepository] and settings from [SettingsStore],
-     * applying theme and locale at the top of the composition tree.
+     * Sets up edge-to-edge display and installs the Compose content root. Inside the
+     * composition:
+     * - Session and checking-session state are collected from [authRepository].
+     * - Dark-mode and language preferences are collected from [settingsStore].
+     * - [LaunchedEffect] applies the locale once the DataStore value is available
+     *   (guarded by a null check to skip the initial placeholder emission).
+     * - [PqrstTheme] wraps the entire nav graph to apply the correct colour scheme.
      *
-     * @param savedInstanceState The previously saved instance state, or null on first creation.
+     * @param savedInstanceState The previously saved instance state bundle, or null on
+     *   first creation. Not used directly here; state is restored via [StateFlow] collectors.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Edge-to-edge allows the app to draw behind the status and navigation bars (Material 3)
         enableEdgeToEdge()
         setContent {
             val session by authRepository.currentSession.collectAsStateWithLifecycle()
@@ -60,11 +94,13 @@ class MainActivity : AppCompatActivity() {
             // null = DataStore not yet loaded; skip locale call until the real value arrives
             val language by settingsStore.language.collectAsStateWithLifecycle(initialValue = null)
 
+            // Map the string preference to a Boolean expected by PqrstTheme
             val darkTheme = when (darkModePref) {
                 "dark" -> true
                 else -> false
             }
 
+            // Re-apply the locale whenever the language preference changes; activity recreates automatically
             LaunchedEffect(language) {
                 val lang = language ?: return@LaunchedEffect
                 AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(lang))
@@ -74,6 +110,7 @@ class MainActivity : AppCompatActivity() {
                 PqrstNavGraph(
                     session = session,
                     isCheckingSession = isChecking,
+                    // Logout is launched on lifecycleScope so it survives a brief recomposition
                     onLogout = { lifecycleScope.launch { authRepository.logout() } },
                 )
             }
