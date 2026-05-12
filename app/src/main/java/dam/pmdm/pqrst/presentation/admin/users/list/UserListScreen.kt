@@ -52,11 +52,19 @@ import dam.pmdm.pqrst.ui.theme.PqrstTheme
 /**
  * Screen that lists all application user accounts for management by an ADMIN.
  *
- * Shows each user's username and role badge, with edit and delete actions per row.
- * Deletion requires confirmation via [ConfirmDialog]. Failed deletions are shown in a Snackbar.
+ * Shows each user's username and a colour-coded role badge (ADMIN or USER). Each row
+ * provides edit and delete [IconButton]s. The delete button is hidden for the currently
+ * logged-in admin's own account to prevent self-deletion and lock-out (CU-04 exception).
  *
- * @param onBack Callback invoked when the user taps the back arrow.
- * @param onNavigateToForm Callback invoked with a user ID to edit an existing user, or null to create one.
+ * Deletion requires confirmation via [ConfirmDialog] because the operation is irreversible.
+ * Failed deletions are surfaced via a Snackbar.
+ *
+ * State hoisting pattern: all persistent state lives in [UserListViewModel]; only transient
+ * UI state (which user is pending deletion, Snackbar host) is held locally.
+ *
+ * @param onBack Callback invoked when the user taps the top-bar back arrow.
+ * @param onNavigateToForm Callback invoked with a user ID to edit an existing account,
+ *                         or null to create a new one.
  * @param viewModel The Hilt-provided [UserListViewModel]; can be overridden in tests.
  */
 @Composable
@@ -65,13 +73,17 @@ fun UserListScreen(
     onNavigateToForm: (Long?) -> Unit,
     viewModel: UserListViewModel = hiltViewModel(),
 ) {
+    // collectAsStateWithLifecycle pauses collection while the screen is inactive,
+    // preventing Snackbar re-triggers when the app resumes.
     val users by viewModel.users.collectAsStateWithLifecycle()
     val currentUserId: Long? by viewModel.currentUserId.collectAsStateWithLifecycle()
     val deleteError by viewModel.deleteError.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    // Tracks which user the admin has chosen to delete; non-null triggers the dialog.
     var userToDelete by remember { mutableStateOf<AppUser?>(null) }
 
+    // Show a Snackbar when a delete error arrives, then clear it to prevent re-show.
     LaunchedEffect(deleteError) {
         deleteError?.let {
             snackbarHostState.showSnackbar(it)
@@ -105,6 +117,7 @@ fun UserListScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
+            // Show an empty-state message when no accounts exist yet.
             if (users.isEmpty()) {
                 Text(
                     text = "No hay usuarios registrados",
@@ -113,11 +126,15 @@ fun UserListScreen(
                 )
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Stable keys prevent unnecessary recompositions when the list updates.
                     items(users, key = { it.id }) { user ->
                         UserRow(
                             user = user,
+                            // isSelf hides the delete button to prevent the admin from
+                            // deleting their own account and locking themselves out.
                             isSelf = user.id == currentUserId,
                             onEdit = { onNavigateToForm(user.id) },
+                            // Setting userToDelete triggers the ConfirmDialog below.
                             onDelete = { userToDelete = user },
                         )
                     }
@@ -126,6 +143,7 @@ fun UserListScreen(
         }
     }
 
+    // Guard the destructive delete action with a confirmation dialog.
     userToDelete?.let { user ->
         ConfirmDialog(
             title = stringResource(R.string.confirm_delete_title),
@@ -140,12 +158,20 @@ fun UserListScreen(
 }
 
 /**
- * A single row in the user list, showing the username and role badge with edit and delete actions.
+ * A single row in the user list, displayed as a colour-coded [Card].
  *
- * @param user The user data to render.
- * @param isSelf True when this row represents the currently logged-in user; hides the delete button.
- * @param onEdit Callback invoked when the user taps the edit icon.
- * @param onDelete Callback invoked when the user taps the delete icon.
+ * ADMIN accounts use a warm tint; USER accounts use a cool tint to make roles
+ * visually distinguishable at a glance.
+ *
+ * The delete [IconButton] is hidden when [isSelf] is true to prevent the currently
+ * logged-in admin from deleting their own account.
+ *
+ * @param user The [AppUser] data to render.
+ * @param isSelf True when this row represents the currently logged-in admin; hides
+ *               the delete button to prevent self-deletion.
+ * @param onEdit Callback invoked when the admin taps the edit [IconButton].
+ * @param onDelete Callback invoked when the admin taps the delete [IconButton].
+ *                 The caller is responsible for showing a confirmation dialog first.
  */
 @Composable
 private fun UserRow(
@@ -154,6 +180,7 @@ private fun UserRow(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    // Differentiate ADMIN and USER rows by card background colour for quick visual scanning.
     val cardColor = if (user.role == UserRole.ADMIN) Color(0xFFE6E2CC) else Color(0xFFB7D2E5)
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -174,6 +201,8 @@ private fun UserRow(
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Spacer(Modifier.padding(top = 4.dp))
+                // Role badge: dark pill background with light label text for legibility
+                // against both the ADMIN (warm) and USER (cool) card colours.
                 Box(
                     modifier = Modifier
                         .background(
@@ -199,6 +228,8 @@ private fun UserRow(
                     contentDescription = stringResource(R.string.edit),
                 )
             }
+            // Only show the delete button for other users — hide it for the admin's
+            // own account to prevent self-deletion and accidental lock-out.
             if (!isSelf) {
                 IconButton(onClick = onDelete) {
                     Icon(
@@ -213,7 +244,8 @@ private fun UserRow(
 }
 
 /**
- * Preview of [UserRow] for the Android Studio design canvas.
+ * Preview of [UserRow] showing an ADMIN user (with self-delete hidden) for the
+ * Android Studio design canvas.
  */
 @Preview(showBackground = true)
 @Composable
@@ -228,6 +260,9 @@ private fun UserRowPreview() {
     }
 }
 
+/**
+ * Preview of the full user list scaffold with sample accounts for the Android Studio design canvas.
+ */
 @Preview(showBackground = true)
 @Composable
 private fun UserListScreenPreview() {
