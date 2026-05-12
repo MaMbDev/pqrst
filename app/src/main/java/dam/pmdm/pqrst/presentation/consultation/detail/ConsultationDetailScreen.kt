@@ -46,17 +46,32 @@ import dam.pmdm.pqrst.ui.theme.PqrstTheme
 /**
  * Screen that displays the full detail of a single consultation.
  *
- * Shows date, symptoms, vital signs, and notes. Provides actions to edit or delete the
- * consultation, and buttons to navigate to ECG capture, CSV import, and report generation.
- * Deletion requires confirmation; on success the screen navigates back.
+ * Shows a [ConsultationInfoCard] with date, symptoms, vital signs, and notes,
+ * followed by an [EcgActionsCard] for ECG-related navigation (live monitor, CSV import,
+ * PDF report). Edit and delete actions are available in the top bar.
  *
- * @param consultationId The ID of the consultation to display.
+ * Deletion requires confirmation via [ConfirmDialog] — the operation cascade-deletes
+ * associated ECG records and analysis results, making it irreversible.
+ *
+ * Side-effect handling:
+ * - [ConsultationDetailViewModel.deletedEvent] is collected in a `LaunchedEffect(Unit)` so
+ *   back-navigation fires exactly once after a successful delete.
+ * - [ConsultationDetailViewModel.error] triggers a Snackbar via `LaunchedEffect(error)`.
+ *
+ * State hoisting pattern: all persistent state lives in [ConsultationDetailViewModel];
+ * only transient UI flags (dialog visibility, Snackbar host) are held locally.
+ *
+ * @param consultationId The Room primary key of the consultation to display. Used by the
+ *                       navigation graph; [ConsultationDetailViewModel] reads it independently
+ *                       from [SavedStateHandle].
  * @param onBack Callback invoked when the user taps the back arrow or after a successful delete.
- * @param onEditConsultation Callback invoked with the patient ID when the user taps the edit icon.
- * @param onEcgAnalysis Callback invoked with an ECG record ID when the user requests analysis.
- * @param onEcgMonitor Callback invoked when the user navigates to the live ECG monitor.
- * @param onEcgImport Callback invoked when the user navigates to import an ECG from CSV.
- * @param onReport Callback invoked when the user requests a PDF report.
+ * @param onEditConsultation Callback invoked with the parent patient ID when the user taps
+ *                           the edit icon; enables the form to pre-fill the patient field.
+ * @param onEcgAnalysis Callback invoked with an ECG record ID when the user requests analysis
+ *                      (currently wired for future use).
+ * @param onEcgMonitor Callback invoked when the user taps "ECG Monitor" to start live capture.
+ * @param onEcgImport Callback invoked when the user taps "Import ECG" to load a CSV file.
+ * @param onReport Callback invoked when the user taps "Generate report" to produce a PDF.
  * @param viewModel The Hilt-provided [ConsultationDetailViewModel]; can be overridden in tests.
  */
 @Composable
@@ -70,16 +85,24 @@ fun ConsultationDetailScreen(
     onReport: () -> Unit,
     viewModel: ConsultationDetailViewModel = hiltViewModel(),
 ) {
+    // collectAsStateWithLifecycle pauses collection while the screen is inactive,
+    // preventing stale Snackbar triggers when the app resumes.
     val consultation by viewModel.consultation.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    // Non-null / true triggers the ConfirmDialog; set to true to request deletion.
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    // LaunchedEffect(Unit) runs once on first composition and persists for the screen's
+    // lifetime. Collecting deletedEvent here ensures back-navigation fires exactly once
+    // per SharedFlow emission, even if the screen recomposes in the interim.
     LaunchedEffect(Unit) {
         viewModel.deletedEvent.collect { onBack() }
     }
 
+    // Re-runs whenever a new error string arrives. Shows the Snackbar, then clears the
+    // error to prevent the same message from reappearing on the next recomposition.
     LaunchedEffect(error) {
         error?.let {
             snackbarHostState.showSnackbar(it)
@@ -95,6 +118,8 @@ fun ConsultationDetailScreen(
                 onMenuClick = {},
                 onBackClick = onBack,
                 actions = {
+                    // Disable edit while consultation is loading to avoid navigating
+                    // with a null patientId.
                     IconButton(
                         onClick = { consultation?.let { onEditConsultation(it.patientId) } },
                         enabled = consultation != null,
@@ -104,6 +129,8 @@ fun ConsultationDetailScreen(
                             contentDescription = stringResource(R.string.edit),
                         )
                     }
+                    // Setting showDeleteDialog triggers the ConfirmDialog rather than
+                    // calling deleteConsultation directly — prevents accidental deletion.
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
@@ -122,6 +149,7 @@ fun ConsultationDetailScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // Render cards only once the consultation has loaded.
             consultation?.let { c ->
                 item { ConsultationInfoCard(consultation = c) }
                 item {
@@ -135,6 +163,7 @@ fun ConsultationDetailScreen(
         }
     }
 
+    // Guard the destructive delete action with a confirmation dialog (RF-01 policy).
     if (showDeleteDialog) {
         ConfirmDialog(
             title = stringResource(R.string.confirm_delete_title),
@@ -149,9 +178,13 @@ fun ConsultationDetailScreen(
 }
 
 /**
- * Card displaying the consultation's date and all non-blank text fields.
+ * Card displaying all non-blank fields of the consultation: date, symptoms,
+ * vital signs, and notes.
  *
- * @param consultation The consultation data to render.
+ * Optional sections are only rendered when the corresponding field is non-blank,
+ * so the card remains compact for consultations with minimal data.
+ *
+ * @param consultation The [Consultation] record whose data is rendered.
  */
 @Composable
 private fun ConsultationInfoCard(consultation: Consultation) {
@@ -191,9 +224,13 @@ private fun ConsultationInfoCard(consultation: Consultation) {
 }
 
 /**
- * A label-value text block used inside the consultation info card.
+ * A labelled text block used inside [ConsultationInfoCard].
  *
- * @param label Section heading displayed in a subdued colour.
+ * Renders the section heading in a subdued colour followed by the value in body text.
+ * Using separate [Text] composables (instead of a single annotated string) makes it
+ * straightforward to apply independent styles to label and value.
+ *
+ * @param label Section heading (e.g. "Síntomas").
  * @param value The content text displayed below the label.
  */
 @Composable
@@ -211,11 +248,15 @@ private fun SectionText(label: String, value: String) {
 }
 
 /**
- * Card containing the ECG and report action buttons for this consultation.
+ * Card containing the action buttons for ECG acquisition, import, and report generation.
  *
- * @param onEcgMonitor Callback for the "ECG Monitor" button.
- * @param onEcgImport Callback for the "Import ECG" button.
- * @param onReport Callback for the "Generate report" button.
+ * Grouped into a separate card to visually separate clinical content from workflow actions.
+ * ECG monitor and import are equally prominent [Button]s; report generation uses an
+ * [OutlinedButton] to indicate it is a secondary action.
+ *
+ * @param onEcgMonitor Callback for the "ECG Monitor" button (RF-03 live capture).
+ * @param onEcgImport Callback for the "Import ECG" button (RF-04 CSV import).
+ * @param onReport Callback for the "Generate report" button (RF-08 PDF export).
  */
 @Composable
 private fun EcgActionsCard(
@@ -253,7 +294,7 @@ private fun EcgActionsCard(
 }
 
 /**
- * Preview of [ConsultationInfoCard] for the Android Studio design canvas.
+ * Preview of [ConsultationInfoCard] with complete sample data for the Android Studio design canvas.
  */
 @Preview(showBackground = true)
 @Composable
@@ -272,6 +313,9 @@ private fun ConsultationInfoCardPreview() {
     }
 }
 
+/**
+ * Preview of the full consultation detail scaffold for the Android Studio design canvas.
+ */
 @Preview(showBackground = true)
 @Composable
 private fun ConsultationDetailScreenPreview() {
