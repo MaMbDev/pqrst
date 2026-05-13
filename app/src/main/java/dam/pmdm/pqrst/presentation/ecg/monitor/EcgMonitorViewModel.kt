@@ -2,13 +2,15 @@ package dam.pmdm.pqrst.presentation.ecg.monitor
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothSocket
-import android.content.BroadcastReceiver
+import android.bluetooth.BluetoothProfile
+import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanResult
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.os.Build
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
@@ -27,7 +29,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.io.IOException
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.math.PI
@@ -82,14 +83,14 @@ sealed class EcgMonitorUiState {
     ) : EcgMonitorUiState()
 
     /**
-     * An RFCOMM connection to the chosen ESP32 is being established.
+     * A BLE GATT connection to the chosen ESP32 is being established.
      *
      * @property deviceName Human-readable name of the target device.
      */
     data class BtConnecting(val deviceName: String) : EcgMonitorUiState()
 
     /**
-     * The Bluetooth SPP socket is open and the app is waiting for ECG data from the ESP32.
+     * The BLE GATT connection is open and characteristic notifications are enabled.
      *
      * @property deviceName Human-readable name of the connected device.
      */
@@ -122,18 +123,17 @@ sealed class EcgMonitorEvent {
  *    size [WINDOW_SIZE] acts as the sliding display window. The chart is updated only every
  *    [CHART_SKIP_FRAMES] samples (~25 Hz) to avoid saturating the Compose recomposition
  *    pipeline while the generator runs at 100 Hz.
- * 2. **Bluetooth SPP** — scans for Classic Bluetooth devices, connects via RFCOMM to the
- *    standard SPP UUID, and (once hardware is available) will stream samples into the same
- *    circular buffer. Discovery uses a [BroadcastReceiver] registered with the application
- *    context so it survives ViewModel recreation.
+ * 2. **Bluetooth BLE** — scans for nearby BLE devices using [BluetoothLeScanner], connects
+ *    via GATT to the ESP32, discovers the NUS (Nordic UART Service) TX characteristic, and
+ *    streams ECG samples into the same circular buffer via characteristic notifications.
+ *    Raw bytes from the ESP32 are expected as ASCII decimal lines ("ADC_VALUE\n").
  *
  * State is exposed as [StateFlow]s so the screen collects them safely with lifecycle
  * awareness. One-shot error events are delivered via a buffered [Channel].
  *
  * @param appContext Application context (not Activity context) used for Bluetooth system
- *                   service access and BroadcastReceiver registration.
- * @param ioDispatcher Coroutine dispatcher for all I/O-bound work (signal generation,
- *                     Bluetooth socket I/O).
+ *                   service access.
+ * @param ioDispatcher Coroutine dispatcher for all I/O-bound work (signal generation).
  */
 @HiltViewModel
 class EcgMonitorViewModel @Inject constructor(
@@ -191,8 +191,16 @@ class EcgMonitorViewModel @Inject constructor(
     @Volatile private var isGeneratorPaused = false
 
     private var demoJob: Job? = null
-    private var btSocket: BluetoothSocket? = null
-    private var discoveryReceiver: BroadcastReceiver? = null
+    private var scanTimeoutJob: Job? = null
+    private var bleScanCallback: ScanCallback? = null
+    private var gatt: BluetoothGatt? = null
+    private var connectedDeviceName: String = ""
+
+    /** Accumulates partial ASCII lines received from the ESP32 BLE characteristic. */
+    private val bleLineBuffer = StringBuilder()
+
+    /** Tracks how many BLE samples have arrived since the last chart refresh. */
+    private var bleChartCounter = 0
 
     // ── Demo mode ──────────────────────────────────────────────────────────────
 
@@ -290,15 +298,14 @@ class EcgMonitorViewModel @Inject constructor(
         buffer.clear()
     }
 
-    // ── Bluetooth ──────────────────────────────────────────────────────────────
+    // ── Bluetooth BLE ──────────────────────────────────────────────────────────
 
     /**
-     * Begins a Classic Bluetooth device scan and transitions to [EcgMonitorUiState.BtDeviceList].
+     * Starts a BLE device scan and transitions to [EcgMonitorUiState.BtDeviceList].
      *
-     * Paired devices are listed immediately from [BluetoothAdapter.bondedDevices]; nearby
-     * devices are appended as [BluetoothDevice.ACTION_FOUND] broadcasts arrive. The
-     * [BroadcastReceiver] is registered on the application context to avoid leaking the
-     * ViewModel, and unregistered when scanning ends or [stopBluetoothScan] is called.
+     * Already-bonded BLE devices are listed immediately; nearby devices are appended as
+     * [ScanCallback.onScanResult] fires. The scan stops automatically after [BLE_SCAN_TIMEOUT_MS]
+     * to preserve battery.
      *
      * Suppresses the MissingPermission lint warning because the caller ([EcgMonitorScreen])
      * has already requested and confirmed the required permissions before invoking this method.
@@ -323,72 +330,62 @@ class EcgMonitorViewModel @Inject constructor(
 
         val nearbyList = mutableListOf<BtDeviceInfo>()
 
-        // Unregister any previous receiver to avoid duplicate registrations
-        discoveryReceiver?.let {
-            try { appContext.unregisterReceiver(it) } catch (_: IllegalArgumentException) {}
-        }
+        // Stop any previous scan before starting a new one
+        bleScanCallback?.let { runCatching { adapter.bluetoothLeScanner?.stopScan(it) } }
 
-        discoveryReceiver = object : BroadcastReceiver() {
-            @SuppressLint("MissingPermission")
-            override fun onReceive(context: Context, intent: Intent) {
-                when (intent.action) {
-                    BluetoothDevice.ACTION_FOUND -> {
-                        // Use the type-safe API on Android 13+ to avoid deprecation
-                        val device: BluetoothDevice? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
-                        } else {
-                            @Suppress("DEPRECATION")
-                            intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                        }
-                        device?.let { d ->
-                            val info = BtDeviceInfo(d.address, d.name ?: d.address)
-                            // Deduplicate by MAC address before updating the state
-                            if (nearbyList.none { it.address == info.address }) {
-                                nearbyList.add(info)
-                                val st = _uiState.value as? EcgMonitorUiState.BtDeviceList ?: return
-                                _uiState.value = st.copy(nearby = nearbyList.toList())
-                            }
-                        }
-                    }
-                    BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                        val st = _uiState.value as? EcgMonitorUiState.BtDeviceList ?: return
-                        _uiState.value = st.copy(isScanning = false)
-                    }
+        bleScanCallback = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult) {
+                val name = result.scanRecord?.deviceName
+                    ?: result.device.name
+                    ?: return  // skip unnamed devices
+                val info = BtDeviceInfo(result.device.address, name)
+                if (nearbyList.none { it.address == info.address }) {
+                    nearbyList.add(info)
+                    val st = _uiState.value as? EcgMonitorUiState.BtDeviceList ?: return
+                    _uiState.value = st.copy(nearby = nearbyList.toList())
                 }
+            }
+
+            override fun onScanFailed(errorCode: Int) {
+                val st = _uiState.value as? EcgMonitorUiState.BtDeviceList ?: return
+                _uiState.value = st.copy(isScanning = false)
+                _events.trySend(EcgMonitorEvent.ShowError(R.string.ecg_bt_unavailable))
             }
         }
 
-        val filter = IntentFilter().apply {
-            addAction(BluetoothDevice.ACTION_FOUND)
-            addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        adapter.bluetoothLeScanner?.startScan(bleScanCallback)
+
+        // Auto-stop scan after timeout so we don't drain the battery
+        scanTimeoutJob?.cancel()
+        scanTimeoutJob = viewModelScope.launch {
+            delay(BLE_SCAN_TIMEOUT_MS)
+            stopBluetoothScan()
+            val st = _uiState.value as? EcgMonitorUiState.BtDeviceList ?: return@launch
+            _uiState.value = st.copy(isScanning = false)
         }
-        appContext.registerReceiver(discoveryReceiver, filter)
-        adapter.startDiscovery()
     }
 
     /**
-     * Cancels any active device discovery and unregisters the [BroadcastReceiver].
+     * Stops the BLE scan and cancels the auto-stop timeout job.
      *
-     * Safe to call multiple times; swallows [IllegalArgumentException] if the receiver
-     * was already unregistered.
+     * Safe to call multiple times.
      */
     @SuppressLint("MissingPermission")
     fun stopBluetoothScan() {
-        bluetoothAdapter?.cancelDiscovery()
-        discoveryReceiver?.let {
-            try { appContext.unregisterReceiver(it) } catch (_: IllegalArgumentException) {}
+        scanTimeoutJob?.cancel()
+        scanTimeoutJob = null
+        bleScanCallback?.let {
+            runCatching { bluetoothAdapter?.bluetoothLeScanner?.stopScan(it) }
         }
-        discoveryReceiver = null
+        bleScanCallback = null
     }
 
     /**
-     * Stops scanning and opens an RFCOMM socket to [info] using the standard SPP UUID.
+     * Stops scanning and opens a BLE GATT connection to [info].
      *
-     * Discovery is cancelled before connecting because an active discovery degrades
-     * RFCOMM throughput. The socket operation blocks on [ioDispatcher]; on failure the
-     * screen receives a [EcgMonitorEvent.ShowError].
-     *
-     * Note: actual data streaming from the ESP32 will be wired here once hardware is available.
+     * After the connection is established the GATT callback discovers services and enables
+     * notifications on the NUS TX characteristic. ECG data from the ESP32 is expected as
+     * ASCII decimal lines ("ADC_VALUE\n", e.g. "2048\n") and normalised to the [−1, 1] range.
      *
      * @param info The target device selected by the user from the BT picker sheet.
      */
@@ -396,26 +393,119 @@ class EcgMonitorViewModel @Inject constructor(
     fun connectToDevice(info: BtDeviceInfo) {
         stopBluetoothScan()
         _uiState.value = EcgMonitorUiState.BtConnecting(info.name)
+        connectedDeviceName = info.name
 
-        viewModelScope.launch(ioDispatcher) {
-            try {
-                val device = bluetoothAdapter?.getRemoteDevice(info.address)
-                    ?: run {
-                        _uiState.value = EcgMonitorUiState.Idle
-                        return@launch
+        val device = bluetoothAdapter?.getRemoteDevice(info.address) ?: run {
+            _uiState.value = EcgMonitorUiState.Idle
+            _events.trySend(EcgMonitorEvent.ShowError(R.string.ecg_bt_connection_failed))
+            return
+        }
+
+        gatt?.close()
+        gatt = device.connectGatt(appContext, false, gattCallback, android.bluetooth.BluetoothDevice.TRANSPORT_LE)
+    }
+
+    /**
+     * Callback chain for BLE GATT: connection state → service discovery → enable notifications.
+     *
+     * ECG bytes arriving via [BluetoothGattCallback.onCharacteristicChanged] are forwarded to
+     * [parseBleEcgData] which accumulates ASCII lines and pushes normalised samples into the
+     * shared circular buffer.
+     */
+    private val gattCallback = object : BluetoothGattCallback() {
+
+        @SuppressLint("MissingPermission")
+        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            when (newState) {
+                BluetoothProfile.STATE_CONNECTED -> gatt.discoverServices()
+                BluetoothProfile.STATE_DISCONNECTED -> {
+                    gatt.close()
+                    this@EcgMonitorViewModel.gatt = null
+                    _uiState.value = EcgMonitorUiState.Idle
+                    _signalBuffer.value = List(WINDOW_SIZE) { 0f }
+                    bleLineBuffer.clear()
+                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                        _events.trySend(EcgMonitorEvent.ShowError(R.string.ecg_bt_connection_failed))
                     }
-                val uuid = UUID.fromString(SPP_UUID)
-                val socket = device.createRfcommSocketToServiceRecord(uuid)
-                bluetoothAdapter?.cancelDiscovery()
-                socket.connect()
-                btSocket = socket
-                _uiState.value = EcgMonitorUiState.BtConnected(info.name)
-                // ESP32 data streaming will be implemented once hardware is available.
-            } catch (e: IOException) {
-                btSocket?.close()
-                btSocket = null
-                _uiState.value = EcgMonitorUiState.Idle
+                }
+            }
+        }
+
+        @SuppressLint("MissingPermission")
+        override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                gatt.disconnect()
                 _events.trySend(EcgMonitorEvent.ShowError(R.string.ecg_bt_connection_failed))
+                return
+            }
+
+            val characteristic = gatt
+                .getService(UUID.fromString(NUS_SERVICE_UUID))
+                ?.getCharacteristic(UUID.fromString(NUS_TX_UUID))
+
+            if (characteristic == null) {
+                gatt.disconnect()
+                _events.trySend(EcgMonitorEvent.ShowError(R.string.ecg_bt_connection_failed))
+                return
+            }
+
+            // Enable notifications on the TX characteristic so the ESP32 can push ECG data
+            gatt.setCharacteristicNotification(characteristic, true)
+            val descriptor = characteristic.getDescriptor(UUID.fromString(CCCD_UUID))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                gatt.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+            } else {
+                @Suppress("DEPRECATION")
+                descriptor?.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                @Suppress("DEPRECATION")
+                gatt.writeDescriptor(descriptor)
+            }
+
+            _uiState.value = EcgMonitorUiState.BtConnected(connectedDeviceName)
+        }
+
+        // API 33+ path
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            value: ByteArray,
+        ) = parseBleEcgData(value)
+
+        // Pre-API-33 path (deprecated but required for minSdk 26)
+        @Suppress("DEPRECATION")
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+        ) {
+            parseBleEcgData(characteristic.value ?: return)
+        }
+    }
+
+    /**
+     * Parses ASCII ECG lines from BLE bytes and pushes normalised samples into the buffer.
+     *
+     * The ESP32 firmware is expected to send one ADC reading per line, e.g. "2048\n".
+     * Values are assumed to be 12-bit (0–4095) and mapped to [−1, 1].
+     * Partial lines are held in [bleLineBuffer] across multiple BLE notifications.
+     */
+    private fun parseBleEcgData(bytes: ByteArray) {
+        bleLineBuffer.append(String(bytes, Charsets.UTF_8))
+        var newlineIdx: Int
+        while (bleLineBuffer.indexOf('\n').also { newlineIdx = it } >= 0) {
+            val line = bleLineBuffer.substring(0, newlineIdx).trim()
+            bleLineBuffer.delete(0, newlineIdx + 1)
+            val raw = line.toFloatOrNull() ?: continue
+            val normalised = (raw / 2048f) - 1f  // 12-bit ADC → [−1, 1]
+            buffer.addLast(normalised)
+            if (buffer.size > WINDOW_SIZE) buffer.removeFirst()
+
+            bleChartCounter++
+            if (bleChartCounter >= CHART_SKIP_FRAMES) {
+                bleChartCounter = 0
+                val data = buffer.toList()
+                val detectedPeaks = detectRPeaks(data)
+                _peaks.value = detectedPeaks
+                _signalBuffer.value = data
             }
         }
     }
@@ -423,7 +513,7 @@ class EcgMonitorViewModel @Inject constructor(
     /**
      * Dismisses the Bluetooth device picker and returns to [EcgMonitorUiState.Idle].
      *
-     * Stops any in-progress scan so the discovery receiver is properly cleaned up.
+     * Stops any in-progress scan so the scan callback is properly released.
      */
     fun dismissBtPicker() {
         stopBluetoothScan()
@@ -432,12 +522,13 @@ class EcgMonitorViewModel @Inject constructor(
         }
     }
 
-    /** Closes the open Bluetooth socket and returns to [EcgMonitorUiState.Idle]. */
+    /** Disconnects the active BLE GATT connection and returns to [EcgMonitorUiState.Idle]. */
+    @SuppressLint("MissingPermission")
     fun disconnectBt() {
-        btSocket?.close()
-        btSocket = null
+        gatt?.disconnect()  // onConnectionStateChange will do the close + state reset
         _uiState.value = EcgMonitorUiState.Idle
         _signalBuffer.value = List(WINDOW_SIZE) { 0f }
+        bleLineBuffer.clear()
     }
 
     // ── Private helpers ────────────────────────────────────────────────────────
@@ -626,11 +717,14 @@ class EcgMonitorViewModel @Inject constructor(
         return (SAMPLE_RATE_HZ * 60.0 / meanRr).roundToInt()
     }
 
+    @SuppressLint("MissingPermission")
     override fun onCleared() {
         super.onCleared()
         demoJob?.cancel()
         stopBluetoothScan()
-        btSocket?.close()
+        gatt?.disconnect()
+        gatt?.close()
+        gatt = null
     }
 
     companion object {
@@ -652,7 +746,19 @@ class EcgMonitorViewModel @Inject constructor(
          */
         const val CHART_SKIP_FRAMES = 4                          // update chart every 4 samples (~25 Hz)
 
-        /** Standard Bluetooth SPP service UUID (RFCOMM serial port profile). */
-        private const val SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB"
+        /** How long to scan for BLE devices before auto-stopping (10 seconds). */
+        private const val BLE_SCAN_TIMEOUT_MS = 10_000L
+
+        /**
+         * Nordic UART Service (NUS) UUIDs — the de-facto standard for ESP32 serial-over-BLE.
+         * Change these if your firmware uses a custom service/characteristic UUID.
+         */
+        private const val NUS_SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
+
+        /** TX characteristic: ESP32 → Android (notify). */
+        private const val NUS_TX_UUID     = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
+
+        /** Client Characteristic Configuration Descriptor — enables/disables notifications. */
+        private const val CCCD_UUID       = "00002902-0000-1000-8000-00805F9B34FB"
     }
 }

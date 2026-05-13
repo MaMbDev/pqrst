@@ -96,18 +96,15 @@ interface EcgRepository {
     ): Result<EcgRecord>
 
     /**
-     * Opens a Bluetooth SPP connection to the given device and emits [EcgSample] values as they
-     * arrive from the hardware (RF-03).
+     * Opens a BLE GATT connection to the given device and emits [EcgSample] values as they
+     * arrive from the NUS TX characteristic (RF-03).
      *
      * The flow is **cold** — the connection is only established when a collector starts collecting.
      * The flow completes normally when the connection is intentionally closed (e.g. user taps
      * "Stop") and completes with an exception when the link is lost unexpectedly. The caller is
      * responsible for wrapping collection in a try/catch or using `catch {}` on the flow.
      *
-     * All socket I/O runs on `Dispatchers.IO` inside the implementation; the caller should
-     * collect on `Dispatchers.Default` or a background dispatcher.
-     *
-     * @param deviceAddress MAC address of the target Bluetooth device (the ESP32 module).
+     * @param deviceAddress MAC address of the target BLE device (the ESP32 module).
      * @return A cold [Flow] of [EcgSample] values at the hardware sampling rate (≥ 100 Hz).
      */
     fun streamFromBluetooth(deviceAddress: String): Flow<EcgSample>
