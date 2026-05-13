@@ -240,14 +240,14 @@ class EcgRepositoryImpl @Inject constructor(
     }.getOrNull()
 
     /**
-     * Returns a [Flow] of live [EcgSample] objects streamed from a Bluetooth Classic
-     * (SPP) device.
+     * Returns a [Flow] of live [EcgSample] objects streamed from a BLE device.
      *
      * This feature is not yet implemented; an [emptyFlow] is returned as a safe no-op
      * stub so the codebase compiles and the domain interface contract is satisfied.
+     * Live streaming is handled directly in [EcgMonitorViewModel] via the GATT callback.
      *
-     * @param deviceAddress MAC address of the Bluetooth device to connect to.
-     * @return An empty [Flow] (stub — pending Bluetooth SPP implementation).
+     * @param deviceAddress MAC address of the BLE device to connect to.
+     * @return An empty [Flow] (stub — BLE streaming is managed in the ViewModel layer).
      */
     override fun streamFromBluetooth(deviceAddress: String): Flow<EcgSample> = emptyFlow()
 
