@@ -9,13 +9,13 @@ plugins {
 }
 
 android {
-    namespace = "dam.pmdm.pqrst"
+    namespace = "dam.pmdm.pqrstlearn"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "dam.pmdm.pqrst"
+        applicationId = "dam.pmdm.pqrstlearn"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
