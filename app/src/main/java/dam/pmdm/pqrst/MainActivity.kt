@@ -5,6 +5,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.core.os.LocaleListCompat
@@ -83,6 +84,7 @@ class MainActivity : AppCompatActivity() {
      *   first creation. Not used directly here; state is restored via [StateFlow] collectors.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         // Edge-to-edge allows the app to draw behind the status and navigation bars (Material 3)
         enableEdgeToEdge()

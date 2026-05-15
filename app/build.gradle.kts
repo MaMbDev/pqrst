@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.bcrypt)
+    implementation(libs.androidx.core.splashscreen)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
