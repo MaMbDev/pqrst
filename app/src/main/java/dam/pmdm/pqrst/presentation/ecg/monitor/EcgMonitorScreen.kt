@@ -108,6 +108,7 @@ import dam.pmdm.pqrst.ui.theme.PqrstBurgundy
 fun EcgMonitorScreen(
     consultationId: Long,
     onBack: () -> Unit,
+    onSaved: () -> Unit = {},
     viewModel: EcgMonitorViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -146,9 +147,15 @@ fun EcgMonitorScreen(
         if (uiState is EcgMonitorUiState.BtDeviceList) showBtSheet = true
     }
 
+    // Navigate away after a successful save.
+    LaunchedEffect(uiState) {
+        if (uiState is EcgMonitorUiState.Saved) {
+            snackbarHostState.showSnackbar(context.getString(R.string.ecg_saved))
+            onSaved()
+        }
+    }
+
     // Collect one-shot events from the ViewModel Channel.
-    // LaunchedEffect(Unit) runs once per composition; the Channel is consumed
-    // until the composable leaves the composition.
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -221,6 +228,8 @@ fun EcgMonitorScreen(
                 onResumeDemo = { viewModel.resumeDemo() },
                 onStopDemo = { viewModel.stopDemo() },
                 onDisconnectBt = { viewModel.disconnectBt() },
+                onSaveCapture = { viewModel.saveCapture(consultationId) },
+                onCancelCapture = { viewModel.cancelCapture() },
             )
 
             // ── Pattern description card ───────────────────────────────────────
@@ -337,10 +346,17 @@ private fun StatusRow(uiState: EcgMonitorUiState) {
             }
         }
 
-        // BPM display — always visible while a demo is running
-        val demoRunning = uiState as? EcgMonitorUiState.DemoRunning
-        AnimatedVisibility(visible = demoRunning != null, enter = fadeIn(), exit = fadeOut()) {
-            val bpmText = demoRunning?.bpm
+        // BPM display — visible during demo or active BLE capture
+        val bpmToShow: Int? = when (uiState) {
+            is EcgMonitorUiState.DemoRunning -> uiState.bpm
+            is EcgMonitorUiState.BtConnected -> uiState.bpm.takeIf { uiState.isCapturing }
+            else -> null
+        }
+        val showBpm = bpmToShow != null ||
+            uiState is EcgMonitorUiState.DemoRunning ||
+            (uiState is EcgMonitorUiState.BtConnected && uiState.isCapturing)
+        AnimatedVisibility(visible = showBpm, enter = fadeIn(), exit = fadeOut()) {
+            val bpmText = bpmToShow
                 ?.let { stringResource(R.string.ecg_bpm, it) }
                 ?: stringResource(R.string.ecg_bpm_unknown)
             Text(
@@ -477,7 +493,9 @@ private fun LegendItem(color: Color, label: String) {
  * @param onPauseDemo Called to suspend demo sample generation.
  * @param onResumeDemo Called to resume demo sample generation.
  * @param onStopDemo Called to end the demo and return to idle.
- * @param onDisconnectBt Called to close the Bluetooth socket and return to idle.
+ * @param onDisconnectBt Called to close the Bluetooth socket and return to idle without saving.
+ * @param onSaveCapture Called to stop capture and persist the buffer to the linked consultation.
+ * @param onCancelCapture Called to discard the buffer and disconnect without saving.
  */
 @Composable
 private fun ActionButtons(
@@ -491,6 +509,8 @@ private fun ActionButtons(
     onResumeDemo: () -> Unit,
     onStopDemo: () -> Unit,
     onDisconnectBt: () -> Unit,
+    onSaveCapture: () -> Unit = {},
+    onCancelCapture: () -> Unit = {},
 ) {
     when (uiState) {
         is EcgMonitorUiState.Idle -> {
@@ -580,20 +600,70 @@ private fun ActionButtons(
             }
         }
         is EcgMonitorUiState.BtConnected -> {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(R.string.ecg_bt_waiting_signal),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedButton(
-                    onClick = onDisconnectBt,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(stringResource(R.string.ecg_disconnect))
+            if (uiState.isCapturing) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val bpmText = uiState.bpm?.let { stringResource(R.string.ecg_bpm, it) } ?: "FC: --"
+                    Text(
+                        text = stringResource(R.string.ecg_capturing, uiState.sampleCount, bpmText),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        OutlinedButton(
+                            onClick = onCancelCapture,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(stringResource(R.string.ecg_cancel_capture))
+                        }
+                        Button(
+                            onClick = onSaveCapture,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF1B5E20),
+                                contentColor = Color.White,
+                            ),
+                        ) {
+                            Icon(Icons.Default.Stop, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(stringResource(R.string.ecg_stop_save))
+                        }
+                    }
                 }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.ecg_bt_waiting_signal),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedButton(
+                        onClick = onDisconnectBt,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(stringResource(R.string.ecg_disconnect))
+                    }
+                }
+            }
+        }
+        is EcgMonitorUiState.Saving -> {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    stringResource(R.string.ecg_saving),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
         }
         else -> {}

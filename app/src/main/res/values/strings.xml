@@ -107,6 +107,38 @@
     <string name="ecg_cancel_capture">Cancelar captura</string>
     <string name="ecg_saving">Guardando registro…</string>
     <string name="ecg_saved">Registro guardado correctamente</string>
+    <string name="ecg_save_error">Error al guardar el registro ECG</string>
+    <string name="ecg_no_data">No hay datos de señal para guardar</string>
+    <string name="ecg_capturing">Capturando · %1$d muestras · FC: %2$s</string>
+    <string name="ecg_capturing_no_bpm">Capturando · %1$d muestras</string>
+
+    <!-- ECG analysis screen (RF-06) -->
+    <string name="ecg_analysis_title">Análisis ECG</string>
+    <string name="ecg_analysis_loading">Analizando señal ECG…</string>
+    <string name="ecg_analysis_run">Ejecutar análisis</string>
+    <string name="ecg_analysis_rerun">Repetir análisis</string>
+    <string name="ecg_analysis_error">Error en el análisis</string>
+    <string name="ecg_analysis_heart_rate">Frecuencia cardíaca media</string>
+    <string name="ecg_analysis_r_peaks">Picos R detectados</string>
+    <string name="ecg_analysis_rr_mean">Intervalo RR medio</string>
+    <string name="ecg_analysis_rr_min">Intervalo RR mínimo</string>
+    <string name="ecg_analysis_rr_max">Intervalo RR máximo</string>
+    <string name="ecg_analysis_regularity">Regularidad del ritmo</string>
+    <string name="ecg_analysis_rhythm">Sugerencia de ritmo</string>
+    <string name="ecg_analysis_algorithm">Algoritmo</string>
+    <string name="ecg_analysis_analyzed_at">Analizado el</string>
+    <string name="ecg_analysis_bpm_value">%1$d lpm</string>
+    <string name="ecg_analysis_peaks_value">%1$d picos</string>
+    <string name="ecg_analysis_ms_value">%1$.0f ms</string>
+    <string name="ecg_analysis_pct_value">%1$.1f %%</string>
+    <string name="ecg_analysis_na">—</string>
+    <string name="ecg_rhythm_normal">Ritmo sinusal normal</string>
+    <string name="ecg_rhythm_brady">Bradicardia sinusal</string>
+    <string name="ecg_rhythm_tachy">Taquicardia sinusal</string>
+    <string name="ecg_rhythm_irregular">Ritmo irregular</string>
+    <string name="ecg_rhythm_insufficient">Datos insuficientes</string>
+    <string name="ecg_analysis_record_info">Registro: %1$s · %2$d Hz · %3$.1f s</string>
+
     <string name="ecg_permission_rationale">Se necesitan permisos de Bluetooth para conectar con el ESP32</string>
     <string name="ecg_bt_unavailable">Bluetooth no disponible en este dispositivo</string>
     <string name="ecg_bt_connection_failed">No se pudo conectar con el dispositivo</string>

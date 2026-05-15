@@ -19,6 +19,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dam.pmdm.pqrst.R
 import dam.pmdm.pqrst.di.IoDispatcher
+import dam.pmdm.pqrst.domain.model.EcgSample
+import dam.pmdm.pqrst.domain.repository.EcgRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -93,8 +95,16 @@ sealed class EcgMonitorUiState {
      * The BLE GATT connection is open and characteristic notifications are enabled.
      *
      * @property deviceName Human-readable name of the connected device.
+     * @property isCapturing True once the first ECG sample has arrived from the ESP32.
+     * @property sampleCount Total samples accumulated in the live recording buffer.
+     * @property bpm Latest BPM estimate from the incoming signal; null before first peaks.
      */
-    data class BtConnected(val deviceName: String) : EcgMonitorUiState()
+    data class BtConnected(
+        val deviceName: String,
+        val isCapturing: Boolean = false,
+        val sampleCount: Int = 0,
+        val bpm: Int? = null,
+    ) : EcgMonitorUiState()
 
     /** The captured signal buffer is being persisted to disk (Room + file write). */
     object Saving : EcgMonitorUiState()
@@ -139,6 +149,7 @@ sealed class EcgMonitorEvent {
 class EcgMonitorViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    private val ecgRepository: EcgRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EcgMonitorUiState>(EcgMonitorUiState.Idle)
@@ -201,6 +212,12 @@ class EcgMonitorViewModel @Inject constructor(
 
     /** Tracks how many BLE samples have arrived since the last chart refresh. */
     private var bleChartCounter = 0
+
+    /** Full recording buffer: every normalised sample received since capture started. */
+    private val liveRecordingBuffer = mutableListOf<Float>()
+
+    /** Absolute system-time (ms) at which the first BLE sample arrived in the current session. */
+    private var captureStartTimeMs = 0L
 
     // ── Demo mode ──────────────────────────────────────────────────────────────
 
@@ -421,10 +438,18 @@ class EcgMonitorViewModel @Inject constructor(
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     gatt.close()
                     this@EcgMonitorViewModel.gatt = null
-                    _uiState.value = EcgMonitorUiState.Idle
+                    // Don't override Saving/Saved states — those are intentional disconnects
+                    val current = _uiState.value
+                    if (current !is EcgMonitorUiState.Saving && current !is EcgMonitorUiState.Saved) {
+                        _uiState.value = EcgMonitorUiState.Idle
+                    }
                     _signalBuffer.value = List(WINDOW_SIZE) { 0f }
                     bleLineBuffer.clear()
-                    if (status != BluetoothGatt.GATT_SUCCESS) {
+                    liveRecordingBuffer.clear()
+                    if (status != BluetoothGatt.GATT_SUCCESS &&
+                        current !is EcgMonitorUiState.Saving &&
+                        current !is EcgMonitorUiState.Saved
+                    ) {
                         _events.trySend(EcgMonitorEvent.ShowError(R.string.ecg_bt_connection_failed))
                     }
                 }
@@ -496,6 +521,11 @@ class EcgMonitorViewModel @Inject constructor(
             bleLineBuffer.delete(0, newlineIdx + 1)
             val raw = line.toFloatOrNull() ?: continue
             val normalised = (raw / 2048f) - 1f  // 12-bit ADC → [−1, 1]
+
+            // Start capture tracking on first sample
+            if (liveRecordingBuffer.isEmpty()) captureStartTimeMs = System.currentTimeMillis()
+            liveRecordingBuffer.add(normalised)
+
             buffer.addLast(normalised)
             if (buffer.size > WINDOW_SIZE) buffer.removeFirst()
 
@@ -504,8 +534,18 @@ class EcgMonitorViewModel @Inject constructor(
                 bleChartCounter = 0
                 val data = buffer.toList()
                 val detectedPeaks = detectRPeaks(data)
+                val bpm = estimateBpm(detectedPeaks)
                 _peaks.value = detectedPeaks
                 _signalBuffer.value = data
+
+                val current = _uiState.value
+                if (current is EcgMonitorUiState.BtConnected) {
+                    _uiState.value = current.copy(
+                        isCapturing = true,
+                        sampleCount = liveRecordingBuffer.size,
+                        bpm = bpm,
+                    )
+                }
             }
         }
     }
@@ -529,6 +569,45 @@ class EcgMonitorViewModel @Inject constructor(
         _uiState.value = EcgMonitorUiState.Idle
         _signalBuffer.value = List(WINDOW_SIZE) { 0f }
         bleLineBuffer.clear()
+        liveRecordingBuffer.clear()
+    }
+
+    /**
+     * Stops BLE capture, persists the accumulated buffer as a CSV linked to [consultationId],
+     * and transitions to [EcgMonitorUiState.Saving] → [EcgMonitorUiState.Saved].
+     *
+     * Callers should observe [uiState] for [EcgMonitorUiState.Saved] and navigate away.
+     */
+    @SuppressLint("MissingPermission")
+    fun saveCapture(consultationId: Long) {
+        val bufferSnapshot = liveRecordingBuffer.toList()
+        if (bufferSnapshot.isEmpty()) {
+            _events.trySend(EcgMonitorEvent.ShowError(R.string.ecg_no_data))
+            return
+        }
+        gatt?.disconnect()
+        gatt = null
+        _uiState.value = EcgMonitorUiState.Saving
+
+        viewModelScope.launch(ioDispatcher) {
+            val samples = bufferSnapshot.mapIndexed { i, v ->
+                EcgSample(timestampMs = i * 1000L / SAMPLE_RATE_HZ, value = v)
+            }
+            ecgRepository.saveLiveBuffer(samples, consultationId, SAMPLE_RATE_HZ)
+                .onSuccess { _uiState.value = EcgMonitorUiState.Saved }
+                .onFailure {
+                    _uiState.value = EcgMonitorUiState.Idle
+                    _events.trySend(EcgMonitorEvent.ShowError(R.string.ecg_save_error))
+                }
+            liveRecordingBuffer.clear()
+            bleLineBuffer.clear()
+        }
+    }
+
+    /** Discards the live recording buffer and disconnects BLE without saving. */
+    fun cancelCapture() {
+        liveRecordingBuffer.clear()
+        disconnectBt()
     }
 
     // ── Private helpers ────────────────────────────────────────────────────────

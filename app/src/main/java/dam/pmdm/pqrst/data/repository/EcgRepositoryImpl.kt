@@ -8,7 +8,10 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dam.pmdm.pqrst.data.csv.CsvEcgParser
+import dam.pmdm.pqrst.data.db.dao.EcgAnalysisDao
 import dam.pmdm.pqrst.data.db.dao.EcgRecordDao
+import dam.pmdm.pqrst.data.db.entity.EcgAnalysisEntity
 import dam.pmdm.pqrst.data.db.entity.EcgRecordEntity
 import dam.pmdm.pqrst.data.db.toDomain
 import dam.pmdm.pqrst.di.IoDispatcher
@@ -16,8 +19,10 @@ import dam.pmdm.pqrst.domain.model.EcgAnalysis
 import dam.pmdm.pqrst.domain.model.EcgRecord
 import dam.pmdm.pqrst.domain.model.EcgSample
 import dam.pmdm.pqrst.domain.model.PatternMatch
+import dam.pmdm.pqrst.domain.model.RhythmSuggestion
 import dam.pmdm.pqrst.domain.repository.AuthRepository
 import dam.pmdm.pqrst.domain.repository.EcgRepository
+import dam.pmdm.pqrst.domain.usecase.AnalyzeEcgSignalUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -64,7 +69,9 @@ import javax.inject.Inject
 class EcgRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val ecgRecordDao: EcgRecordDao,
+    private val ecgAnalysisDao: EcgAnalysisDao,
     private val authRepository: AuthRepository,
+    private val analyzeUseCase: AnalyzeEcgSignalUseCase,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : EcgRepository {
 
@@ -239,69 +246,102 @@ class EcgRepositoryImpl @Inject constructor(
         file.absolutePath
     }.getOrNull()
 
-    /**
-     * Returns a [Flow] of live [EcgSample] objects streamed from a BLE device.
-     *
-     * This feature is not yet implemented; an [emptyFlow] is returned as a safe no-op
-     * stub so the codebase compiles and the domain interface contract is satisfied.
-     * Live streaming is handled directly in [EcgMonitorViewModel] via the GATT callback.
-     *
-     * @param deviceAddress MAC address of the BLE device to connect to.
-     * @return An empty [Flow] (stub — BLE streaming is managed in the ViewModel layer).
-     */
     override fun streamFromBluetooth(deviceAddress: String): Flow<EcgSample> = emptyFlow()
 
-    /**
-     * Saves a buffer of live-captured [EcgSample] objects from a Bluetooth session as
-     * a new ECG record linked to [consultationId].
-     *
-     * Not yet implemented; returns [Result.failure] with [UnsupportedOperationException]
-     * so callers receive a clear error rather than a silent no-op.
-     *
-     * @param buffer The in-memory sample buffer collected during the live session.
-     * @param consultationId The consultation to link the record to.
-     * @param sampleRateHz The capture sample rate in hertz.
-     * @return [Result.failure] until the feature is implemented.
-     */
     override suspend fun saveLiveBuffer(
         buffer: List<EcgSample>,
         consultationId: Long,
         sampleRateHz: Int,
-    ): Result<EcgRecord> = Result.failure(UnsupportedOperationException("Not yet implemented"))
+    ): Result<EcgRecord> = withContext(ioDispatcher) {
+        runCatching {
+            val dir = File(context.filesDir, "ecg").also { it.mkdirs() }
+            val dest = File(dir, "ecg_live_${System.currentTimeMillis()}.csv")
+            dest.bufferedWriter().use { w ->
+                w.write("timestamp_ms,value\n")
+                buffer.forEach { s -> w.write("${s.timestampMs},${s.value}\n") }
+            }
 
-    /**
-     * Runs the ECG analysis pipeline (noise filtering, R-peak detection, BPM and
-     * regularity calculation) on the record identified by [recordId].
-     *
-     * Not yet implemented; returns [Result.failure] with [UnsupportedOperationException].
-     *
-     * @param recordId The primary key of the [EcgRecord] to analyse.
-     * @return [Result.failure] until the feature is implemented.
-     */
-    override suspend fun analyze(recordId: Long): Result<EcgAnalysis> =
-        Result.failure(UnsupportedOperationException("Not yet implemented"))
+            val floatValues = buffer.map { it.value }
+            val peaks = simplePeakDetect(floatValues, sampleRateHz)
+            val snapshotPath = if (floatValues.size >= 2) renderAndSaveSnapshot(floatValues, peaks) else null
 
-    /**
-     * Retrieves a previously computed [EcgAnalysis] for the given [recordId].
-     *
-     * Returns null as a stub until the analysis pipeline is implemented.
-     *
-     * @param recordId The primary key of the ECG record.
-     * @return null (stub — pending implementation).
-     */
-    override suspend fun getAnalysis(recordId: Long): EcgAnalysis? = null
+            val now = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            val duration = buffer.size.toDouble() / sampleRateHz
+            val userId = authRepository.currentSession.value?.userId
+                ?: error("No active session — cannot save ECG record")
 
-    /**
-     * Compares an ECG record against the bundled reference-pattern library and returns
-     * the closest [PatternMatch] with a similarity score.
-     *
-     * Not yet implemented; returns [Result.failure] with [UnsupportedOperationException].
-     * When implemented, results must be labelled as **educational only** and must not be
-     * presented as clinical diagnoses (see RF-07).
-     *
-     * @param recordId The primary key of the [EcgRecord] to compare.
-     * @return [Result.failure] until the feature is implemented.
-     */
+            val id = ecgRecordDao.insert(
+                EcgRecordEntity(
+                    consultationId = consultationId,
+                    filePath = dest.absolutePath,
+                    captureDate = now,
+                    sampleRateHz = sampleRateHz,
+                    duration = duration,
+                    signalQuality = null,
+                    status = "Pendiente",
+                    createdBy = userId,
+                    channelCount = 1,
+                    snapshotPath = snapshotPath,
+                ),
+            )
+            ecgRecordDao.getById(id)!!.toDomain()
+        }
+    }
+
+    override suspend fun analyze(recordId: Long): Result<EcgAnalysis> = withContext(ioDispatcher) {
+        runCatching {
+            val record = ecgRecordDao.getById(recordId) ?: error("Record not found: $recordId")
+            val file = File(record.filePath)
+            require(file.exists()) { "ECG file not found: ${record.filePath}" }
+
+            val parsed = file.inputStream().use { CsvEcgParser.parse(it) }.getOrThrow()
+            val sampleRate = record.sampleRateHz.takeIf { it > 0 } ?: parsed.sampleRateHz
+            val result = analyzeUseCase(parsed.samples, sampleRate)
+
+            val now = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            val entity = EcgAnalysisEntity(
+                ecgRecordId = recordId,
+                heartRateBpm = result.meanBpm.takeIf { it > 0 },
+                rPeakCount = result.rPeakCount,
+                rrMeanMs = if (result.meanBpm > 0) 60_000.0 / result.meanBpm else null,
+                rrMinMs = if (result.maxBpm > 0) 60_000.0 / result.maxBpm else null,
+                rrMaxMs = if (result.minBpm > 0) 60_000.0 / result.minBpm else null,
+                regularity = when (result.suggestion) {
+                    RhythmSuggestion.IRREGULAR -> "Irregular"
+                    RhythmSuggestion.INSUFFICIENT_DATA -> "No determinado"
+                    else -> "Regular"
+                },
+                analyzedAt = now,
+                algorithmVersion = "threshold-v1",
+                analysisNotes = if (result.suggestion == RhythmSuggestion.INSUFFICIENT_DATA)
+                    "Señal insuficiente para análisis completo" else null,
+            )
+            ecgAnalysisDao.insert(entity)
+            ecgAnalysisDao.getByRecordId(recordId)!!.toDomain()
+        }
+    }
+
+    override suspend fun getAnalysis(recordId: Long): EcgAnalysis? =
+        withContext(ioDispatcher) { ecgAnalysisDao.getByRecordId(recordId)?.toDomain() }
+
     override suspend fun comparePattern(recordId: Long): Result<PatternMatch> =
-        Result.failure(UnsupportedOperationException("Not yet implemented"))
+        Result.failure(UnsupportedOperationException("Pattern comparison not yet implemented"))
+
+    private fun simplePeakDetect(data: List<Float>, sampleRateHz: Int): List<Int> {
+        if (data.size < 10) return emptyList()
+        val mean = data.average().toFloat()
+        val max = data.max()
+        val threshold = mean + 0.45f * (max - mean)
+        val minDist = (sampleRateHz * 0.25f).toInt()
+        val peaks = mutableListOf<Int>()
+        for (i in 2 until data.size - 2) {
+            val v = data[i]
+            if (v > threshold && v >= data[i - 1] && v >= data[i - 2] &&
+                v >= data[i + 1] && v >= data[i + 2]
+            ) {
+                if (peaks.isEmpty() || i - peaks.last() >= minDist) peaks.add(i)
+            }
+        }
+        return peaks
+    }
 }

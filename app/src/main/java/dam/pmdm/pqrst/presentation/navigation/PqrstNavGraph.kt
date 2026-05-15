@@ -247,6 +247,7 @@ fun PqrstNavGraph(
             EcgMonitorScreen(
                 consultationId = args.consultationId,
                 onBack = { navController.popBackStack() },
+                onSaved = { navController.popBackStack() },
             )
         }
 
