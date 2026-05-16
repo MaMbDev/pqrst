@@ -306,7 +306,7 @@ Para probar el análisis sin hardware se incluye un generador de señales ECG ba
 
 **Solución:** Migración completa a BLE GATT con Nordic UART Service (ver sección anterior).
 
-**Impacto:** Reescritura de `EcgMonitorViewModel.kt` (~200 líneas). Sin cambios en `domain` ni en la UI.
+**Impacto:** Reescritura de `EcgMonitorViewModel.kt`. Sin cambios en `domain` ni en la UI.
 
 </details>
 
@@ -335,14 +335,14 @@ Returns are prohibited for functions with an expression body. Use block body '{.
 
 **Causa:** Uso de `return` dentro de una función con cuerpo de expresión (`= expr`):
 ```kotlin
-// ❌ Incorrecto
+
 override fun onCharacteristicChanged(...) =
     parseBleEcgData(characteristic.value ?: return)
 ```
 
 **Solución:**
 ```kotlin
-// ✅ Correcto
+
 override fun onCharacteristicChanged(...) {
     parseBleEcgData(characteristic.value ?: return)
 }
@@ -406,7 +406,7 @@ override fun onCharacteristicChanged(...) {
 | Algoritmo de similitud en comparación de patrones | RF-07 | La infraestructura (tablas `ecg_patterns`, `pattern_comparisons`) está creada, pero DTW/correlación cruzada no se implementó por limitaciones de tiempo |
 | Intent de compartir el PDF | RF-08 | La generación del PDF está completa; el `Intent.ACTION_SEND` desde la pantalla de previsualización no se completó |
 | Zoom táctil en el monitor ECG en vivo | RF-05 | La señal histórica sí tiene zoom con Vico; el monitor en vivo usa ventana deslizante fija |
-| Onboarding en primer arranque | — | Sustituido por las pantallas permanentes de guía educativa del dashboard |
+
 
 ### Hoja de ruta
 
@@ -424,7 +424,6 @@ override fun onCharacteristicChanged(...) {
 - **Sincronización en la nube** opcional con cifrado end-to-end (opt-in)
 
 **UX:**
-- Onboarding interactivo con tooltips sobre cada pantalla
 - Gráfico de tendencia histórica de BPM por paciente
 - Widget en la pantalla de inicio de Android
 
@@ -438,8 +437,8 @@ La app arranca con una pantalla de login. Credenciales de demo:
 
 | Usuario | Contraseña | Rol |
 |---------|-----------|-----|
-| `admin` | `Admin1234` | ADMIN |
-| `user` | `User1234` | USER |
+| `admin` | `admin123` | ADMIN |
+| `user` | `user123` | USER |
 
 > Cambia las contraseñas por defecto tras el primer acceso desde *Gestión de usuarios → editar usuario*.
 
@@ -466,10 +465,9 @@ Desde el dashboard tienes acceso directo a todas las funciones:
 ### Gestión de pacientes (RF-01)
 
 1. En la lista de pacientes usa la **barra de búsqueda** para filtrar por nombre.
-2. Pulsa **+** para crear un nuevo paciente.
-3. Campos obligatorios: nombre, edad, sexo, historia clínica. El contacto es opcional.
-4. Si falta algún campo obligatorio, la app muestra un error inline y no guarda.
-5. El borrado muestra un **diálogo de confirmación** y elimina en cascada consultas y ECG asociados.
+2. Pulsa **NUEVO PACIENTE** para crear un nuevo paciente.
+3. Campos: nombre, edad, sexo, teléfono, e-mail, antecedentes médicos.
+4. El borrado muestra un **diálogo de confirmación** y elimina en cascada consultas y ECG asociados.
 
 ---
 
@@ -488,7 +486,7 @@ Cada consulta está vinculada a un paciente. Campos: fecha (por defecto timestam
 5. Pulsa **Iniciar captura** — la señal aparece en la gráfica en tiempo real.
 6. Pulsa **Detener** — el buffer se guarda como CSV y se vincula a la consulta activa.
 
-> **Permisos:** En Android < 12 se requiere `ACCESS_FINE_LOCATION` para escanear BLE (no se usa GPS). En Android 12+ este permiso ya no es necesario.
+> **Permisos:** En Android < 12 se requiere `ACCESS_FINE_LOCATION` para escanear BLE . En Android 12+ este permiso ya no es necesario.
 
 > **Sin hardware:** Puedes importar CSV de demo o usar las señales sintéticas integradas.
 
