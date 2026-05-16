@@ -12,6 +12,7 @@
 ## Índice
 
 - [Descripción](#descripción)
+- [Hardware: ESP32 + AD8232](#hardware-esp32--ad8232)
 - [Capturas de pantalla](#capturas-de-pantalla)
 - [Arquitectura](#arquitectura)
 - [Stack tecnológico](#stack-tecnológico)
@@ -45,6 +46,162 @@
 
 ---
 
+## Hardware: ESP32 + AD8232
+
+El módulo de adquisición de señal ECG se construye con dos componentes de bajo coste:
+
+- **ESP32**: microcontrolador con Bluetooth BLE integrado. Actúa como servidor BLE y transmite las muestras del ADC al móvil en tiempo real.
+- **AD8232**: amplificador de instrumentación diseñado para señales biopotenciales (ECG, EMG). Filtra el ruido de la red eléctrica y amplifica la señal diferencial entre los electrodos.
+
+<div align="center">
+
+<img src="docs/screens/hardware_esp32_ad8232.jpg" width="480" alt="Montaje ESP32 + AD8232"/>
+
+*Montaje del circuito ESP32 + AD8232 con electrodos de derivación I*
+
+</div>
+
+### Conexionado
+
+```
+AD8232          ESP32
+───────         ─────────────
+OUTPUT    ──►   GPIO 4   (entrada ADC — señal ECG analógica)
+LO−       ──►   GPIO 5   (detección de electrodo suelto −)
+LO+       ──►   GPIO 6   (detección de electrodo suelto +)
+3.3V      ──►   3.3V
+GND       ──►   GND
+```
+
+| Pin AD8232 | Pin ESP32 | Descripción |
+|-----------|-----------|-------------|
+| OUTPUT | GPIO 4 | Señal ECG analógica (entrada ADC 12 bits, rango 0–4095) |
+| LO− | GPIO 5 | Detección de electrodo suelto (−) |
+| LO+ | GPIO 6 | Detección de electrodo suelto (+) |
+| 3.3V | 3.3V | Alimentación |
+| GND | GND | Tierra común |
+
+Cuando LO+ o LO− están en HIGH (electrodo sin contacto), el firmware envía el valor especial `-1` para que la app descarte esas muestras.
+
+### Protocolo BLE — Nordic UART Service (NUS)
+
+El ESP32 expone un servidor BLE. La app Android se conecta y suscribe a notificaciones de la característica TX:
+
+| Elemento | UUID |
+|----------|------|
+| Service | `6E400001-B5A3-F393-E0A9-E50E24DCCA9E` |
+| TX Characteristic (ESP32 → móvil) | `6E400003-B5A3-F393-E0A9-E50E24DCCA9E` |
+| CCCD (activar notificaciones) | `00002902-0000-1000-8000-00805F9B34FB` |
+
+El ESP32 envía cada muestra como texto ASCII (`"2048\n"`). La app la normaliza a `[-1, 1]` con `(raw / 2048f) - 1f`. La tasa de muestreo es **~200 muestras/s** (`delay(5)` en el firmware), muy por encima del mínimo de 100 muestras/s exigido por RF-03.
+
+### Firmware (Arduino / ESP32)
+
+<details>
+<summary><strong>Ver código completo del firmware</strong></summary>
+
+```cpp
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+
+#define ECG_PIN      4
+#define LO_MINUS     5
+#define LO_PLUS      6
+#define WINDOW_SIZE  10
+
+#define SERVICE_UUID        "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
+#define CHARACTERISTIC_UUID "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
+
+int readings[WINDOW_SIZE];
+int readIndex = 0;
+long total = 0;
+
+BLEServer* pServer = nullptr;
+BLECharacteristic* pCharacteristic = nullptr;
+bool deviceConnected = false;
+bool oldDeviceConnected = false;
+
+class MyServerCallbacks : public BLEServerCallbacks {
+  void onConnect(BLEServer* pServer) {
+    deviceConnected = true;
+    Serial.println("✓ Cliente conectado");
+  }
+  void onDisconnect(BLEServer* pServer) {
+    deviceConnected = false;
+    Serial.println("✗ Cliente desconectado");
+  }
+};
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LO_MINUS, INPUT);
+  pinMode(LO_PLUS, INPUT);
+  memset(readings, 0, sizeof(readings));
+
+  BLEDevice::init("ECG_ESP32");
+  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9);
+
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+
+  BLEService* pService = pServer->createService(SERVICE_UUID);
+  pCharacteristic = pService->createCharacteristic(
+    CHARACTERISTIC_UUID,
+    BLECharacteristic::PROPERTY_READ |
+    BLECharacteristic::PROPERTY_NOTIFY
+  );
+  pCharacteristic->addDescriptor(new BLE2902());
+  pService->start();
+
+  BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(true);
+  pAdvertising->setMinPreferred(0x06);
+  pAdvertising->setMinPreferred(0x12);
+  BLEDevice::startAdvertising();
+
+  Serial.println("BLE listo, esperando conexión...");
+}
+
+void loop() {
+  int ecgValue = 0;
+
+  if (digitalRead(LO_PLUS) == 1 || digitalRead(LO_MINUS) == 1) {
+    ecgValue = -1;  // electrodo suelto
+  } else {
+    // Filtro de media móvil de 10 muestras
+    total -= readings[readIndex];
+    readings[readIndex] = analogRead(ECG_PIN);
+    total += readings[readIndex];
+    readIndex = (readIndex + 1) % WINDOW_SIZE;
+    ecgValue = total / WINDOW_SIZE;
+  }
+
+  if (deviceConnected) {
+    String ecgStr = String(ecgValue) + "\n";
+    pCharacteristic->setValue(ecgStr.c_str());
+    pCharacteristic->notify();
+    delay(5);  // ~200 muestras/s
+  }
+
+  // Reconexión automática
+  if (!deviceConnected && oldDeviceConnected) {
+    delay(500);
+    pServer->startAdvertising();
+    oldDeviceConnected = deviceConnected;
+  }
+  if (deviceConnected && !oldDeviceConnected) {
+    oldDeviceConnected = deviceConnected;
+  }
+}
+```
+
+</details>
+
+---
+
 ## Capturas de pantalla
 
 ### Login y Dashboard
@@ -64,7 +221,7 @@
 
 | | | |
 |:---:|:---:|:---:|
-| <img src="docs/screens/02_dashboard.png" width="200" alt="Lista de pacientes"/> | <img src="docs/screens/04_patient_detail.png" width="200" alt="Detalle del paciente"/> | <img src="docs/screens/05_patient_form.png" width="200" alt="Formulario de paciente"/> |
+| <img src="docs/screens/03_patients_list.png" width="200" alt="Lista de pacientes"/> | <img src="docs/screens/04_patient_detail.png" width="200" alt="Detalle del paciente"/> | <img src="docs/screens/05_patient_form.png" width="200" alt="Formulario de paciente"/> |
 | Lista de pacientes | Detalle del paciente | Formulario de paciente |
 
 </div>
