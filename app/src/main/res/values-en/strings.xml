@@ -49,6 +49,11 @@
     <string name="patients_search_hint">Search by name or ID</string>
     <string name="patients_list_title">LIST</string>
     <string name="patients_new">NEW PATIENT</string>
+    <string name="patient_form_title_new">New Patient</string>
+    <string name="patient_form_title_edit">Edit Patient</string>
+    <string name="patient_sex_male">Male</string>
+    <string name="patient_sex_female">Female</string>
+    <string name="patient_sex_other">Other</string>
     <string name="patients_empty">No patients registered</string>
     <string name="patient_name_label">Name</string>
     <string name="patient_age_label">Age</string>
@@ -246,4 +251,33 @@
     <string name="rhythm_tachycardia_short">Tachycardia</string>
     <string name="rhythm_regular">Regular</string>
     <string name="rhythm_irregular_short">Irregular</string>
+
+    <!-- PDF report content -->
+    <string name="pdf_report_title">PQRST Learn — Consultation Report</string>
+    <string name="pdf_generated_at">Generated: %s</string>
+    <string name="pdf_section_patient">PATIENT DATA</string>
+    <string name="pdf_field_name">Name</string>
+    <string name="pdf_field_age">Age</string>
+    <string name="pdf_field_age_sex">%1$d years · %2$s</string>
+    <string name="pdf_field_history">Medical History</string>
+    <string name="pdf_field_phone">Phone</string>
+    <string name="pdf_field_email">E-mail</string>
+    <string name="pdf_section_consultation">CONSULTATION DATA</string>
+    <string name="pdf_field_date">Date</string>
+    <string name="pdf_field_symptoms">Symptoms</string>
+    <string name="pdf_field_vital_signs">Vital Signs</string>
+    <string name="pdf_field_notes">Notes</string>
+    <string name="pdf_section_ecg">ECG RECORD</string>
+    <string name="pdf_field_sample_rate">Sample Rate</string>
+    <string name="pdf_field_duration">Duration</string>
+    <string name="pdf_field_signal_quality">Signal Quality</string>
+    <string name="pdf_field_heart_rate">Heart Rate</string>
+    <string name="pdf_field_r_peaks">R Peaks</string>
+    <string name="pdf_field_rr_interval">RR Interval</string>
+    <string name="pdf_field_rhythm">Rhythm</string>
+    <string name="pdf_field_analysis_notes">Analysis Notes</string>
+    <string name="pdf_no_ecg_record">No ECG record linked to this consultation.</string>
+    <string name="pdf_subsection_ecg_chart">ECG Chart</string>
+    <string name="pdf_no_ecg_data">No ECG data to display</string>
+    <string name="pdf_disclaimer">EDUCATIONAL NOTICE: This report is for educational use only. Results do not constitute a clinical diagnosis and are not a substitute for the assessment of a qualified medical professional.</string>
 </resources>

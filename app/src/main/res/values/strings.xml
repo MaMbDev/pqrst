@@ -54,6 +54,11 @@
     <string name="patients_search_hint">Buscar por nombre o ID</string>
     <string name="patients_list_title">LISTADO</string>
     <string name="patients_new">NUEVO PACIENTE</string>
+    <string name="patient_form_title_new">Nuevo Paciente</string>
+    <string name="patient_form_title_edit">Editar Paciente</string>
+    <string name="patient_sex_male">Masculino</string>
+    <string name="patient_sex_female">Femenino</string>
+    <string name="patient_sex_other">Otro</string>
     <string name="patients_empty">No hay pacientes registrados</string>
     <string name="patient_name_label">Nombre</string>
     <string name="patient_age_label">Edad</string>
@@ -247,8 +252,8 @@
     <string name="heart_anatomy_la">AI</string>
     <string name="heart_anatomy_rv">VD</string>
     <string name="heart_anatomy_lv">VI</string>
-    <string name="heart_anatomy_legend_atria">RA: Right Atrium  LA: Left Atrium</string>
-    <string name="heart_anatomy_legend_ventricles">RV: Right Ventricle  LV: Left Ventricle</string>
+    <string name="heart_anatomy_legend_atria">AD: Aurícula Derecha  AI: Aurícula Izquierda</string>
+    <string name="heart_anatomy_legend_ventricles">VD: Ventrículo Derecho  VI: Ventrículo Izquierdo</string>
     <string name="heart_anatomy_sa_label">1 — Nodo Sinoauricular (SA)</string>
     <string name="heart_anatomy_sa_title">El marcapasos natural del corazón</string>
     <string name="heart_anatomy_sa_desc">Localizado en la pared superior de la aurícula derecha (AD), el nodo SA genera impulsos eléctricos espontáneos que inician cada latido.\n\n• Frecuencia intrínseca: 60–100 lpm en reposo\n• Regulado por el sistema nervioso autónomo\n• Su activación produce la onda P en el ECG\n• Disfunción: enfermedad del nodo sinusal (bradicardia sinusal, paro sinusal)</string>
@@ -289,4 +294,33 @@
     <string name="rhythm_tachycardia_short">Taquicardia</string>
     <string name="rhythm_regular">Regular</string>
     <string name="rhythm_irregular_short">Irregular</string>
+
+    <!-- PDF report content -->
+    <string name="pdf_report_title">PQRST Learn — Informe de Consulta</string>
+    <string name="pdf_generated_at">Generado: %s</string>
+    <string name="pdf_section_patient">DATOS DEL PACIENTE</string>
+    <string name="pdf_field_name">Nombre</string>
+    <string name="pdf_field_age">Edad</string>
+    <string name="pdf_field_age_sex">%1$d años · %2$s</string>
+    <string name="pdf_field_history">Antecedentes</string>
+    <string name="pdf_field_phone">Teléfono</string>
+    <string name="pdf_field_email">E-mail</string>
+    <string name="pdf_section_consultation">DATOS DE LA CONSULTA</string>
+    <string name="pdf_field_date">Fecha</string>
+    <string name="pdf_field_symptoms">Síntomas</string>
+    <string name="pdf_field_vital_signs">Signos vitales</string>
+    <string name="pdf_field_notes">Notas</string>
+    <string name="pdf_section_ecg">REGISTRO ECG</string>
+    <string name="pdf_field_sample_rate">Frec. muestreo</string>
+    <string name="pdf_field_duration">Duración</string>
+    <string name="pdf_field_signal_quality">Calidad de señal</string>
+    <string name="pdf_field_heart_rate">Frec. cardíaca</string>
+    <string name="pdf_field_r_peaks">Picos R</string>
+    <string name="pdf_field_rr_interval">Intervalo RR</string>
+    <string name="pdf_field_rhythm">Ritmo</string>
+    <string name="pdf_field_analysis_notes">Notas análisis</string>
+    <string name="pdf_no_ecg_record">Sin registro ECG asociado a esta consulta.</string>
+    <string name="pdf_subsection_ecg_chart">Gráfico ECG</string>
+    <string name="pdf_no_ecg_data">Sin datos ECG para mostrar</string>
+    <string name="pdf_disclaimer">AVISO EDUCATIVO: Este informe es exclusivamente para uso educativo. Los resultados no constituyen diagnóstico clínico ni sustituyen la valoración de un profesional médico cualificado.</string>
 </resources>

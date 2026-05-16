@@ -1,6 +1,7 @@
 package dam.pmdm.pqrstlearn.data.repository
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
@@ -12,6 +13,7 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import androidx.core.content.FileProvider
+import dam.pmdm.pqrstlearn.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dam.pmdm.pqrstlearn.data.db.dao.ConsultationDao
 import dam.pmdm.pqrstlearn.data.db.dao.EcgAnalysisDao
@@ -23,15 +25,18 @@ import dam.pmdm.pqrstlearn.data.db.entity.EcgRecordEntity
 import dam.pmdm.pqrstlearn.data.db.entity.PatientEntity
 import dam.pmdm.pqrstlearn.data.db.entity.ConsultationEntity
 import dam.pmdm.pqrstlearn.data.db.entity.ReportEntity
+import dam.pmdm.pqrstlearn.data.settings.SettingsStore
 import dam.pmdm.pqrstlearn.di.IoDispatcher
 import dam.pmdm.pqrstlearn.domain.repository.AuthRepository
 import dam.pmdm.pqrstlearn.domain.repository.ReportRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -81,8 +86,26 @@ class ReportRepositoryImpl @Inject constructor(
     private val ecgAnalysisDao: EcgAnalysisDao,
     private val reportDao: ReportDao,
     private val authRepository: AuthRepository,
+    private val settingsStore: SettingsStore,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ReportRepository {
+
+    /**
+     * Creates a [Context] whose resources resolve to the language the user has selected
+     * in the app settings. Needed because [context] is the Application singleton context
+     * and does not automatically update when [AppCompatDelegate.setApplicationLocales]
+     * changes the per-app locale.
+     */
+    private suspend fun localizedContext(): Context {
+        val tag = settingsStore.language.first()
+        val locale = when (tag) {
+            "system" -> Locale.getDefault()
+            else -> Locale.forLanguageTag(tag)
+        }
+        val config = Configuration(context.resources.configuration)
+        config.setLocale(locale)
+        return context.createConfigurationContext(config)
+    }
 
     /**
      * Generates a PDF report for the given consultation and returns a sharable [Uri].
@@ -116,7 +139,7 @@ class ReportRepositoryImpl @Inject constructor(
                 }
                 val ecgAnalysis = ecgRecord?.let { ecgAnalysisDao.getByRecordId(it.id) }
 
-                val pdf = buildPdf(patient, consultation, ecgRecord, ecgAnalysis)
+                val pdf = buildPdf(patient, consultation, ecgRecord, ecgAnalysis, localizedContext())
 
                 val dir = File(context.filesDir, "reports").also { it.mkdirs() }
                 val file = File(dir, "informe_${consultationId}_${System.currentTimeMillis()}.pdf")
@@ -159,54 +182,62 @@ class ReportRepositoryImpl @Inject constructor(
         consultation: ConsultationEntity,
         ecgRecord: EcgRecordEntity?,
         ecgAnalysis: EcgAnalysisEntity?,
+        localizedCtx: Context,
     ): PdfDocument {
+        val s = localizedCtx.resources
+        fun str(id: Int) = s.getString(id)
+        fun str(id: Int, vararg args: Any) = s.getString(id, *args)
+
         val b = PdfCanvas()
 
-        b.drawHeader()
+        b.drawHeader(str(R.string.pdf_report_title), str(R.string.pdf_generated_at))
 
-        b.drawSection("DATOS DEL PACIENTE")
-        b.drawFieldRow("Nombre", patient.name, "Edad", "${patient.age} años · ${patient.sex}")
-        patient.medicalHistory?.takeIf { it.isNotBlank() }?.let { b.drawField("Antecedentes", it) }
+        b.drawSection(str(R.string.pdf_section_patient))
+        b.drawFieldRow(
+            str(R.string.pdf_field_name), patient.name,
+            str(R.string.pdf_field_age), str(R.string.pdf_field_age_sex, patient.age, patient.sex),
+        )
+        patient.medicalHistory?.takeIf { it.isNotBlank() }?.let { b.drawField(str(R.string.pdf_field_history), it) }
         val hasPhone = patient.phone?.isNotBlank() == true
         val hasEmail = patient.email?.isNotBlank() == true
         // Lay out contact fields in a two-column row when both are available
         when {
-            hasPhone && hasEmail -> b.drawFieldRow("Teléfono", patient.phone!!, "E-mail", patient.email!!)
-            hasPhone -> b.drawField("Teléfono", patient.phone!!)
-            hasEmail -> b.drawField("E-mail", patient.email!!)
+            hasPhone && hasEmail -> b.drawFieldRow(str(R.string.pdf_field_phone), patient.phone!!, str(R.string.pdf_field_email), patient.email!!)
+            hasPhone -> b.drawField(str(R.string.pdf_field_phone), patient.phone!!)
+            hasEmail -> b.drawField(str(R.string.pdf_field_email), patient.email!!)
         }
         b.drawDivider()
 
-        b.drawSection("DATOS DE LA CONSULTA")
-        b.drawField("Fecha", formatDate(consultation.date))
-        consultation.symptoms?.takeIf { it.isNotBlank() }?.let { b.drawField("Síntomas", it) }
-        consultation.vitalSigns?.takeIf { it.isNotBlank() }?.let { b.drawField("Signos vitales", it) }
-        consultation.notes?.takeIf { it.isNotBlank() }?.let { b.drawField("Notas", it) }
+        b.drawSection(str(R.string.pdf_section_consultation))
+        b.drawField(str(R.string.pdf_field_date), formatDate(consultation.date))
+        consultation.symptoms?.takeIf { it.isNotBlank() }?.let { b.drawField(str(R.string.pdf_field_symptoms), it) }
+        consultation.vitalSigns?.takeIf { it.isNotBlank() }?.let { b.drawField(str(R.string.pdf_field_vital_signs), it) }
+        consultation.notes?.takeIf { it.isNotBlank() }?.let { b.drawField(str(R.string.pdf_field_notes), it) }
         b.drawDivider()
 
-        b.drawSection("REGISTRO ECG")
+        b.drawSection(str(R.string.pdf_section_ecg))
         if (ecgRecord != null) {
             b.drawFieldRow(
-                "Frec. muestreo", "${ecgRecord.sampleRateHz} Hz",
-                "Duración", if (ecgRecord.duration > 0) "%.1f s".format(ecgRecord.duration) else "—",
+                str(R.string.pdf_field_sample_rate), "${ecgRecord.sampleRateHz} Hz",
+                str(R.string.pdf_field_duration), if (ecgRecord.duration > 0) "%.1f s".format(ecgRecord.duration) else "—",
             )
-            ecgRecord.signalQuality?.let { b.drawField("Calidad de señal", it) }
+            ecgRecord.signalQuality?.let { b.drawField(str(R.string.pdf_field_signal_quality), it) }
             if (ecgAnalysis != null) {
                 b.drawFieldRow(
-                    "Frec. cardíaca", ecgAnalysis.heartRateBpm?.let { "$it bpm" } ?: "—",
-                    "Picos R", ecgAnalysis.rPeakCount?.toString() ?: "—",
+                    str(R.string.pdf_field_heart_rate), ecgAnalysis.heartRateBpm?.let { "$it bpm" } ?: "—",
+                    str(R.string.pdf_field_r_peaks), ecgAnalysis.rPeakCount?.toString() ?: "—",
                 )
-                ecgAnalysis.rrMeanMs?.let { b.drawField("Intervalo RR", "%.1f ms".format(it)) }
-                ecgAnalysis.regularity?.let { b.drawField("Ritmo", it) }
+                ecgAnalysis.rrMeanMs?.let { b.drawField(str(R.string.pdf_field_rr_interval), "%.1f ms".format(it)) }
+                ecgAnalysis.regularity?.let { b.drawField(str(R.string.pdf_field_rhythm), it) }
                 ecgAnalysis.analysisNotes?.takeIf { it.isNotBlank() }
-                    ?.let { b.drawField("Notas análisis", it) }
+                    ?.let { b.drawField(str(R.string.pdf_field_analysis_notes), it) }
             }
         } else {
             // No ECG record available; show a note rather than leaving the section blank
-            b.drawNote("Sin registro ECG asociado a esta consulta.")
+            b.drawNote(str(R.string.pdf_no_ecg_record))
         }
 
-        b.drawSubSection("Gráfico ECG")
+        b.drawSubSection(str(R.string.pdf_subsection_ecg_chart))
         // Attempt to decode the pre-rendered snapshot PNG; fall back to a placeholder box
         val snapshotBitmap = ecgRecord?.snapshotPath
             ?.let { runCatching { BitmapFactory.decodeFile(it) }.getOrNull() }
@@ -214,10 +245,10 @@ class ReportRepositoryImpl @Inject constructor(
             b.drawEcgImage(snapshotBitmap)
             snapshotBitmap.recycle()
         } else {
-            b.drawEcgPlaceholder()
+            b.drawEcgPlaceholder(str(R.string.pdf_no_ecg_data))
         }
 
-        b.drawDisclaimer()
+        b.drawDisclaimer(str(R.string.pdf_disclaimer))
 
         return b.build()
     }
@@ -390,10 +421,10 @@ private class PdfCanvas {
      * Draws the report header: application title, generation timestamp, and a full-width
      * divider line. Called once at the very start of [buildPdf].
      */
-    fun drawHeader() {
-        singleLine("PQRST Learn — Informe de Consulta", titlePaint, gap = 2f)
+    fun drawHeader(title: String, generatedAtTemplate: String) {
+        singleLine(title, titlePaint, gap = 2f)
         val now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-        singleLine("Generado: $now", metaPaint, gap = 5f)
+        singleLine(String.format(generatedAtTemplate, now), metaPaint, gap = 5f)
         canvas.drawLine(margin, y, pageWidth - margin, y, dividerPaint)
         y += 6f
     }
@@ -503,15 +534,14 @@ private class PdfCanvas {
      * Draws a placeholder rectangle with a centred "no ECG data" label when no
      * snapshot is available.
      */
-    fun drawEcgPlaceholder() {
+    fun drawEcgPlaceholder(noDataLabel: String) {
         val boxHeight = 80f
         ensureSpace(boxHeight + 6f)
         canvas.drawRect(margin, y, pageWidth - margin, y + boxHeight, boxFillPaint)
         canvas.drawRect(margin, y, pageWidth - margin, y + boxHeight, boxStrokePaint)
-        val text = "Sin datos ECG para mostrar"
-        val tw = placeholderTextPaint.measureText(text)
+        val tw = placeholderTextPaint.measureText(noDataLabel)
         canvas.drawText(
-            text,
+            noDataLabel,
             margin + (contentWidth - tw) / 2f,
             y + boxHeight / 2f - placeholderTextPaint.ascent() / 2f,
             placeholderTextPaint,
@@ -526,12 +556,9 @@ private class PdfCanvas {
      * This disclaimer is required by the project's non-clinical constraint (RF-07,
      * RF-08) and must appear on every generated report.
      */
-    fun drawDisclaimer() {
+    fun drawDisclaimer(text: String) {
         y += 4f
-        multiLine(
-            "AVISO EDUCATIVO: Este informe es exclusivamente para uso educativo. Los resultados no constituyen diagnóstico clínico ni sustituyen la valoración de un profesional médico cualificado.",
-            disclaimerPaint,
-        )
+        multiLine(text, disclaimerPaint)
     }
 
     /**

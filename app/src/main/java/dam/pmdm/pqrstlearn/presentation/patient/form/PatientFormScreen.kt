@@ -36,13 +36,6 @@ import dam.pmdm.pqrstlearn.presentation.component.PrimaryButton
 import dam.pmdm.pqrstlearn.presentation.component.PqrstTopBar
 import dam.pmdm.pqrstlearn.ui.theme.PqrstTheme
 
-/**
- * Pairs of (stored value, display label) used to populate the sex dropdown.
- *
- * The stored value ("M", "F", "Otro") is what is persisted to the database; the
- * display label is what the user sees in the UI.
- */
-private val SEX_OPTIONS = listOf("M" to "Masculino", "F" to "Femenino", "Otro" to "Otro")
 
 /**
  * Screen for creating a new patient or editing an existing one.
@@ -89,7 +82,7 @@ fun PatientFormScreen(
         topBar = {
             PqrstTopBar(
                 // Show context-appropriate title based on create vs edit mode.
-                title = if (viewModel.isEditing) "Editar Paciente" else "Nuevo Paciente",
+                title = if (viewModel.isEditing) stringResource(R.string.patient_form_title_edit) else stringResource(R.string.patient_form_title_new),
                 role = null,
                 onMenuClick = {},
                 onBackClick = onBack,
@@ -128,10 +121,15 @@ private fun PatientFormContent(
     viewModel: PatientFormViewModel,
     modifier: Modifier = Modifier,
 ) {
+    val sexOptions = listOf(
+        "M" to stringResource(R.string.patient_sex_male),
+        "F" to stringResource(R.string.patient_sex_female),
+        "Otro" to stringResource(R.string.patient_sex_other),
+    )
     // Local UI state for the dropdown; does not need to survive configuration changes.
     var sexExpanded by remember { mutableStateOf(false) }
     // Derive the display label from the stored value so the dropdown shows the human-readable text.
-    val sexDisplayLabel = SEX_OPTIONS.firstOrNull { it.first == viewModel.sex }?.second ?: ""
+    val sexDisplayLabel = sexOptions.firstOrNull { it.first == viewModel.sex }?.second ?: ""
 
     Column(
         modifier = modifier
@@ -183,7 +181,7 @@ private fun PatientFormContent(
                 expanded = sexExpanded,
                 onDismissRequest = { sexExpanded = false },
             ) {
-                SEX_OPTIONS.forEach { (value, label) ->
+                sexOptions.forEach { (value, label) ->
                     DropdownMenuItem(
                         text = { Text(label) },
                         onClick = {
@@ -243,7 +241,7 @@ private fun PatientFormPreview() {
         Scaffold(
             topBar = {
                 PqrstTopBar(
-                    title = "Nuevo Paciente",
+                    title = stringResource(R.string.patient_form_title_new),
                     role = null,
                     onMenuClick = {},
                     onBackClick = {},
