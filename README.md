@@ -53,12 +53,14 @@
   <img src="docs/screens/01_login.png" width="200" alt="Login"/>
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="docs/screens/02_dashboard.png" width="200" alt="Dashboard"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/screens/02b_dashboard.png" width="200" alt="Dashboard"/>
 </p>
 
 ### Gestión de pacientes
 
 <p align="center">
-  <img src="docs/screens/03_patients_list.png" width="200" alt="Lista de pacientes"/>
+  <img src="docs/screens/02_dashboard.png" width="200" alt="Lista de pacientes"/>
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="docs/screens/04_patient_detail.png" width="200" alt="Detalle del paciente"/>
   &nbsp;&nbsp;&nbsp;&nbsp;
@@ -73,6 +75,8 @@
   <img src="docs/screens/07_consultation_detail.png" width="200" alt="Detalle de consulta"/>
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="docs/screens/08_consultation_form.png" width="200" alt="Formulario de consulta"/>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/screens/08b_consultation_form.png" width="200" alt="Formulario de consulta"/>
 </p>
 
 ### Módulo ECG
@@ -91,6 +95,8 @@
   <img src="docs/screens/13_ecg_chart.png" width="200" alt="Visualización de señal"/>
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="docs/screens/14_pdf_report.png" width="200" alt="Informe PDF"/>
+   &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="docs/screens/14b_pdf_report.png" width="200" alt="Informe PDF"/>
 </p>
 
 ### Pantallas educativas y administración
@@ -108,9 +114,6 @@
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="docs/screens/19_user_form.png" width="200" alt="Formulario de usuario"/>
 </p>
-
-> **Para añadir las capturas al repositorio:** crea la carpeta `docs/screens/`, copia los PNG con los nombres indicados arriba y haz commit. Las imágenes se renderizarán automáticamente aquí.
-
 ---
 
 ## Arquitectura
