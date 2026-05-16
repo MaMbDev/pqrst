@@ -1,7 +1,14 @@
 package dam.pmdm.pqrstlearn.presentation.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +33,8 @@ import dam.pmdm.pqrstlearn.presentation.learn.EcgGuideScreen
 import dam.pmdm.pqrstlearn.presentation.learn.HeartAnatomyScreen
 import dam.pmdm.pqrstlearn.presentation.settings.AboutScreen
 import dam.pmdm.pqrstlearn.presentation.settings.SettingsScreen
+import dam.pmdm.pqrstlearn.presentation.tour.TourOverlay
+import dam.pmdm.pqrstlearn.presentation.tour.TourViewModel
 
 /**
  * Root navigation graph for the PQRST Learn application.
@@ -91,6 +100,23 @@ fun PqrstNavGraph(
     onLogout: () -> Unit,
     navController: NavHostController = rememberNavController(),
 ) {
+    // Tour ViewModel scoped to the NavGraph composable (i.e. the Activity)
+    val tourViewModel: TourViewModel = hiltViewModel()
+
+    // Screen height in pixels for tooltip positioning inside TourOverlay
+    val configuration = LocalConfiguration.current
+    val screenHeightPx = with(LocalDensity.current) { configuration.screenHeightDp.dp.toPx() }
+
+    // Collect tour navigation events and forward them to the nav controller
+    LaunchedEffect(Unit) {
+        tourViewModel.navigateTo.collect { route ->
+            navController.navigate(route) {
+                launchSingleTop = true
+                popUpTo(navController.graph.startDestinationId)
+            }
+        }
+    }
+
     // Single source of truth for auth-driven navigation.
     // Keying on both session and isCheckingSession ensures we re-evaluate whenever
     // either changes, but we skip while the check is still in progress.
@@ -108,6 +134,7 @@ fun PqrstNavGraph(
         }
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     NavHost(navController = navController, startDestination = Login) {
 
         // ── Login ──────────────────────────────────────────────────────────────
@@ -136,6 +163,7 @@ fun PqrstNavGraph(
                         else -> Unit
                     }
                 },
+                tourViewModel = tourViewModel,
             )
         }
 
@@ -161,6 +189,7 @@ fun PqrstNavGraph(
                         else -> Unit
                     }
                 },
+                tourViewModel = tourViewModel,
             )
         }
 
@@ -319,4 +348,11 @@ fun PqrstNavGraph(
             HeartAnatomyScreen(onBack = { navController.popBackStack() })
         }
     }
+
+    // Tour overlay sits on top of all screens, rendered over the NavHost content
+    TourOverlay(
+        tourViewModel = tourViewModel,
+        screenHeightPx = screenHeightPx,
+    )
+    } // end Box
 }

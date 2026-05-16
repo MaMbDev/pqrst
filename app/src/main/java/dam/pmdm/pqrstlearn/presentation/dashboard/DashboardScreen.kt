@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -41,11 +42,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import dam.pmdm.pqrstlearn.R
 import dam.pmdm.pqrstlearn.domain.model.Session
 import dam.pmdm.pqrstlearn.domain.model.UserRole
 import dam.pmdm.pqrstlearn.presentation.component.PqrstNavigationDrawer
 import dam.pmdm.pqrstlearn.presentation.component.PqrstTopBar
+import dam.pmdm.pqrstlearn.presentation.tour.TourViewModel
+import dam.pmdm.pqrstlearn.presentation.tour.tourTarget
 import dam.pmdm.pqrstlearn.ui.theme.PqrstTheme
 import kotlinx.coroutines.launch
 
@@ -75,6 +79,7 @@ fun DashboardScreen(
     session: Session?,
     onLogout: () -> Unit,
     onNavigate: (String) -> Unit,
+    tourViewModel: TourViewModel = hiltViewModel(),
 ) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     // rememberCoroutineScope gives a scope tied to the composition for drawer open/close animations
@@ -113,6 +118,7 @@ fun DashboardScreen(
             DashboardContent(
                 session = session,
                 onNavigate = onNavigate,
+                tourViewModel = tourViewModel,
                 modifier = Modifier.padding(innerPadding),
             )
         }
@@ -140,6 +146,7 @@ fun DashboardScreen(
 private fun DashboardContent(
     session: Session?,
     onNavigate: (String) -> Unit,
+    tourViewModel: TourViewModel,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -153,7 +160,9 @@ private fun DashboardContent(
         // Welcome card — colour differs for ADMIN vs USER to reinforce role awareness
         val welcomeColor = if (session?.role == UserRole.ADMIN) Color(0xFFE6E2CC) else Color(0xFFB7D2E5)
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .tourTarget("tour_welcome", tourViewModel),
             colors = CardDefaults.cardColors(
                 containerColor = welcomeColor,
                 contentColor = Color(0xFF1C1B1F),
@@ -185,12 +194,14 @@ private fun DashboardContent(
             label = stringResource(R.string.dashboard_patients),
             icon = Icons.Default.Person,
             onClick = { onNavigate("patients") },
+            modifier = Modifier.tourTarget("tour_patients_card", tourViewModel),
         )
         Spacer(Modifier.height(8.dp))
         QuickActionCard(
             label = stringResource(R.string.dashboard_consultations),
             icon = Icons.Default.DateRange,
             onClick = { onNavigate("consultations") },
+            modifier = Modifier.tourTarget("tour_consult_card", tourViewModel),
         )
         Spacer(Modifier.height(8.dp))
         // ECG Monitor + ECG Import: side-by-side with equal height
@@ -203,14 +214,20 @@ private fun DashboardContent(
                 subtitle = stringResource(R.string.dashboard_ecg_guide),
                 icon = Icons.Default.MonitorHeart,
                 onClick = { onNavigate("ecg_monitor") },
-                modifier = Modifier.weight(1f).fillMaxHeight(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .tourTarget("tour_ecg_monitor_card", tourViewModel),
             )
             QuickActionCard(
                 label = stringResource(R.string.dashboard_import_ecg),
                 subtitle = stringResource(R.string.dashboard_ecg_guide),
                 icon = Icons.Default.FileUpload,
                 onClick = { onNavigate("ecg_import") },
-                modifier = Modifier.weight(1f).fillMaxHeight(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .tourTarget("tour_ecg_import_card", tourViewModel),
             )
         }
 
@@ -226,7 +243,10 @@ private fun DashboardContent(
                 subtitle = stringResource(R.string.dashboard_ecg_guide),
                 icon = Icons.Default.Timeline,
                 onClick = { onNavigate("ecg_guide") },
-                modifier = Modifier.weight(1f).fillMaxHeight(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .tourTarget("tour_learn_card", tourViewModel),
             )
             QuickActionCard(
                 label = stringResource(R.string.dashboard_learn),
@@ -247,6 +267,14 @@ private fun DashboardContent(
                 containerColor = Color(0xFFE6E2CC),
                 contentColor = Color(0xFF1C1B1F),
             )
+        }
+
+        Spacer(Modifier.height(8.dp))
+        TextButton(
+            onClick = { tourViewModel.startTour() },
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        ) {
+            Text(stringResource(R.string.tour_start))
         }
     }
 }
@@ -325,6 +353,7 @@ private fun DashboardPreview() {
         DashboardContent(
             session = Session(1L, "admin", null, UserRole.ADMIN),
             onNavigate = {},
+            tourViewModel = TourViewModel(),
         )
     }
 }

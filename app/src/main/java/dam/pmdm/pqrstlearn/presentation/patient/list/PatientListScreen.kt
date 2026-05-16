@@ -52,6 +52,8 @@ import dam.pmdm.pqrstlearn.presentation.component.ConfirmDialog
 import dam.pmdm.pqrstlearn.presentation.component.PrimaryButton
 import dam.pmdm.pqrstlearn.presentation.component.PqrstNavigationDrawer
 import dam.pmdm.pqrstlearn.presentation.component.PqrstTopBar
+import dam.pmdm.pqrstlearn.presentation.tour.TourViewModel
+import dam.pmdm.pqrstlearn.presentation.tour.tourTarget
 import dam.pmdm.pqrstlearn.ui.theme.PqrstTheme
 import kotlinx.coroutines.launch
 
@@ -93,6 +95,7 @@ fun PatientListScreen(
     onNavigateToForm: (Long?) -> Unit,
     onDrawerNavigate: (String) -> Unit,
     viewModel: PatientListViewModel = hiltViewModel(),
+    tourViewModel: TourViewModel = hiltViewModel(),
 ) {
     // collectAsStateWithLifecycle suspends collection when the screen is not active,
     // avoiding DB queries and Snackbar triggers while the app is in the background.
@@ -149,7 +152,9 @@ fun PatientListScreen(
                     PrimaryButton(
                         text = stringResource(R.string.patients_new),
                         onClick = { onNavigateToForm(null) },
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .tourTarget("tour_new_patient_btn", tourViewModel),
                     )
                     Spacer(modifier = Modifier.height(72.dp))
                 }

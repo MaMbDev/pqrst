@@ -323,4 +323,25 @@
     <string name="pdf_subsection_ecg_chart">Gráfico ECG</string>
     <string name="pdf_no_ecg_data">Sin datos ECG para mostrar</string>
     <string name="pdf_disclaimer">AVISO EDUCATIVO: Este informe es exclusivamente para uso educativo. Los resultados no constituyen diagnóstico clínico ni sustituyen la valoración de un profesional médico cualificado.</string>
+
+    <!-- Interactive tour -->
+    <string name="tour_start">Iniciar tour</string>
+    <string name="tour_skip">Saltar</string>
+    <string name="tour_next">Siguiente</string>
+    <string name="tour_previous">Anterior</string>
+    <string name="tour_finish">Finalizar</string>
+    <string name="tour_welcome_title">¡Bienvenido a PQRST Learn!</string>
+    <string name="tour_welcome_desc">Esta es tu pantalla principal. Desde aquí accedes a todas las funciones de la aplicación. Sigue el tour para conocerlas.</string>
+    <string name="tour_patients_title">Gestión de Pacientes</string>
+    <string name="tour_patients_desc">Crea y gestiona tus pacientes. Puedes registrar su nombre, edad, sexo, historial médico y datos de contacto.</string>
+    <string name="tour_consult_title">Consultas</string>
+    <string name="tour_consult_desc">Registra consultas clínicas asociadas a cada paciente, incluyendo síntomas, signos vitales y notas.</string>
+    <string name="tour_ecg_monitor_title">Monitor ECG en vivo</string>
+    <string name="tour_ecg_monitor_desc">Conecta tu dispositivo ESP32 por Bluetooth y visualiza la señal ECG en tiempo real. Puedes guardarla vinculada a una consulta.</string>
+    <string name="tour_ecg_import_title">Importar ECG</string>
+    <string name="tour_ecg_import_desc">Importa registros ECG desde archivos CSV, como los de la base de datos MIT-BIH, y analízalos directamente en la app.</string>
+    <string name="tour_learn_title">Sección de Aprendizaje</string>
+    <string name="tour_learn_desc">Explora guías interactivas sobre la onda PQRST, anatomía cardíaca y patrones de referencia. Solo para uso educativo.</string>
+    <string name="tour_new_patient_title">Crear un nuevo paciente</string>
+    <string name="tour_new_patient_desc">Pulsa este botón para registrar tu primer paciente. Todos los campos marcados son obligatorios.</string>
 </resources>
