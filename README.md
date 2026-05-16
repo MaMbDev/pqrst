@@ -49,71 +49,69 @@
 
 ### Login y Dashboard
 
-<p align="center">
-  <img src="docs/screens/01_login.png" width="200" alt="Login"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/02_dashboard.png" width="200" alt="Dashboard"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/02b_dashboard.png" width="200" alt="Dashboard"/>
-</p>
+<div align="center">
+
+| | | |
+|:---:|:---:|:---:|
+| <img src="docs/screens/01_login.png" width="200" alt="Login"/> | <img src="docs/screens/02_dashboard.png" width="200" alt="Dashboard"/> | <img src="docs/screens/02b_dashboard.png" width="200" alt="Dashboard"/> |
+| Login | Dashboard | Dashboard |
+
+</div>
 
 ### Gestión de pacientes
 
-<p align="center">
-  <img src="docs/screens/02_dashboard.png" width="200" alt="Lista de pacientes"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/04_patient_detail.png" width="200" alt="Detalle del paciente"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/05_patient_form.png" width="200" alt="Formulario de paciente"/>
-</p>
+<div align="center">
+
+| | | |
+|:---:|:---:|:---:|
+| <img src="docs/screens/02_dashboard.png" width="200" alt="Lista de pacientes"/> | <img src="docs/screens/04_patient_detail.png" width="200" alt="Detalle del paciente"/> | <img src="docs/screens/05_patient_form.png" width="200" alt="Formulario de paciente"/> |
+| Lista de pacientes | Detalle del paciente | Formulario de paciente |
+
+</div>
 
 ### Gestión de consultas
 
-<p align="center">
-  <img src="docs/screens/06_consultations_list.png" width="200" alt="Lista de consultas"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/07_consultation_detail.png" width="200" alt="Detalle de consulta"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/08_consultation_form.png" width="200" alt="Formulario de consulta"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/08b_consultation_form.png" width="200" alt="Formulario de consulta"/>
-</p>
+<div align="center">
+
+| | | | |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screens/06_consultations_list.png" width="200" alt="Lista de consultas"/> | <img src="docs/screens/07_consultation_detail.png" width="200" alt="Detalle de consulta"/> | <img src="docs/screens/08_consultation_form.png" width="200" alt="Formulario de consulta"/> | <img src="docs/screens/08b_consultation_form.png" width="200" alt="Formulario de consulta"/> |
+| Lista de consultas | Detalle de consulta | Formulario | Formulario |
+
+</div>
 
 ### Módulo ECG
 
-<p align="center">
-  <img src="docs/screens/09_ecg_scan.png" width="200" alt="Escanear ESP32"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/10_ecg_recording.png" width="200" alt="Captura en tiempo real"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/11_ecg_import.png" width="200" alt="Importar CSV"/>
-</p>
+<div align="center">
 
-<p align="center">
-  <img src="docs/screens/12_ecg_analysis.png" width="200" alt="Análisis ECG"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/13_ecg_chart.png" width="200" alt="Visualización de señal"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/14_pdf_report.png" width="200" alt="Informe PDF"/>
-   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/14b_pdf_report.png" width="200" alt="Informe PDF"/>
-</p>
+| | | |
+|:---:|:---:|:---:|
+| <img src="docs/screens/09_ecg_scan.png" width="200" alt="Escanear ESP32"/> | <img src="docs/screens/10_ecg_recording.png" width="200" alt="Captura en tiempo real"/> | <img src="docs/screens/11_ecg_import.png" width="200" alt="Importar CSV"/> |
+| Escanear ESP32 | Captura en tiempo real | Importar CSV |
+
+| | | | |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screens/12_ecg_analysis.png" width="200" alt="Análisis ECG"/> | <img src="docs/screens/13_ecg_chart.png" width="200" alt="Visualización de señal"/> | <img src="docs/screens/14_pdf_report.png" width="200" alt="Informe PDF"/> | <img src="docs/screens/14b_pdf_report.png" width="200" alt="Informe PDF"/> |
+| Análisis ECG | Visualización de señal | Informe PDF | Informe PDF |
+
+</div>
 
 ### Pantallas educativas y administración
 
-<p align="center">
-  <img src="docs/screens/15_pqrst_guide.png" width="200" alt="Guía PQRST"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/16_heart_anatomy.png" width="200" alt="Anatomía cardíaca"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/17_settings.png" width="200" alt="Configuración"/>
-</p>
+<div align="center">
 
-<p align="center">
-  <img src="docs/screens/18_users_list.png" width="200" alt="Lista de usuarios"/>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="docs/screens/19_user_form.png" width="200" alt="Formulario de usuario"/>
-</p>
+| | | |
+|:---:|:---:|:---:|
+| <img src="docs/screens/15_pqrst_guide.png" width="200" alt="Guía PQRST"/> | <img src="docs/screens/16_heart_anatomy.png" width="200" alt="Anatomía cardíaca"/> | <img src="docs/screens/17_settings.png" width="200" alt="Configuración"/> |
+| Guía PQRST | Anatomía cardíaca | Configuración |
+
+| | |
+|:---:|:---:|
+| <img src="docs/screens/18_users_list.png" width="200" alt="Lista de usuarios"/> | <img src="docs/screens/19_user_form.png" width="200" alt="Formulario de usuario"/> |
+| Lista de usuarios | Formulario de usuario |
+
+</div>
+
 ---
 
 ## Arquitectura
