@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dam.pmdm.pqrstlearn.R
 import dam.pmdm.pqrstlearn.presentation.component.LabeledTextField
+import dam.pmdm.pqrstlearn.presentation.util.toStringRes
 import dam.pmdm.pqrstlearn.presentation.component.PrimaryButton
 import dam.pmdm.pqrstlearn.presentation.component.PqrstTopBar
 import dam.pmdm.pqrstlearn.ui.theme.PqrstTheme
@@ -121,6 +123,9 @@ private fun PatientFormContent(
     viewModel: PatientFormViewModel,
     modifier: Modifier = Modifier,
 ) {
+    // LocalContext.current is the Activity context — it carries the correct per-app locale
+    // on all API levels, unlike @ApplicationContext which may lag on API < 33.
+    val context = LocalContext.current
     val sexOptions = listOf(
         "M" to stringResource(R.string.patient_sex_male),
         "F" to stringResource(R.string.patient_sex_female),
@@ -143,7 +148,7 @@ private fun PatientFormContent(
             onValueChange = { viewModel.name = it },
             label = stringResource(R.string.patient_name_label),
             isError = viewModel.nameError != null,
-            errorMessage = viewModel.nameError,
+            errorMessage = viewModel.nameError?.let { context.getString(it.toStringRes()) },
         )
 
         LabeledTextField(
@@ -151,9 +156,7 @@ private fun PatientFormContent(
             onValueChange = { viewModel.age = it },
             label = stringResource(R.string.patient_age_label),
             isError = viewModel.ageError != null,
-            errorMessage = viewModel.ageError,
-            // Numeric keyboard to avoid non-digit input; actual parsing/validation
-            // is performed in the ViewModel via FieldValidators.
+            errorMessage = viewModel.ageError?.let { context.getString(it.toStringRes()) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
 
@@ -170,7 +173,7 @@ private fun PatientFormContent(
                 label = { Text(stringResource(R.string.patient_sex_label)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sexExpanded) },
                 isError = viewModel.sexError != null,
-                supportingText = viewModel.sexError?.let { { Text(it) } },
+                supportingText = viewModel.sexError?.let { err -> { Text(context.getString(err.toStringRes())) } },
                 modifier = Modifier
                     .fillMaxWidth()
                     // PrimaryNotEditable anchors the dropdown to the text field without
@@ -198,7 +201,7 @@ private fun PatientFormContent(
             onValueChange = { viewModel.phone = it },
             label = stringResource(R.string.patient_phone_label),
             isError = viewModel.phoneError != null,
-            errorMessage = viewModel.phoneError,
+            errorMessage = viewModel.phoneError?.let { context.getString(it.toStringRes()) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
         )
 
@@ -207,7 +210,7 @@ private fun PatientFormContent(
             onValueChange = { viewModel.email = it },
             label = stringResource(R.string.patient_email_label),
             isError = viewModel.emailError != null,
-            errorMessage = viewModel.emailError,
+            errorMessage = viewModel.emailError?.let { context.getString(it.toStringRes()) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         )
 

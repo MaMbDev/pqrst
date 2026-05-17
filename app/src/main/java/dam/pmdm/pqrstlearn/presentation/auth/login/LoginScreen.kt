@@ -31,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -77,15 +78,22 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showForgotDialog by remember { mutableStateOf(false) }
+    // LocalContext.current is the Activity context — it carries the correct per-app locale
+    // on all API levels, unlike @ApplicationContext which may lag on API < 33.
+    val context = LocalContext.current
 
-    // Re-runs whenever uiState changes. Using uiState as the key means the effect
-    // fires exactly once per distinct state value — not on every recomposition.
     LaunchedEffect(uiState) {
-        if (uiState is LoginUiState.Success) onLoginSuccess()
-        if (uiState is LoginUiState.Error) {
-            snackbarHostState.showSnackbar((uiState as LoginUiState.Error).message)
-            // Clear the error after showing it to avoid re-triggering on recomposition.
-            viewModel.clearError()
+        when (val state = uiState) {
+            is LoginUiState.Success     -> onLoginSuccess()
+            is LoginUiState.BlankFields -> {
+                snackbarHostState.showSnackbar(context.getString(R.string.error_login_fields_empty))
+                viewModel.clearError()
+            }
+            is LoginUiState.Error -> {
+                snackbarHostState.showSnackbar(state.message)
+                viewModel.clearError()
+            }
+            else -> Unit
         }
     }
 

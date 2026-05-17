@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -41,6 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import dam.pmdm.pqrstlearn.R
 import dam.pmdm.pqrstlearn.domain.model.UserRole
 import dam.pmdm.pqrstlearn.presentation.component.LabeledTextField
+import dam.pmdm.pqrstlearn.presentation.util.toStringRes
 import dam.pmdm.pqrstlearn.presentation.component.PrimaryButton
 import dam.pmdm.pqrstlearn.presentation.component.PqrstTopBar
 import dam.pmdm.pqrstlearn.ui.theme.PqrstTheme
@@ -132,6 +134,9 @@ private fun UserFormContent(
     viewModel: UserFormViewModel,
     modifier: Modifier = Modifier,
 ) {
+    // LocalContext.current is the Activity context — it carries the correct per-app locale
+    // on all API levels, unlike @ApplicationContext which may lag on API < 33.
+    val context = LocalContext.current
     // Local transient state: does not need to survive configuration changes.
     var passwordVisible by remember { mutableStateOf(false) }
     var roleExpanded by remember { mutableStateOf(false) }
@@ -155,7 +160,7 @@ private fun UserFormContent(
             onValueChange = { viewModel.username = it },
             label = stringResource(R.string.user_username_label),
             isError = viewModel.usernameError != null,
-            errorMessage = viewModel.usernameError,
+            errorMessage = viewModel.usernameError?.let { context.getString(it.toStringRes()) },
         )
 
         LabeledTextField(
@@ -163,7 +168,7 @@ private fun UserFormContent(
             onValueChange = { viewModel.password = it },
             label = stringResource(R.string.user_password_label),
             isError = viewModel.passwordError != null,
-            errorMessage = viewModel.passwordError,
+            errorMessage = viewModel.passwordError?.let { context.getString(it.toStringRes()) },
             // Toggle between obscured and plain-text display based on user preference.
             visualTransformation = if (passwordVisible) {
                 VisualTransformation.None
@@ -199,7 +204,7 @@ private fun UserFormContent(
             onValueChange = { viewModel.email = it },
             label = stringResource(R.string.user_email_label),
             isError = viewModel.emailError != null,
-            errorMessage = viewModel.emailError,
+            errorMessage = viewModel.emailError?.let { context.getString(it.toStringRes()) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         )
 
