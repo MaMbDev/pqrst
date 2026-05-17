@@ -13,10 +13,7 @@ import dam.pmdm.pqrstlearn.domain.model.UserRole
 import dam.pmdm.pqrstlearn.domain.repository.AuthRepository
 import dam.pmdm.pqrstlearn.domain.repository.UserRepository
 import dam.pmdm.pqrstlearn.domain.validation.FieldValidators
-<<<<<<< Updated upstream
-=======
 import dam.pmdm.pqrstlearn.domain.validation.ValidationError
->>>>>>> Stashed changes
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -24,6 +21,14 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import javax.inject.Inject
 
+/**
+ * ViewModel for the user account create/edit form (ADMIN only).
+ *
+ * Exposes typed [ValidationError] errors resolved to strings by the Composable via
+ * [LocalContext.current]. Password is never stored in plain text — [BcryptPasswordHasher]
+ * hashes it before it reaches the database. In edit mode a blank password retains the
+ * existing hash. Username uniqueness is checked asynchronously after sync validation.
+ */
 @HiltViewModel
 class UserFormViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -65,35 +70,29 @@ class UserFormViewModel @Inject constructor(
                     email    = user.email
                     role     = user.role
                     existingPasswordHash = user.passwordHash
-                    originalCreatedBy = user.createdBy
-                    originalCreatedAt = user.createdAt
+                    originalCreatedBy    = user.createdBy
+                    originalCreatedAt    = user.createdAt
                 }
             }
         }
     }
 
+    /**
+     * Validates fields synchronously, then checks username uniqueness against the DB.
+     * Sets [usernameError] = [ValidationError.UsernameTaken] if the name is already used
+     * (excluding [userId] in edit mode). Hashes the password and persists on success.
+     */
     fun save() {
-<<<<<<< Updated upstream
-        // Run all synchronous validators; the screen will display errors inline.
-        usernameError = FieldValidators.required(username)
-        passwordError = FieldValidators.password(password, isEditing)
-        emailError = FieldValidators.email(email)
-=======
         usernameError = FieldValidators.required(username)
         passwordError = FieldValidators.password(password, isEditing)
         emailError    = FieldValidators.email(email)
->>>>>>> Stashed changes
 
         if (listOf(usernameError, passwordError, emailError).any { it != null }) return
 
         viewModelScope.launch {
             val taken = repository.usernameExists(username.trim(), excludeId = userId ?: 0L)
             if (taken) {
-<<<<<<< Updated upstream
-                usernameError = "Este nombre de usuario ya está en uso"
-=======
                 usernameError = ValidationError.UsernameTaken
->>>>>>> Stashed changes
                 return@launch
             }
 
@@ -109,13 +108,13 @@ class UserFormViewModel @Inject constructor(
             val currentUserId = authRepository.currentSession.value?.userId ?: 0L
             repository.upsert(
                 AppUser(
-                    id = userId ?: 0L,
-                    username = username.trim(),
-                    email    = email.trim(),
+                    id           = userId ?: 0L,
+                    username     = username.trim(),
+                    email        = email.trim(),
                     passwordHash = hash,
-                    role = role,
-                    createdAt = if (isEditing) originalCreatedAt else LocalDateTime.now().toString(),
-                    createdBy = if (isEditing) originalCreatedBy else currentUserId,
+                    role         = role,
+                    createdAt    = if (isEditing) originalCreatedAt else LocalDateTime.now().toString(),
+                    createdBy    = if (isEditing) originalCreatedBy else currentUserId,
                 ),
             ).onSuccess { _savedEvent.emit(Unit) }
              .onFailure { _error.emit(it.message ?: "Error al guardar usuario") }

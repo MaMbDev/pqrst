@@ -23,6 +23,14 @@
     <string name="loading">Cargando…</string>
     <string name="error_generic">Ha ocurrido un error. Inténtalo de nuevo.</string>
     <string name="error_field_required">Este campo es obligatorio</string>
+    <string name="error_email_invalid">Introduce un correo electrónico válido</string>
+    <string name="error_phone_invalid">Introduce un número de teléfono válido</string>
+    <string name="error_age_invalid">Introduce una edad válida (1–150)</string>
+    <string name="error_password_min_length">Mínimo 8 caracteres</string>
+    <string name="error_password_no_uppercase">Debe contener al menos una letra mayúscula</string>
+    <string name="error_password_no_digit">Debe contener al menos un dígito</string>
+    <string name="error_username_taken">Este nombre de usuario ya está en uso</string>
+    <string name="error_login_fields_empty">Completa todos los campos</string>
     <string name="confirm_delete_title">Confirmar eliminación</string>
     <string name="confirm_delete_message">¿Estás seguro de que deseas eliminar este elemento? Esta acción no se puede deshacer.</string>
 
