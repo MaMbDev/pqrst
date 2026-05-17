@@ -1,3 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">pqrst</string>
+    <string name="app_name">PQRST Learn</string>
+
+    <!-- Auth -->
+    <string name="login_username_hint">Usuario</string>
+    <string name="login_password_hint">Contraseña</string>
+    <string name="login_button">INICIAR SESIÓN</string>
+    <string name="login_forgot_password">¿Olvidaste la contraseña?</string>
+    <string name="login_error_invalid">Usuario o contraseña incorrectos</string>
+    <string name="forgot_password_title">Contraseña olvidada</string>
+    <string name="forgot_password_message">Contacta a tu administrador para restablecer tu contraseña.</string>
+
+    <!-- Common -->
+    <string name="ok">Aceptar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
+    <string name="view">Ver</string>
+    <string name="back">Volver</string>
+    <string name="close">Cerrar</string>
+    <string name="loading">Cargando…</string>
+    <string name="error_generic">Ha ocurrido un error. Inténtalo de nuevo.</string>
+    <string name="error_field_required">Este campo es obligatorio</string>
+    <string name="error_email_invalid">Introduce un correo electrónico válido</string>
+    <string name="error_phone_invalid">Introduce un número de teléfono válido</string>
+    <string name="error_age_invalid">Introduce una edad válida (1–150)</string>
+    <string name="error_password_min_length">Mínimo 8 caracteres</string>
+    <string name="error_password_no_uppercase">Debe contener al menos una letra mayúscula</string>
+    <string name="error_password_no_digit">Debe contener al menos un dígito</string>
+    <string name="error_username_taken">Este nombre de usuario ya está en uso</string>
+    <string name="error_login_fields_empty">Completa todos los campos</string>
+    <string name="confirm_delete_title">Confirmar eliminación</string>
+    <string name="confirm_delete_message">¿Estás seguro de que deseas eliminar este elemento? Esta acción no se puede deshacer.</string>
+
+    <!-- Navigation drawer -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_patients">Pacientes</string>
+    <string name="nav_consultations">Consultas</string>
+    <string name="nav_ecg_monitor">Monitor ECG</string>
+    <string name="nav_import_csv">Importar CSV</string>
+    <string name="nav_settings">Configuración</string>
+    <string name="nav_help">Ayuda</string>
+    <string name="nav_logout">Cerrar sesión</string>
+    <string name="nav_role_admin">Admin</string>
+    <string name="nav_role_user">Usuario</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_welcome">¡Bienvenido, %1$s!</string>
+    <string name="dashboard_last_access">Último acceso: %1$s</string>
+    <string name="dashboard_quick_actions">ACCESO RÁPIDO</string>
+    <string name="dashboard_patients">PACIENTES</string>
+    <string name="dashboard_consultations">CONSULTAS</string>
+    <string name="dashboard_ecg_monitor">MONITOR</string>
+    <string name="dashboard_import_ecg">IMPORTAR</string>
+    <string name="dashboard_admin_label">sólo visible para admin</string>
+    <string name="dashboard_user_management">Gestión Usuarios\nAdministrar accesos</string>
+
+    <!-- Patients -->
+    <string name="patients_title">PACIENTES</string>
+    <string name="patients_search_hint">Buscar por nombre o ID</string>
+    <string name="patients_list_title">LISTADO</string>
+    <string name="patients_new">NUEVO PACIENTE</string>
+    <string name="patient_form_title_new">Nuevo Paciente</string>
+    <string name="patient_form_title_edit">Editar Paciente</string>
+    <string name="patient_sex_male">Masculino</string>
+    <string name="patient_sex_female">Femenino</string>
+    <string name="patient_sex_other">Otro</string>
+    <string name="patients_empty">No hay pacientes registrados</string>
+    <string name="patient_name_label">Nombre</string>
+    <string name="patient_age_label">Edad</string>
+    <string name="patient_sex_label">Sexo</string>
+    <string name="patient_phone_label">Teléfono</string>
+    <string name="patient_email_label">E-mail</string>
+    <string name="patient_address_label">Dirección</string>
+    <string name="patient_history_label">Antecedentes médicos</string>
+    <string name="patient_delete_confirm">¿Eliminar este paciente? Se eliminarán también todas sus consultas y registros ECG.</string>
+
+    <!-- Consultations -->
+    <string name="consultations_empty">Sin consultas registradas</string>
+    <string name="consultations_title">CONSULTAS</string>
+    <string name="consultations_new">NUEVA CONSULTA</string>
+    <string name="consultations_search_hint">Buscar por paciente o ID</string>
+    <string name="consultations_select_patient">Seleccionar paciente</string>
+    <string name="consultation_patient_label">Paciente</string>
+    <string name="consultation_date_label">Fecha</string>
+    <string name="consultation_symptoms_label">Síntomas</string>
+    <string name="consultation_vital_signs_label">Signos vitales</string>
+    <string name="consultation_fill_normal_vitals">Valores normales</string>
+    <string name="consultation_normal_vitals_value">FC: 60-100 lpm\nFR: 12-20 rpm\nTA: &lt; 120/80 mmHg\nT°: 36,5–37,3 °C</string>
+    <string name="consultation_notes_label">Notas</string>
+    <string name="consultation_delete_confirm">¿Eliminar esta consulta? Se eliminarán también todos sus registros ECG.</string>
+    <string name="consultation_ecg_section">REGISTROS ECG</string>
+
+    <!-- ECG -->
+    <string name="ecg_records_title">Registros ECG</string>
+    <string name="ecg_analyze">Analizar</string>
+    <string name="ecg_import">Importar ECG</string>
+    <string name="ecg_monitor">Monitor ECG</string>
+    <string name="ecg_save">Guardar ECG</string>
+    <string name="ecg_disclaimer">Estos resultados son solo educativos y no constituyen diagnóstico clínico.</string>
+    <string name="ecg_monitor_title">Monitor ECG</string>
+    <string name="ecg_connect_esp32">Conectar ESP32</string>
+    <string name="ecg_demo_mode">Señal de prueba</string>
+    <string name="ecg_demo_description">ECG sinusal normal simulado — 72 lpm</string>
+    <string name="ecg_esp32_description">Conectar dispositivo ESP32 + AD8232 vía Bluetooth</string>
+    <string name="ecg_paired_devices">Vinculados</string>
+    <string name="ecg_nearby_devices">Cercanos</string>
+    <string name="ecg_scan">Buscar</string>
+    <string name="ecg_scanning">Buscando…</string>
+    <string name="ecg_no_devices">No se encontraron dispositivos</string>
+    <string name="ecg_connecting">Conectando con %1$s…</string>
+    <string name="ecg_source_demo">DEMO</string>
+    <string name="ecg_source_bt">Bluetooth</string>
+    <string name="ecg_samples">%1$d muestras</string>
+    <string name="ecg_bpm">FC estimada: %1$d lpm</string>
+    <string name="ecg_bpm_unknown">FC: --</string>
+    <string name="ecg_stop_save">Detener y guardar</string>
+    <string name="ecg_cancel_capture">Cancelar captura</string>
+    <string name="ecg_saving">Guardando registro…</string>
+    <string name="ecg_saved">Registro guardado correctamente</string>
+    <string name="ecg_save_error">Error al guardar el registro ECG</string>
+    <string name="ecg_no_data">No hay datos de señal para guardar</string>
+    <string name="ecg_capturing">Capturando · %1$d muestras · FC: %2$s</string>
+    <string name="ecg_capturing_no_bpm">Capturando · %1$d muestras</string>
+
+    <!-- ECG analysis screen (RF-06) -->
+    <string name="ecg_analysis_title">Análisis ECG</string>
+    <string name="ecg_analysis_loading">Analizando señal ECG…</string>
+    <string name="ecg_analysis_run">Ejecutar análisis</string>
+    <string name="ecg_analysis_rerun">Repetir análisis</string>
+    <string name="ecg_analysis_error">Error en el análisis</string>
+    <string name="ecg_analysis_heart_rate">Frecuencia cardíaca media</string>
+    <string name="ecg_analysis_r_peaks">Picos R detectados</string>
+    <string name="ecg_analysis_rr_mean">Intervalo RR medio</string>
+    <string name="ecg_analysis_rr_min">Intervalo RR mínimo</string>
+    <string name="ecg_analysis_rr_max">Intervalo RR máximo</string>
+    <string name="ecg_analysis_regularity">Regularidad del ritmo</string>
+    <string name="ecg_analysis_rhythm">Sugerencia de ritmo</string>
+    <string name="ecg_analysis_algorithm">Algoritmo</string>
+    <string name="ecg_analysis_analyzed_at">Analizado el</string>
+    <string name="ecg_analysis_bpm_value">%1$d lpm</string>
+    <string name="ecg_analysis_peaks_value">%1$d picos</string>
+    <string name="ecg_analysis_ms_value">%1$.0f ms</string>
+    <string name="ecg_analysis_pct_value">%1$.1f %%</string>
+    <string name="ecg_analysis_na">—</string>
+    <string name="ecg_rhythm_normal">Ritmo sinusal normal</string>
+    <string name="ecg_rhythm_brady">Bradicardia sinusal</string>
+    <string name="ecg_rhythm_tachy">Taquicardia sinusal</string>
+    <string name="ecg_rhythm_irregular">Ritmo irregular</string>
+    <string name="ecg_rhythm_insufficient">Datos insuficientes</string>
+    <string name="ecg_analysis_record_info">Registro: %1$s · %2$d Hz · %3$.1f s</string>
+
+    <string name="ecg_permission_rationale">Se necesitan permisos de Bluetooth para conectar con el ESP32</string>
+    <string name="ecg_bt_unavailable">Bluetooth no disponible en este dispositivo</string>
+    <string name="ecg_bt_connection_failed">No se pudo conectar con el dispositivo</string>
+    <string name="ecg_bt_waiting_signal">Conectado. En espera de señal ECG del ESP32…</string>
+    <string name="ecg_disconnect">Desconectar</string>
+    <string name="ecg_connect_action">Conectar</string>
+    <string name="ecg_stop_demo">Detener demo</string>
+    <string name="ecg_pause_demo">Pausar</string>
+    <string name="ecg_resume_demo">Reanudar</string>
+    <string name="ecg_zoom_hint">Pellizca para ampliar · doble toque para restablecer</string>
+    <string name="ecg_no_signal">Sin señal</string>
+    <string name="ecg_legend_signal">Señal</string>
+    <string name="ecg_legend_peak">Pico R</string>
+    <string name="ecg_pattern_features">Características del patrón</string>
+
+    <!-- ECG demo patterns -->
+    <string name="ecg_pattern_normal">ECG Normal</string>
+    <string name="ecg_pattern_normal_desc">Ritmo sinusal normal · 72 lpm</string>
+    <string name="ecg_pattern_normal_detail">• FC: 60–100 lpm\n• Ritmo regular, origen sinoauricular\n• Eje cardíaco: −30° a +90°\n• Ondas P presentes, cada P seguida de un QRS\n• Intervalo PR: 120–200 ms (3–5 cuadros pequeños)\n• QRS: &lt;0,12 s, morfología y progresión normales\n• Segmento ST isoeléctrico\n• Ondas T positivas; inversión en V1 e inversión en III son variantes normales</string>
+    <string name="ecg_pattern_tachy">Taquicardia sinusal</string>
+    <string name="ecg_pattern_tachy_desc">Frecuencia cardíaca elevada · 150 lpm</string>
+    <string name="ecg_pattern_tachy_detail">• FC: &gt;100 lpm (típicamente 100–180 lpm)\n• Ritmo regular, origen sinoauricular\n• Ondas P visibles antes de cada QRS (pueden solapar con onda T previa a FC elevadas)\n• Intervalo PR normal o ligeramente acortado\n• QRS: morfología normal (&lt;0,12 s)\n• Causas frecuentes: ejercicio, fiebre, ansiedad, hipovolemia, hipertiroidismo</string>
+    <string name="ecg_pattern_brady">Bradicardia sinusal</string>
+    <string name="ecg_pattern_brady_desc">Frecuencia cardíaca reducida · 42 lpm</string>
+    <string name="ecg_pattern_brady_detail">• FC: &lt;60 lpm\n• Ritmo regular, origen sinoauricular\n• Ondas P presentes, cada P seguida de un QRS\n• Todos los intervalos dentro de límites normales\n• Habitualmente fisiológica (atletas entrenados, sueño, tono vagal elevado)\n• Tratar si sintomática: síncope, hipotensión o intolerancia al esfuerzo</string>
+    <string name="ecg_pattern_afib">Fibrilación auricular</string>
+    <string name="ecg_pattern_afib_desc">Ritmo irregular, sin onda P · ~88 lpm</string>
+    <string name="ecg_pattern_afib_detail">• FC: variable, 60–180 lpm (sin control)\n• Ritmo irregularmente irregular\n• Sin ondas P identificables; línea de base fibrilatoria (ondas f, mejor visible en V1)\n• Intervalos RR variables\n• QRS habitualmente estrecho (&lt;0,12 s)\n• Arritmia sostenida más frecuente; conlleva riesgo tromboembólico importante</string>
+    <string name="ecg_pattern_vfib">Fibrilación ventricular</string>
+    <string name="ecg_pattern_vfib_desc">Caótico, sin PQRST identificable</string>
+    <string name="ecg_pattern_vfib_detail">• Sin complejos PQRST reconocibles\n• Oscilaciones caóticas de alta frecuencia y amplitud variable\n• Emergencia vital: el gasto cardíaco cesa de inmediato\n• No genera pulso efectivo\n• Tratamiento inmediato: desfibrilación eléctrica + RCP\n• Precipitada por infarto agudo de miocardio, hipoxia o trastornos electrolíticos graves</string>
+
+    <!-- Report -->
+    <string name="report_title">Informe</string>
+    <string name="report_generate">Generar informe</string>
+    <string name="report_generating">Generando informe…</string>
+    <string name="report_ready">Informe generado</string>
+    <string name="report_retry">Reintentar</string>
+    <string name="report_share">Guardar / Compartir</string>
+    <string name="report_print">Imprimir</string>
+
+    <!-- Admin / Users -->
+    <string name="users_title">Gestión de Usuarios</string>
+    <string name="users_new">Nuevo usuario</string>
+    <string name="user_username_label">Nombre de usuario</string>
+    <string name="user_email_label">Correo electrónico</string>
+    <string name="user_password_label">Contraseña</string>
+    <string name="user_confirm_password_label">Confirmar contraseña</string>
+    <string name="user_role_label">Rol</string>
+    <string name="user_role_user">Usuario</string>
+    <string name="user_role_admin">Administrador</string>
+    <string name="user_delete_confirm">¿Eliminar este usuario? Esta acción no se puede deshacer.</string>
+    <string name="user_password_edit_hint">Dejar en blanco para mantener la contraseña actual</string>
+
+    <!-- Settings / About -->
+    <string name="settings_appearance">Apariencia</string>
+    <string name="settings_dark_mode">Modo oscuro</string>
+    <string name="settings_dark_mode_system">Sistema</string>
+    <string name="settings_dark_mode_light">Claro</string>
+    <string name="settings_dark_mode_dark">Oscuro</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_system">Sistema</string>
+    <string name="settings_language_spanish">Español</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_title">Configuración</string>
+    <string name="about_title">Ayuda / Acerca de</string>
+    <string name="about_version">Versión %1$s</string>
+    <string name="about_educational_notice">PQRST Learn es una herramienta educativa. Los resultados de análisis ECG no constituyen diagnóstico clínico.</string>
+    <string name="about_mit_bih_attribution">Patrones de referencia derivados de la base de datos MIT-BIH Arrhythmia.</string>
+
+    <!-- Dashboard — learn section -->
+    <string name="dashboard_learn_section">APRENDE</string>
+    <string name="dashboard_learn">APRENDE</string>
+    <string name="dashboard_ecg_guide">ECG</string>
+    <string name="dashboard_heart_anatomy">CORAZÓN</string>
+
+    <!-- ECG Guide screen -->
+    <string name="ecg_guide_title">Guía de Ondas PQRST</string>
+    <string name="ecg_guide_intro">El electrocardiograma (ECG) registra la actividad eléctrica del corazón. Cada ciclo cardíaco produce un patrón con cinco ondas principales: P, Q, R, S y T. Toca cada sección para conocer su significado.</string>
+    <string name="ecg_guide_p_wave_label">ONDA P</string>
+    <string name="ecg_guide_p_wave_title">Despolarización auricular</string>
+    <string name="ecg_guide_p_wave_desc">La onda P representa la activación eléctrica de las aurículas, iniciada en el nodo sinoauricular (SA) y propagada por ambas aurículas produciendo su contracción.\n\n• Duración normal: 80–120 ms\n• Amplitud: &lt; 2,5 mm\n• Positiva en DI, DII y aVF\n• Inversión en aVR es normal</string>
+    <string name="ecg_guide_qrs_label">COMPLEJO QRS</string>
+    <string name="ecg_guide_qrs_title">Despolarización ventricular</string>
+    <string name="ecg_guide_qrs_desc">El QRS representa la despolarización de los ventrículos a través del sistema His-Purkinje y el miocardio ventricular.\n\n• Onda Q: despolarización septal (negativa, pequeña)\n• Onda R: pared libre ventricular (positiva, grande)\n• Onda S: regiones basales (negativa)\n• Duración normal: &lt; 120 ms\n• QRS ≥ 120 ms sugiere bloqueo de rama</string>
+    <string name="ecg_guide_t_wave_label">ONDA T</string>
+    <string name="ecg_guide_t_wave_title">Repolarización ventricular</string>
+    <string name="ecg_guide_t_wave_desc">La onda T representa la recuperación eléctrica (repolarización) de los ventrículos.\n\n• Morfología asimétrica: ascenso lento, descenso rápido\n• Polaridad concordante con el QRS\n• Inversión en V1 y en III puede ser variante normal\n• Inversión en V2-V6 sugiere isquemia o hipertrofia</string>
+    <string name="ecg_guide_pr_label">INTERVALO PR</string>
+    <string name="ecg_guide_pr_title">Conducción auriculoventricular</string>
+    <string name="ecg_guide_pr_desc">Tiempo desde el inicio de la despolarización auricular hasta el inicio del QRS. Refleja el retardo fisiológico en el nodo AV.\n\n• Normal: 120–200 ms\n• PR corto: preexcitación (WPW) o ritmo de la unión\n• PR largo (&gt; 200 ms): bloqueo AV de primer grado\n• PR variable: bloqueo de segundo o tercer grado</string>
+    <string name="ecg_guide_st_label">SEGMENTO ST</string>
+    <string name="ecg_guide_st_title">Período isoeléctrico ventricular</string>
+    <string name="ecg_guide_st_desc">Desde el punto J hasta el inicio de la onda T. Normalmente isoeléctrico (plano en la línea de base).\n\n• Elevación ST (&gt; 1 mm): infarto agudo de miocardio, pericarditis\n• Depresión ST (&gt; 0,5 mm): isquemia subendocárdica, digitálicos\n\n⚠ Solo educativo — no sustituye al diagnóstico clínico</string>
+    <string name="ecg_guide_qt_label">INTERVALO QT</string>
+    <string name="ecg_guide_qt_title">Sístole eléctrica ventricular</string>
+    <string name="ecg_guide_qt_desc">Duración total de despolarización y repolarización ventricular. Varía con la frecuencia cardíaca; se corrige con la fórmula de Bazett.\n\n• QTc = QT / √RR\n• QTc normal: &lt; 440 ms (♂) / &lt; 460 ms (♀)\n• QTc &gt; 500 ms: mayor riesgo de torsade de pointes\n• Causas: fármacos, hipopotasemia, hipocalcemia</string>
+    <string name="ecg_guide_u_wave_label">ONDA U</string>
+    <string name="ecg_guide_u_wave_title">Repolarización tardía</string>
+    <string name="ecg_guide_u_wave_desc">La onda U es una pequeña deflexión positiva que sigue a la onda T, más visible en derivaciones precordiales (V2–V3).\n\n• Amplitud: normalmente &lt; 1 mm (&lt; 25 % de la onda T)\n• Origen probable: repolarización de los músculos papilares o del sistema de Purkinje\n• Onda U prominente: hipopotasemia, bradicardia, fármacos como la amiodarona\n• Onda U invertida: puede indicar isquemia o sobrecarga ventricular</string>
+
+    <!-- Heart Anatomy screen -->
+    <string name="heart_anatomy_title">Anatomía y Conducción Cardíaca</string>
+    <string name="heart_anatomy_intro">El corazón tiene cuatro cámaras y un sistema eléctrico especializado que coordina su contracción. Comprende este sistema para interpretar mejor el ECG.</string>
+    <string name="heart_anatomy_ra">AD</string>
+    <string name="heart_anatomy_la">AI</string>
+    <string name="heart_anatomy_rv">VD</string>
+    <string name="heart_anatomy_lv">VI</string>
+    <string name="heart_anatomy_legend_atria">AD: Aurícula Derecha  AI: Aurícula Izquierda</string>
+    <string name="heart_anatomy_legend_ventricles">VD: Ventrículo Derecho  VI: Ventrículo Izquierdo</string>
+    <string name="heart_anatomy_sa_label">1 — Nodo Sinoauricular (SA)</string>
+    <string name="heart_anatomy_sa_title">El marcapasos natural del corazón</string>
+    <string name="heart_anatomy_sa_desc">Localizado en la pared superior de la aurícula derecha (AD), el nodo SA genera impulsos eléctricos espontáneos que inician cada latido.\n\n• Frecuencia intrínseca: 60–100 lpm en reposo\n• Regulado por el sistema nervioso autónomo\n• Su activación produce la onda P en el ECG\n• Disfunción: enfermedad del nodo sinusal (bradicardia sinusal, paro sinusal)</string>
+    <string name="heart_anatomy_av_label">2 — Nodo Auriculoventricular (AV)</string>
+    <string name="heart_anatomy_av_title">Filtro y retardador de la conducción</string>
+    <string name="heart_anatomy_av_desc">Situado en el tabique interauricular, es la única conexión eléctrica normal entre aurículas y ventrículos. Introduce un retardo de 120–200 ms.\n\n• Frecuencia de escape: 40–60 lpm\n• El retardo permite que las aurículas se vacíen antes de la sístole ventricular\n• Refleja el intervalo PR en el ECG\n• Bloqueo AV: 1.º grado (PR largo), 2.º (latidos bloqueados), 3.º (disociación AV)</string>
+    <string name="heart_anatomy_his_label">3 — Haz de His y ramas</string>
+    <string name="heart_anatomy_his_title">Autopista de activación ventricular</string>
+    <string name="heart_anatomy_his_desc">El haz de His desciende por el tabique interventricular y se divide en rama derecha (hacia el VD) e izquierda (hacia el VI, con fascículos anterior y posterior).\n\n• Frecuencia de escape: 20–40 lpm\n• Velocidad de conducción: ~2 m/s\n• BRD: QRS ≥ 120 ms, rSR\' en V1\n• BRI: QRS ≥ 120 ms, patrón característico en V5-V6</string>
+    <string name="heart_anatomy_purkinje_label">4 — Fibras de Purkinje</string>
+    <string name="heart_anatomy_purkinje_title">Red de distribución subendocárdica</string>
+    <string name="heart_anatomy_purkinje_desc">Red de fibras altamente especializadas que distribuyen el impulso por el subendocardio ventricular de forma casi simultánea, garantizando una contracción eficiente.\n\n• Velocidad más alta del corazón: ~4 m/s\n• Activación sincronizada del miocardio ventricular\n• Frecuencia de escape: 20–40 lpm\n• Su activación produce el complejo QRS en el ECG</string>
+    <string name="heart_anatomy_conduction_label">5 — Vías internodales</string>
+    <string name="heart_anatomy_conduction_title">Propagación auricular del impulso</string>
+    <string name="heart_anatomy_conduction_desc">El impulso desde el nodo SA se propaga por las aurículas a través de vías preferenciales (haz de Bachmann, tractos anterior, medio y posterior) hasta el nodo AV.\n\n• Velocidad: ~1 m/s en el miocardio auricular\n• El haz de Bachmann conduce el impulso a la aurícula izquierda\n• La propagación auricular genera la onda P\n• Duración normal: 80–120 ms</string>
+
+    <!-- ECG CSV Import -->
+    <string name="ecg_import_title">Importar ECG desde CSV</string>
+    <string name="ecg_import_pick_file">Seleccionar archivo CSV</string>
+    <string name="ecg_import_pick_hint">Compatible con MIT-BIH y CSV de columna única</string>
+    <string name="ecg_import_parsing">Analizando archivo…</string>
+    <string name="ecg_import_parsing_pct">Analizando… %1$d%%</string>
+    <string name="ecg_import_error">Error: %1$s</string>
+    <string name="ecg_import_retry">Intentar con otro archivo</string>
+    <string name="ecg_import_play">Reproducir</string>
+    <string name="ecg_import_pause">Pausar</string>
+    <string name="ecg_import_stop">Reiniciar</string>
+    <string name="ecg_import_save">Guardar en consulta</string>
+    <string name="ecg_import_no_consultation">Abre este ECG desde una consulta para poder guardarlo</string>
+
+    <!-- ECG live metrics -->
+    <string name="ecg_metric_bpm_avg">FC media</string>
+    <string name="ecg_metric_rr">Dist. RR</string>
+
+    <!-- Rhythm badges (short form for chips) -->
+    <string name="rhythm_normal_short">Normal</string>
+    <string name="rhythm_bradycardia_short">Bradicardia</string>
+    <string name="rhythm_tachycardia_short">Taquicardia</string>
+    <string name="rhythm_regular">Regular</string>
+    <string name="rhythm_irregular_short">Irregular</string>
+
+    <!-- PDF report content -->
+    <string name="pdf_report_title">PQRST Learn — Informe de Consulta</string>
+    <string name="pdf_generated_at">Generado: %s</string>
+    <string name="pdf_section_patient">DATOS DEL PACIENTE</string>
+    <string name="pdf_field_name">Nombre</string>
+    <string name="pdf_field_age">Edad</string>
+    <string name="pdf_field_age_sex">%1$d años · %2$s</string>
+    <string name="pdf_field_history">Antecedentes</string>
+    <string name="pdf_field_phone">Teléfono</string>
+    <string name="pdf_field_email">E-mail</string>
+    <string name="pdf_section_consultation">DATOS DE LA CONSULTA</string>
+    <string name="pdf_field_date">Fecha</string>
+    <string name="pdf_field_symptoms">Síntomas</string>
+    <string name="pdf_field_vital_signs">Signos vitales</string>
+    <string name="pdf_field_notes">Notas</string>
+    <string name="pdf_section_ecg">REGISTRO ECG</string>
+    <string name="pdf_field_sample_rate">Frec. muestreo</string>
+    <string name="pdf_field_duration">Duración</string>
+    <string name="pdf_field_signal_quality">Calidad de señal</string>
+    <string name="pdf_field_heart_rate">Frec. cardíaca</string>
+    <string name="pdf_field_r_peaks">Picos R</string>
+    <string name="pdf_field_rr_interval">Intervalo RR</string>
+    <string name="pdf_field_rhythm">Ritmo</string>
+    <string name="pdf_field_analysis_notes">Notas análisis</string>
+    <string name="pdf_no_ecg_record">Sin registro ECG asociado a esta consulta.</string>
+    <string name="pdf_subsection_ecg_chart">Gráfico ECG</string>
+    <string name="pdf_no_ecg_data">Sin datos ECG para mostrar</string>
+    <string name="pdf_disclaimer">AVISO EDUCATIVO: Este informe es exclusivamente para uso educativo. Los resultados no constituyen diagnóstico clínico ni sustituyen la valoración de un profesional médico cualificado.</string>
+
+    <!-- Interactive tour -->
+    <string name="tour_start">Iniciar tour</string>
+    <string name="tour_skip">Saltar</string>
+    <string name="tour_next">Siguiente</string>
+    <string name="tour_previous">Anterior</string>
+    <string name="tour_finish">Finalizar</string>
+    <string name="tour_welcome_title">¡Bienvenido a PQRST Learn!</string>
+    <string name="tour_welcome_desc">Esta es tu pantalla principal. Desde aquí accedes a todas las funciones de la aplicación. Sigue el tour para conocerlas.</string>
+    <string name="tour_patients_title">Gestión de Pacientes</string>
+    <string name="tour_patients_desc">Crea y gestiona tus pacientes. Puedes registrar su nombre, edad, sexo, historial médico y datos de contacto.</string>
+    <string name="tour_consult_title">Consultas</string>
+    <string name="tour_consult_desc">Registra consultas clínicas asociadas a cada paciente, incluyendo síntomas, signos vitales y notas.</string>
+    <string name="tour_ecg_monitor_title">Monitor ECG en vivo</string>
+    <string name="tour_ecg_monitor_desc">Conecta tu dispositivo ESP32 por Bluetooth y visualiza la señal ECG en tiempo real. Puedes guardarla vinculada a una consulta.</string>
+    <string name="tour_ecg_import_title">Importar ECG</string>
+    <string name="tour_ecg_import_desc">Importa registros ECG desde archivos CSV, como los de la base de datos MIT-BIH, y analízalos directamente en la app.</string>
+    <string name="tour_learn_title">Sección de Aprendizaje</string>
+    <string name="tour_learn_desc">Explora guías interactivas sobre la onda PQRST, anatomía cardíaca y patrones de referencia. Solo para uso educativo.</string>
+    <string name="tour_new_patient_title">Crear un nuevo paciente</string>
+    <string name="tour_new_patient_desc">Pulsa este botón para registrar tu primer paciente. Todos los campos marcados son obligatorios.</string>
 </resources>

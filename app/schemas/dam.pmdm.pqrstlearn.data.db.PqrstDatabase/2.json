@@ -1,0 +1,786 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "0067742a9be740cc519facd336c2ea87",
+    "entities": [
+      {
+        "tableName": "usuarios",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_usuario` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre_usuario` TEXT NOT NULL, `email` TEXT NOT NULL, `contrasena_hash` TEXT NOT NULL, `rol` INTEGER NOT NULL, `activo` INTEGER NOT NULL, `fecha_creacion` TEXT NOT NULL, `ultimo_acceso` TEXT, `creado_por` INTEGER NOT NULL, FOREIGN KEY(`creado_por`) REFERENCES `usuarios`(`id_usuario`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "idUsuario",
+            "columnName": "id_usuario",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombreUsuario",
+            "columnName": "nombre_usuario",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contrasenaHash",
+            "columnName": "contrasena_hash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rol",
+            "columnName": "rol",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activo",
+            "columnName": "activo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaCreacion",
+            "columnName": "fecha_creacion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ultimoAcceso",
+            "columnName": "ultimo_acceso",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "creadoPor",
+            "columnName": "creado_por",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_usuario"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_usuarios_nombre_usuario",
+            "unique": true,
+            "columnNames": [
+              "nombre_usuario"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_usuarios_nombre_usuario` ON `${TABLE_NAME}` (`nombre_usuario`)"
+          },
+          {
+            "name": "index_usuarios_email",
+            "unique": true,
+            "columnNames": [
+              "email"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_usuarios_email` ON `${TABLE_NAME}` (`email`)"
+          },
+          {
+            "name": "index_usuarios_creado_por",
+            "unique": false,
+            "columnNames": [
+              "creado_por"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_usuarios_creado_por` ON `${TABLE_NAME}` (`creado_por`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "usuarios",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "creado_por"
+            ],
+            "referencedColumns": [
+              "id_usuario"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "pacientes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_paciente` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `edad` INTEGER NOT NULL, `sexo` TEXT NOT NULL, `antecedentes` TEXT, `telefono` TEXT, `email` TEXT, `fecha_creacion` TEXT NOT NULL, `activo` INTEGER NOT NULL, `creado_por` INTEGER NOT NULL, FOREIGN KEY(`creado_por`) REFERENCES `usuarios`(`id_usuario`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "idPaciente",
+            "columnName": "id_paciente",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "edad",
+            "columnName": "edad",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sexo",
+            "columnName": "sexo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "antecedentes",
+            "columnName": "antecedentes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "telefono",
+            "columnName": "telefono",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fechaCreacion",
+            "columnName": "fecha_creacion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activo",
+            "columnName": "activo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creadoPor",
+            "columnName": "creado_por",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_paciente"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_pacientes_creado_por",
+            "unique": false,
+            "columnNames": [
+              "creado_por"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pacientes_creado_por` ON `${TABLE_NAME}` (`creado_por`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "usuarios",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "creado_por"
+            ],
+            "referencedColumns": [
+              "id_usuario"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "consultas",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_consulta` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id_paciente` INTEGER NOT NULL, `sintomas` TEXT, `constantes` TEXT, `notas` TEXT, `fecha_creacion` TEXT NOT NULL, `fecha` TEXT NOT NULL, `creado_por` INTEGER NOT NULL, FOREIGN KEY(`id_paciente`) REFERENCES `pacientes`(`id_paciente`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`creado_por`) REFERENCES `usuarios`(`id_usuario`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "idConsulta",
+            "columnName": "id_consulta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idPaciente",
+            "columnName": "id_paciente",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sintomas",
+            "columnName": "sintomas",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "constantes",
+            "columnName": "constantes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "notas",
+            "columnName": "notas",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fechaCreacion",
+            "columnName": "fecha_creacion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fecha",
+            "columnName": "fecha",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creadoPor",
+            "columnName": "creado_por",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_consulta"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_consultas_id_paciente",
+            "unique": false,
+            "columnNames": [
+              "id_paciente"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_consultas_id_paciente` ON `${TABLE_NAME}` (`id_paciente`)"
+          },
+          {
+            "name": "index_consultas_creado_por",
+            "unique": false,
+            "columnNames": [
+              "creado_por"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_consultas_creado_por` ON `${TABLE_NAME}` (`creado_por`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "pacientes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id_paciente"
+            ],
+            "referencedColumns": [
+              "id_paciente"
+            ]
+          },
+          {
+            "table": "usuarios",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "creado_por"
+            ],
+            "referencedColumns": [
+              "id_usuario"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "registro_ecg",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_ecg` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id_consulta` INTEGER NOT NULL, `ruta_archivo` TEXT NOT NULL, `fecha_captura` TEXT NOT NULL, `frecuencia_muestreo` INTEGER NOT NULL, `duracion` REAL NOT NULL, `calidad_senal` TEXT, `estado` TEXT NOT NULL, `creado_por` INTEGER NOT NULL, `num_canales` INTEGER, FOREIGN KEY(`id_consulta`) REFERENCES `consultas`(`id_consulta`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`creado_por`) REFERENCES `usuarios`(`id_usuario`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "idEcg",
+            "columnName": "id_ecg",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idConsulta",
+            "columnName": "id_consulta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rutaArchivo",
+            "columnName": "ruta_archivo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaCaptura",
+            "columnName": "fecha_captura",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frecuenciaMuestreo",
+            "columnName": "frecuencia_muestreo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "duracion",
+            "columnName": "duracion",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "calidadSenal",
+            "columnName": "calidad_senal",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "estado",
+            "columnName": "estado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creadoPor",
+            "columnName": "creado_por",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "numCanales",
+            "columnName": "num_canales",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_ecg"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_registro_ecg_id_consulta",
+            "unique": false,
+            "columnNames": [
+              "id_consulta"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_registro_ecg_id_consulta` ON `${TABLE_NAME}` (`id_consulta`)"
+          },
+          {
+            "name": "index_registro_ecg_creado_por",
+            "unique": false,
+            "columnNames": [
+              "creado_por"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_registro_ecg_creado_por` ON `${TABLE_NAME}` (`creado_por`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "consultas",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id_consulta"
+            ],
+            "referencedColumns": [
+              "id_consulta"
+            ]
+          },
+          {
+            "table": "usuarios",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "creado_por"
+            ],
+            "referencedColumns": [
+              "id_usuario"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "analisis_ecg",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_analisis` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id_ecg` INTEGER NOT NULL, `frecuencia_cardiaca` INTEGER, `num_picos_r` INTEGER, `rr_medio` REAL, `rr_min` REAL, `rr_max` REAL, `regularidad` TEXT, `fecha_analisis` TEXT NOT NULL, `algoritmo_version` TEXT, `observaciones` TEXT, FOREIGN KEY(`id_ecg`) REFERENCES `registro_ecg`(`id_ecg`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "idAnalisis",
+            "columnName": "id_analisis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idEcg",
+            "columnName": "id_ecg",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frecuenciaCardiaca",
+            "columnName": "frecuencia_cardiaca",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "numPicosR",
+            "columnName": "num_picos_r",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "rrMedio",
+            "columnName": "rr_medio",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "rrMin",
+            "columnName": "rr_min",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "rrMax",
+            "columnName": "rr_max",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "regularidad",
+            "columnName": "regularidad",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fechaAnalisis",
+            "columnName": "fecha_analisis",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "algoritmoVersion",
+            "columnName": "algoritmo_version",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "observaciones",
+            "columnName": "observaciones",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_analisis"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_analisis_ecg_id_ecg",
+            "unique": false,
+            "columnNames": [
+              "id_ecg"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_analisis_ecg_id_ecg` ON `${TABLE_NAME}` (`id_ecg`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "registro_ecg",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id_ecg"
+            ],
+            "referencedColumns": [
+              "id_ecg"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "patrones_ecg",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_patron` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre_patron` TEXT NOT NULL, `descripcion` TEXT, `ruta_archivo` TEXT NOT NULL, `frecuencia_muestreo` INTEGER NOT NULL, `arritmia` TEXT, `visible` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "idPatron",
+            "columnName": "id_patron",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombrePatron",
+            "columnName": "nombre_patron",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "descripcion",
+            "columnName": "descripcion",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "rutaArchivo",
+            "columnName": "ruta_archivo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frecuenciaMuestreo",
+            "columnName": "frecuencia_muestreo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "arritmia",
+            "columnName": "arritmia",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "visible",
+            "columnName": "visible",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_patron"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "comparaciones",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_comparacion` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id_ecg` INTEGER NOT NULL, `id_patron` INTEGER NOT NULL, `porcentaje_coincidencia` REAL, `fecha_comparacion` TEXT NOT NULL, `resultado_texto` TEXT, FOREIGN KEY(`id_ecg`) REFERENCES `registro_ecg`(`id_ecg`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`id_patron`) REFERENCES `patrones_ecg`(`id_patron`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "idComparacion",
+            "columnName": "id_comparacion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idEcg",
+            "columnName": "id_ecg",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idPatron",
+            "columnName": "id_patron",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "porcentajeCoincidencia",
+            "columnName": "porcentaje_coincidencia",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fechaComparacion",
+            "columnName": "fecha_comparacion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "resultadoTexto",
+            "columnName": "resultado_texto",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_comparacion"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_comparaciones_id_ecg",
+            "unique": false,
+            "columnNames": [
+              "id_ecg"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_comparaciones_id_ecg` ON `${TABLE_NAME}` (`id_ecg`)"
+          },
+          {
+            "name": "index_comparaciones_id_patron",
+            "unique": false,
+            "columnNames": [
+              "id_patron"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_comparaciones_id_patron` ON `${TABLE_NAME}` (`id_patron`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "registro_ecg",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id_ecg"
+            ],
+            "referencedColumns": [
+              "id_ecg"
+            ]
+          },
+          {
+            "table": "patrones_ecg",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id_patron"
+            ],
+            "referencedColumns": [
+              "id_patron"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "informes",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id_informe` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `id_consulta` INTEGER NOT NULL, `fecha_generacion` TEXT NOT NULL, `formato` TEXT NOT NULL, `contenido_resumen` TEXT, `ruta_pdf` TEXT, `creado_por` INTEGER NOT NULL, FOREIGN KEY(`id_consulta`) REFERENCES `consultas`(`id_consulta`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`creado_por`) REFERENCES `usuarios`(`id_usuario`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "idInforme",
+            "columnName": "id_informe",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idConsulta",
+            "columnName": "id_consulta",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaGeneracion",
+            "columnName": "fecha_generacion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "formato",
+            "columnName": "formato",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contenidoResumen",
+            "columnName": "contenido_resumen",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "rutaPdf",
+            "columnName": "ruta_pdf",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "creadoPor",
+            "columnName": "creado_por",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id_informe"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_informes_id_consulta",
+            "unique": false,
+            "columnNames": [
+              "id_consulta"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_informes_id_consulta` ON `${TABLE_NAME}` (`id_consulta`)"
+          },
+          {
+            "name": "index_informes_creado_por",
+            "unique": false,
+            "columnNames": [
+              "creado_por"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_informes_creado_por` ON `${TABLE_NAME}` (`creado_por`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "consultas",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id_consulta"
+            ],
+            "referencedColumns": [
+              "id_consulta"
+            ]
+          },
+          {
+            "table": "usuarios",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "creado_por"
+            ],
+            "referencedColumns": [
+              "id_usuario"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0067742a9be740cc519facd336c2ea87')"
+    ]
+  }
+}
